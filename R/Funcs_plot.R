@@ -15,7 +15,7 @@ robCRS_no <- 54030
 lonlatCRS <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 lonlatCRS_no <- 4326
 
-plotGlobalChange <- function(all, tit, w_sf, clim){
+plotGlobalChange <- function(all, tit, w_sf, clim, refFirstYear, refLastYear, output){
   
   # if history and future are given together 
   if(length(all)>1){
@@ -75,7 +75,7 @@ plotGlobalChange <- function(all, tit, w_sf, clim){
 
 plotGlobalYear <- function(dat, tit, w_sf){
   
-  # CN trial 
+  # trial 
   # dat<-fut[[(86*12)-2]]
   # w_sf = world_sf
   
@@ -108,7 +108,7 @@ plotGlobalYear <- function(dat, tit, w_sf){
   return(gg)
 }
 
-plotTimeseries <- function(all, tit){
+plotTimeseries <- function(all, tit, date){
   
   if(length(all)>1){
     out <- stack(all$hist, all$fut) 
@@ -128,36 +128,19 @@ plotTimeseries <- function(all, tit){
              Year = year(Date),
              Month = month(Date))
   
-  # explore last dot point for DBPM - why so high biomass?????? nove outside the function here
-  # a<-filter(df, Year == 2100, Month %in% c(10,11,12))
-  # a<-filter(a, y == 89.5)
-  # head(a)
-  # a$Biomass
-  # df<-filter(df, Date < "2100-12-01") # done already outside function
-  # explore NA or 1e20 values 
-  # trial <- filter(df, Year == 2011, 
-  #                 Month  == 10, 
-  #                 is.na(Biomass))
-  # nrow(trial) # should be 23473 (land - OK)
-  # filter years - already done outside function
-  # df2<-filter(df2, Year>=1950) # for consistency with Zoom 
-  
   df2 <- df %>%
     group_by(Year) %>%
-    summarise(Biomass = median(Biomass, na.rm = TRUE)) #,
-  # .groups = "keep") #  not sure what this is 
+    summarise(Biomass = median(Biomass, na.rm = TRUE)) 
   
-  # CN adding  - make it as Lotze et al 
-  # consider only 1971 owards (Boats starts in 1971...) and calcualte changes from 1990-1999 decade 
+  # make it as Lotze et al 
+  # consider only 1971 onward and calculate changes from 1990-1999 decade 
   df2<- filter(df2, Year>1970)
   refDecade <- df2 %>% 
     filter(Year >= 1990, Year <=2000)
   refDecade<-mean(refDecade$Biomass, na.rm = TRUE)
-  
-  # This doesn't seem to work in mutate. It just returns 0
   df2$BiomassChange = (df2$Biomass - refDecade)/refDecade * 100
   
-  # CN use line below if you consider all years and do the mean over first decade 
+  # otherwise consider all years and do the mean over first decade 
   # df2$BiomassChange = (df2$Biomass - mean(df2$Biomass[1:10], na.rm = TRUE))/mean(df2$Biomass[1:10], na.rm = TRUE) * 100
   
   gg <- ggplot(data = df2, aes(x = Year, y = BiomassChange)) +

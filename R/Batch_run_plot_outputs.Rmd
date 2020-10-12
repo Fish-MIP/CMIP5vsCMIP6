@@ -3,27 +3,67 @@ title: "Untitled"
 author: "Camilla Novaglio"
 date: "12/10/2020"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 # load data  
 
 Call plotting function and load global model ISIMIP2b and ISIMIP3b data (now stored in DKRZ, gem48 and local - will need to all be moved to local) 
 
+NOTE: when cleaning gem48: this is CMIP5vsCMIP6.r and functions are in plotMaps.r
+
 ```{r}
 
 rm(list=ls())
-source("/data/home/camillan/dbpm/plotMaps.R")
+# source("/data/home/camillan/dbpm/plotMaps.R")
+source("/Users/nov017/R-projects/CMIP5vsCMIP6/R/Funcs_plot.R")
 library('ncdf4')
 
-#### all to fix when decided on the loop functions ----
+# data 
+input_loc_2b <- "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/marine-fishery_global_ISIMIP2b/"
+save_loc <- "/Users/nov017/R-projects/CMIP5vsCMIP6/figs/"
 
-# loop through models, cmips, variables 
-var <- c("tpb", "tcb", "bp30cm", "bp30to90cm", "bp90cm")
-mod <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL", "EcoTroph", "FEISTY", "ZooMSS")
+# variables 
 cmip<-c("CMIP5", "CMIP6")
-# out montly or annual 
+mod <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL", "EcoTroph", "FEISTY", "ZooMSS")
+protocol <- c("picontrol","historical", "future")
+var <- c("tcb","tpb", "bp30cm", "bp30to90cm", "bp90cm")
+time<-c("monthly", "annual")
 
-#### end all to fix ----
+# load all data and explore dimensions 
+# try one model only - cmip5
+
+# APECOSM ----
+
+hist <- stack(paste0(input_loc_2b, mod[1], "/ipsl-cm5a-lr/", portocol[2], "apecosm_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_no-oa_",var[1],"_global_monthly_1950_2005.nc4"))
+
+fut126 <- stack(paste0(input_loc_2b, mod[1], "/ipsl-cm5a-lr/", portocol[3],"apecosm_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_no-oa_",var[1],"_global_monthly_2006_2100.nc4"))
+
+fut585 <- stack(paste0(input_loc_2b, mod[1], "/ipsl-cm5a-lr/", portocol[3],"apecosm_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_no-oa_",var[1],"_global_monthly_2006_2100.nc4"))
+
+# add together input data
+all126 <- list(hist = hist, fut = fut126)
+
+# title 
+tit126 <- paste0(mod[1], " IPSL SSP126 ",var[1]," (1950-2100 Change ", cmip[1], ")")
+
+# reference years and time scale 
+refFirstYear<-(1990-1950)*12
+refLastYear<-(2090-2006)*12
+output<-"monthly"
+date = seq(as.Date("1950-1-1"), as.Date("2100-12-1"), by = output)
+
+# map of change 
+map_cmip5 <- plotGlobalChange(all126, tit126, world_sf, clim, refFirstYear, refLastYear, output)
+ts_cmip5 <- plotTimeseries(all, tit, date)
+
+
+
+
+
+### original working  code on gem48
+
 
 #### CMIP5 ----
 
