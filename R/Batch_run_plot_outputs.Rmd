@@ -324,11 +324,6 @@ tiff("IPSL_CMIP5vsCMIP5_summary.tiff", height=30, width=20, units ='in', res=300
 pt 
 dev.off()
 
-tiff("DBPM_senescence.tiff", height=10, width=20, units ='in', res=300)
-(gg_map_cmip6[[7]]+gg_map_cmip6[[8]]+gg_ts_cmip6[[8]])/ # dbpm   
-  (gg_map_cmip6_DBPMSenescence_ssp126+gg_map_cmip6_DBPMSenescence_ssp585+gg_ts_cmip6_DBPMSenescence_ssp585)   
-dev.off()
-
 # multimodel for SSP ----
 
 # detailed plots 
