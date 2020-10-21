@@ -9,11 +9,9 @@ editor_options:
 
 # load data  
 
-Call plotting function and load global model ISIMIP2b and ISIMIP3b data (now stored in DKRZ, gem48 and local - will need to all be moved to local) 
+Load global ISIMIP2b model data (now stored in DKRZ, gem48 and local - will need to all be moved to local) 
 
-NOTE: when cleaning gem48: this is CMIP5vsCMIP6.r and functions are in plotMaps.r
-
-```{r}
+```{r load CMIP5}
 
 rm(list=ls())
 # source("/data/home/camillan/dbpm/plotMaps.R")
@@ -21,17 +19,15 @@ source("/Users/nov017/R-projects/CMIP5vsCMIP6/R/Funcs_plot.R")
 library('ncdf4')
 
 # data 
-input_loc_2b <- "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/"
+input_loc <- "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/"
 save_loc <- "/Users/nov017/R-projects/CMIP5vsCMIP6/figs/"
 
 # variables 
 cmip<-c("CMIP5", "CMIP6")
-mod <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL") # "EcoTroph", "FEISTY", "ZooMSS")
+mod <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL") # FEISTY & ZooMSS possibly coming - EcoTroph might be only CMIP6
 protocol <- c("picontrol","historical", "future")
 future<-c("SSP126", "SSP585")
 var <- c("tcb","tpb", "bp30cm", "bp30to90cm", "bp90cm")
-
-# models for CMIP5 ----
 
 # APECOSM ----
 h_yearsA <- "1950_2005"
@@ -83,11 +79,8 @@ dim<-list() # dim of the future - just to check
 
 for (i in 1:length(mod)){
 
-  hist <- stack(paste0(input_loc_2b, mod[i], "/ipsl-cm5a-lr/", protocol[2],"/", tolower(mod[i]), "_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_",oa[i],"_",var[1],"_global_", output[i], "_", h_years[i], ".nc4"))
-
-  fut126 <- stack(paste0(input_loc_2b, mod[i], "/ipsl-cm5a-lr/", protocol[3], "/", tolower(mod[i]), "_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_",oa[i],"_",var[1],"_global_",output[i], "_",f_years[i],".nc4"))
-
- # add together input data
+  hist <- stack(paste0(input_loc, mod[i], "/ipsl-cm5a-lr/", protocol[2],"/", tolower(mod[i]), "_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_",oa[i],"_",var[1],"_global_", output[i], "_", h_years[i], ".nc4"))
+  fut126 <- stack(paste0(input_loc, mod[i], "/ipsl-cm5a-lr/", protocol[3], "/", tolower(mod[i]), "_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_",oa[i],"_",var[1],"_global_",output[i], "_",f_years[i],".nc4"))
  all126 <- list(hist = hist, fut = fut126)
  
  data126[[i]]<-all126
@@ -99,7 +92,9 @@ for (i in 1:length(mod)){
  
 }
 
-# NOTE <- DBEM dimension is doubled - 0.5 grid cell resolution? Needs fixing, though plots are produced anyway....
+data126_CMIP5<-data126
+
+# NOTE <- DBEM dimension is doubled - 0.5 grid cell resolution? NEEDS FIXING
 # delete from all variables for now 
 # data126$DBEM<-NULL
 # mod <- c("APECOSM", "BOATS", "DBPM","EcoOcean", "MACROECOLOGICAL") # "EcoTroph", "FEISTY", "ZooMSS")
@@ -108,16 +103,19 @@ for (i in 1:length(mod)){
 # output <-c(outputA, outputB, outputDB, outputE, outputM)
 # oa <-c(oaA, oaB, oaDB, oaE, oaM)
 
-# plot data 
+```
+
+Plot global ISIMIP2b model outputs
+
+```{r map CMIP5}
+
 # consider ssp126
 
 map<-list()
-ts <-list()
+#  ts <-list()
 
 for (i in 1:length(data126)){ 
-  
-  i = 5
-  
+
   # map of change
   clim <- c(-50, 50)
   
@@ -141,191 +139,157 @@ for (i in 1:length(data126)){
   
 }
 
-names(map) 
+map_CMIP5<-map
 
+```
 
-#### CMIP6 ----
+Load global ISIMIP3b model data (now stored in DKRZ, gem48 and local - will need to all be moved to local) 
 
-gg_map_cmip6 <- list()
-gg_ts_cmip6 <- list()
-clim <- c(-50, 50)
+```{r load CMIP6}
 
+# data 
+input_loc <- "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP3b/"
+
+# variables 
+mod <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL", "EcoTroph", "FEISTY", "ZooMSS") # all would be this 
+mod <- c("MACROECOLOGICAL", "ZooMSS") # need to download DBPM, FEISTY, and BOATS
 
 # APECOSM ----
-# no data 01/10/2020
+# h_yearsA <- "1950_2005"
+# f_yearsA<- "2006_2100"
+# outputA<-"monthly"
+
 
 # BOATS ----
-# no data 01/10/2020
+# h_yearsB <- "1971_2005"
+# f_yearsB<- "2006_2099"
+# outputB<-"monthly"
+
 
 # DBEM ----
-# no data 01/10/2020
+# h_yearsD <- "1951_2005"
+# f_yearsD<- "2006_2099"
+# outputD<-"annual"
 
-# DBPM (in gem!!!) ---- 
 
-hist<-stack("/../../rd/gem/private/fishmip_outputs/ISIMIP3b/IPSL-CM6A-LR/netcdf/historical/dbpm_ipsl_cm6a_lr_nobc_historical_nat_default_tcb_global_montly_1850_2014.nc4")
-dim(hist) # (2014-1850+1)*12
-# cut 1850-1950 for hist data? not necessary if you have the ref year and dates... 
-# cut<-((2015-1850)*12) - ((2015-1950)*12) # from beginning of 1850 to end of 2014
-# hist<-dropLayer(hist, seq(1:cut))
+# DBPM ----
+# dbpm_ipsl_cm6a_lr_nobc_historical_nat_default_tcb_global_montly_1850_2014.nc4
+# dbpm_ipsl_cm6a_lr_nobc_ssp126_nat_default_tcb_global_montly_2015_2100.nc4
+# h_yearsDB <- "1850_2014"
+# f_yearsDB<- "2015_2100"
+# outputDB<-"monthly"
+# extensionDB <-".nc4"
 
-### ssp126
-v = 2
-m = 4
-c = 2
-fut <- stack("/../../rd/gem/private/fishmip_outputs/ISIMIP3b/IPSL-CM6A-LR/netcdf/ssp126/dbpm_ipsl_cm6a_lr_nobc_ssp126_nat_default_tcb_global_montly_2015_2100.nc4")
-dim(fut)
-tit <- paste0(mod[m], " IPSL SSP126 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-all<-list(hist = hist, fut = fut)
-#  this should be part of the loop... 
-refFirstYear<-(1990-1850)*12
-refLastYear<-(2090-2015)*12
-output<-"montly"
-gg_map_cmip6[[7]] <- plotGlobalChange(all, tit, world_sf, clim)
-date = seq(as.Date("1850-1-1"), as.Date("2100-12-1"), by = "months") 
-gg_ts_cmip6[[7]] <- plotTimeseries(all, tit)
+# EcoOcean ----  
+# h_yearsE <- "1971_2005"
+# f_yearsE<- "2006_2100"
+# outputE<-"monthly"
+# oaE<-"no-oa"
 
-#  ssp585
-v = 2
-m = 4
-c = 2
-fut <- stack(paste0("/../../rd/gem/private/fishmip_outputs/ISIMIP3b/IPSL-CM6A-LR/netcdf/ssp585/dbpm_ipsl_cm6a_lr_nobc_ssp585_nat_default_tcb_global_montly_2015_2100.nc4"))
-dim(fut)
-tit <- paste0(mod[m], " IPSL SSP585 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-tit <- paste0(mod[m], " " ,cmip[c])
-all<-list(hist = hist, fut = fut)
-gg_map_cmip6[[8]] <- plotGlobalChange(all, tit, world_sf, clim)
-gg_ts_cmip6[[8]] <- plotTimeseries(all, tit)
+# macroecological ----  
+# macroecological_ipsl-cm6a-lr_nobc_historical_nat_default_tcb_global_annual_1950_2014.nc
+# macroecological_ipsl-cm6a-lr_nobc_ssp126_nat_default_tcb_global_annual_2015-2100.nc
+h_yearsM <- "1950_2014"
+f_yearsM<- "2015_2100"
+outputM<-"annual"
+extensionM<-".nc"
 
-rm(hist, fut, all)
+# EcoTroph ----  
+# h_yearsEC <- "1950_2005"
+# f_yearsEC<- "2006_2100"
+# outputEC<-"annual"
 
-# DBPM (in gem!!! senescence) ---- 
+# FEISTY ----  
+# h_yearsF <- "1950_2005"
+# f_yearsF<- "2006_2100"
+# outputF<-"annual"
 
-hist<-stack("/../../rd/gem/private/fishmip_outputs/ISIMIP3b_withTempOnSenescence/IPSL-CM6A-LR/netcdf/historical/dbpm_ipsl_cm6a_lr_nobc_historical_nat_default_tcb_global_montly_1850_2014.nc4")
-dim(hist) # (2014-1850+1)*12
-# cut 1850-1950 for hist data? not necessary if you have the ref year and dates... 
-# cut<-((2015-1850)*12) - ((2015-1950)*12) # from beginning of 1850 to end of 2014
-# hist<-dropLayer(hist, seq(1:cut))
 
-### ssp126
-v = 2
-m = 4
-c = 2
-fut <- stack("/../../rd/gem/private/fishmip_outputs/ISIMIP3b_withTempOnSenescence/IPSL-CM6A-LR/netcdf/ssp126/dbpm_ipsl_cm6a_lr_nobc_ssp126_nat_default_tcb_global_montly_2015_2100.nc4")
-fut<-dropLayer(fut, dim(fut)[3])
-tit <- paste0(mod[m], " IPSL SSP126 ",var[v]," (1950-2100 Change ", cmip[c], ")", "senescence")
-all<-list(hist = hist, fut = fut)
-#  this should be part of the loop... 
-refFirstYear<-(1990-1850)*12
-refLastYear<-(2090-2015)*12
-output<-"montly"
-gg_map_cmip6_DBPMSenescence_ssp126 <- plotGlobalChange(all, tit, world_sf, clim)
-date = seq(as.Date("1850-1-1"), as.Date("2100-11-1"), by = "months") # because last months of data cut 
-gg_ts_cmip6_DBPMSenescence_ssp126 <- plotTimeseries(all, tit)
-
-#  ssp585
-v = 2
-m = 4
-c = 2
-fut <- stack(paste0("/../../rd/gem/private/fishmip_outputs/ISIMIP3b_withTempOnSenescence/IPSL-CM6A-LR/netcdf/ssp585/dbpm_ipsl_cm6a_lr_nobc_ssp585_nat_default_tcb_global_montly_2015_2100.nc4"))
-fut<-dropLayer(fut, dim(fut)[3])
-tit <- paste0(mod[m], " IPSL SSP585 ",var[v]," (1950-2100 Change ", cmip[c], ")", "senescence")
-tit <- paste0(mod[m], " " ,cmip[c],"senescence")
-all<-list(hist = hist, fut = fut)
-gg_map_cmip6_DBPMSenescence_ssp585 <- plotGlobalChange(all, tit, world_sf, clim)
-gg_ts_cmip6_DBPMSenescence_ssp585 <- plotTimeseries(all, tit)
-
-rm(hist, fut, all)
-
-# check if outputs  matrix are the same: 
-# hist<-stack("/../../rd/gem/private/fishmip_outputs/ISIMIP3b/IPSL-CM6A-LR/netcdf/historical/dbpm_ipsl_cm6a_lr_nobc_historical_nat_default_tcb_global_montly_1850_2014.nc4")
-# hist_s<-stack("/../../rd/gem/private/fishmip_outputs/ISIMIP3b_withTempOnSenescence/IPSL-CM6A-LR/netcdf/historical/dbpm_ipsl_cm6a_lr_nobc_historical_nat_default_tcb_global_montly_1850_2014.nc4")
-
-# identical(hist, hist_s) # but shifted by 1 time step 
-
-# EcoOcean ---- 
-# in .zip files and wired names 01/10/2020
-
-# MACROECOLOGICAL ----
-# # ../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP3b/MACROECOLOGICAL/_tmp/ipsl-cm6a-lr/pre-industrial 
-# /../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP3b/MACROECOLOGICAL/_tmp/ipsl-cm6a-lr/historical/macroecological_ipsl-cm6a-lr_nobc_historical_nat_default_tcb_global_annual_1950_2014.nc
-# /../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP3b/MACROECOLOGICAL/_tmp/ipsl-cm6a-lr/future/macroecological_ipsl-cm6a-lr_nobc_ssp126_nat_default_tcb_global_annual_2015-2100.nc
-# /../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP3b/MACROECOLOGICAL/_tmp/ipsl-cm6a-lr/future/macroecological_ipsl-cm6a-lr_nobc_ssp585_nat_default_tcb_global_annual_2015-2100.nc
-
-hist<-stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP3b/MACROECOLOGICAL/_tmp/ipsl-cm6a-lr/historical/macroecological_ipsl-cm6a-lr_nobc_historical_nat_default_tcb_global_annual_1950_2014.nc")
-dim(hist) # ANNUAL need to change the function 
-
-### ssp126
-v = 2
-m = 6
-c = 2
-fut <- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP3b/MACROECOLOGICAL/_tmp/ipsl-cm6a-lr/future/macroecological_ipsl-cm6a-lr_nobc_ssp126_nat_default_tcb_global_annual_2015-2100.nc")
-dim(fut)
-tit <- paste0(mod[m], " IPSL SSP126 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-all<-list(hist = hist, fut = fut)
-refFirstYear<-(1990-1950)
-refLastYear<-(2090-2015)
-output<-"annual"
-# gg_map_cmip6[[11]] <- plotGlobalChange(all, tit, world_sf, clim)
-# date = seq(as.Date("1950-1-1"), as.Date("2100-12-1"), by = "years") 
-# gg_ts_cmip6[[11]] <- plotTimeseries(all, tit)
-
-#  ssp585
-v = 2
-m = 6
-c = 2
-fut <- stack(paste0("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP3b/MACROECOLOGICAL/_tmp/ipsl-cm6a-lr/future/macroecological_ipsl-cm6a-lr_nobc_ssp585_nat_default_tcb_global_annual_2015-2100.nc"))
-tit <- paste0(mod[m], " IPSL SSP585 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-tit <- paste0(mod[m], " " ,cmip[c])
-all<-list(hist = hist, fut = fut)
-gg_map_cmip6[[12]] <- plotGlobalChange(all, tit, world_sf, clim)
-# gg_ts_cmip6[[12]] <- plotTimeseries(all, tit)
-
-rm(hist, fut, all)
-
-# OTHER models ---- 
-
-# EcoTroph ----
-# no data 01/10/2020
-# FEISTY ----
-# no data 01/10/2020
-# ZooMSS ----
-# rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP3b/ZooMSS/_tmp/ipsl-cm6a-lr/future
+# ZooMSS ----  
 # zoomss_ipsl-cm6a-lr_nobasd_historical_nat_default_tcb_global_annual_1950_2014.nc
 # zoomss_ipsl-cm6a-lr_nobasd_ssp126_nat_default_tcb_global_annual_2015_2100.nc
 # zoomss_ipsl-cm6a-lr_nobasd_ssp585_nat_default_tcb_global_annual_2015_2100.nc
+h_yearsZ <- "1950_2014"
+f_yearsZ<- "2015_2100"
+outputZ<-"annual"
+extensionZ<-".nc4"
 
-hist<-stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP3b/ZooMSS/_tmp/ipsl-cm6a-lr/historical/zoomss_ipsl-cm6a-lr_nobasd_historical_nat_default_tcb_global_annual_1950_2014.nc")
-dim(hist) # ANNUAL need to change the function 
+# extract data ---- 
+# consider only ipsl and tcb 
 
-### ssp126
-v = 2
-m = 9
-c = 2
-fut <- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP3b/ZooMSS/_tmp/ipsl-cm6a-lr/future/zoomss_ipsl-cm6a-lr_nobasd_ssp126_nat_default_tcb_global_annual_2015_2100.nc")
-dim(fut)
-tit <- paste0(mod[m], " IPSL SSP126 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-all<-list(hist = hist, fut = fut)
-refFirstYear<-(1990-1950)
-refLastYear<-(2090-2015)
-output<-"annual"
-# gg_map_cmip6[[17]] <- plotGlobalChange(all, tit, world_sf, clim)
-# date = seq(as.Date("1950-1-1"), as.Date("2100-12-1"), by = "years") 
-# gg_ts_cmip6[[17]] <- plotTimeseries(all, tit)
+h_years <-c(h_yearsM, h_yearsZ)
+f_years <-c(f_yearsM, f_yearsZ)
+output <-c(outputM,outputZ)
+extension <-c(extensionM, extensionZ)
 
-#  ssp585
-v = 2
-m = 9
-c = 2
-fut <- stack(paste0("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP3b/ZooMSS/_tmp/ipsl-cm6a-lr/future/zoomss_ipsl-cm6a-lr_nobasd_ssp585_nat_default_tcb_global_annual_2015_2100.nc"))
-tit <- paste0(mod[m], " IPSL SSP585 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-all<-list(hist = hist, fut = fut)
-tit <- paste0(mod[m], " " ,cmip[c])
-gg_map_cmip6[[18]] <- plotGlobalChange(all, tit, world_sf, clim)
-# gg_ts_cmip6[[18]] <- plotTimeseries(all, tit)
+data126<-list()
+dim<-list() # dim of the future - just to check 
+# data585<-list()
 
-rm(hist, fut, all)
+for (i in 1:length(mod)){
 
-# plots ----
+  i =1
+  hist <- stack(paste0(input_loc, mod[i], "/ipsl-cm5a-lr/", protocol[2],"/", tolower(mod[i]), "_ipsl-cm6a-lr_nobc_historical_nat_default_",var[1],"_global_", output[i], "_", h_years[i], extension[i]))
+
+  fut126 <- stack(paste0(input_loc, mod[i], "/ipsl-cm5a-lr/", protocol[3], "/", tolower(mod[i]), "_ipsl-cm6a-lr_nobc_ssp126_nat_default_",var[1],"_global_",output[i], "_",f_years[i],extension[i]))
+
+ # add together input data
+ all126 <- list(hist = hist, fut = fut126)
+ 
+ data126[[i]]<-all126
+ names(data126)[[i]]<-mod[[i]]
+ dim[[i]]<-dim(fut126)
+ names(dim)[[i]]<-mod[[i]]
+  
+ rm(all126)
+ 
+}
+
+data126_CMIP6<-data126
+```
+
+Plot global ISIMIP3b model outputs
+
+```{r plot CMIP6}
+
+# consider ssp126
+
+map<-list()
+#  ts <-list()
+
+for (i in 1:length(data126)){ 
+
+  # map of change
+  clim <- c(-50, 50)
+  
+  # reference years
+  refFirstYear<-(1990-as.numeric(substr(h_years[i], start = 1, stop = 4)))
+  refLastYear<-(2090-as.numeric(substr(f_years[i], start = 1, stop = 4)))
+  if(output[i]=="monthly"){
+    refFirstYear = refFirstYear*12
+    refLastYear = refLastYear*12
+  }
+  
+  tit <- paste0(mod[i], " IPSL ", future[1], " ", var[1]," (1990s-2090s Change ", cmip[2], ")")
+  map[[i]] <- plotGlobalChange(data126[[i]], tit, world_sf, clim, refFirstYear, refLastYear, output[i])
+  names(map)[[i]]<-mod[[i]]
+  
+  # # trends 
+  # tit <- paste0(mod[i], " IPSL ", future[1], " ", var[1]," (Change relative to 1990s ", cmip[2], ")")
+  # date = seq(as.Date(paste0(substr(h_years[i], start = 1, stop = 4),"-1-1")), as.Date(paste0(substr(f_years[i], start = 6, stop = 9),"-12-1")), by = ifelse(output[i]=="monthly","month","year"))
+  # ts[[i]] <- plotTimeseries(data126[[i]], tit, date)
+  # names(ts)[[i]]<-mod[[i]]
+  
+}
+
+map_CMIP6<-map
+```
+
+put them all together 
+
+```{r multipanel plot}
+
+# multimodel for SSP ----
 
 library(patchwork)
 
@@ -339,13 +303,13 @@ H#
 #I
 "
 
-pt<-gg_map_cmip5[[8]]+gg_map_cmip6[[8]] + # apecosm DONE, but no CMIP6 counterpart
-    gg_map_cmip5[[12]]+ gg_map_cmip6[[12]]+ # boats DONE, but no CMIP6 counterpart  
-    gg_map_cmip5[[6]]+ # dbem DONE, but no CMIP6 counterpart
-    gg_map_cmip5[[2]]+ # dbpm   
-    gg_map_cmip5[[10]]+ # ecoocean DONE, but no CMIP6 in netcdf  
-    gg_map_cmip5[[4]]+ # macroecological  
-    gg_map_cmip6[[18]] + # zooMMS
+pt<-map_CMIP5$DBPM + map_CMIP6$DBPM + 
+    map_CMIP5$MACROECOLOGICAL + map_CMIP6$MACROECOLOGICAL+  
+    map_CMIP5$DBEM +
+    map_CMIP5$APECOSM + 
+    map_CMIP5$EcoOcean + 
+    map_CMIP5$BOATS+ 
+    map_CMIP6$ZooMSS + # zooMMS
   plot_layout(design = layout)
 
 pt<-pt + plot_annotation(
@@ -365,31 +329,13 @@ tiff("DBPM_senescence.tiff", height=10, width=20, units ='in', res=300)
   (gg_map_cmip6_DBPMSenescence_ssp126+gg_map_cmip6_DBPMSenescence_ssp585+gg_ts_cmip6_DBPMSenescence_ssp585)   
 dev.off()
 
-
+# multimodel for SSP ----
 
 # detailed plots 
 # pdf("IPSL_CMIP5.pdf", height=30, width=20) # ssp126, ssp585, trends ssp585 
 tiff("IPSL_CMIP5.tiff", height=10, width=20, units ='in', res=300)
-# (gg_map_cmip5[[1]]+gg_map_cmip5[[2]]+gg_ts_cmip5[[2]])/ # apecosm DONE, but no CMIP6 counterpart
-# (gg_map_cmip5[[3]]+gg_map_cmip5[[4]]+gg_ts_cmip5[[4]])/ # boats DONE, but no CMIP6 counterpart  
-# (gg_map_cmip5[[5]]+gg_map_cmip5[[6]]+gg_ts_cmip5[[6]])/ # dbem TO DO
-(gg_map_cmip5[[7]]+gg_map_cmip5[[8]]+gg_ts_cmip5[[8]])/ # dbpm   
-  # (gg_map_cmip5[[9]]+gg_map_cmip5[[10]]+gg_ts_cmip5[[10]])/  # ecoocean TO DO 
-  (gg_map_cmip5[[11]]+gg_map_cmip5[[12]]+gg_ts_cmip5[[12]])  # macroecological  
+(map_cmip5$DBPM+map_cmip5$DBPM+ts_cmip5$DBPM)/ # dbpm # this should be ssp126 vs ssp585 so need to run both above    
+  (map_cmip5$MACROECOLOGICAL+map_cmip5$MACROECOLOGICAL+ts_cmip5$MACROECOLOGICAL)  
 dev.off()
-
-# pdf("IPSL_CMIP6.pdf", height=30, width=20) 
-tiff("IPSL_CMIP6.tiff", height=10, width=20, units ='in', res=300)
-# (gg_map_cmip5[[1]]+gg_map_cmip5[[2]]+gg_ts_cmip5[[2]])/ # apecosm # no data 
-# (gg_map_cmip5[[3]]+gg_map_cmip5[[4]]+gg_ts_cmip5[[4]])/ # boats # no data  
-# (gg_map_cmip5[[5]]+gg_map_cmip5[[6]]+gg_ts_cmip5[[6]])/ # dbem # no data 
-(gg_map_cmip6[[7]]+gg_map_cmip6[[8]]+gg_ts_cmip6[[8]])/ # dbpm   
-  # (gg_map_cmip5[[9]]+gg_map_cmip5[[10]]+gg_ts_cmip5[[10]])/  # ecoocean # in zip
-  (gg_map_cmip6[[11]]+gg_map_cmip6[[12]]+gg_ts_cmip6[[12]])  # macroecological  
-dev.off()
-
-
-
-
 
 ```
