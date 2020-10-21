@@ -5,6 +5,7 @@ library(sf)
 library(rnaturalearth)
 library(patchwork)
 library(lubridate)
+library(rgeos)
 
 mollCRS <- CRS("+proj=moll +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
 mollCRS_no <- 54009
@@ -16,6 +17,14 @@ lonlatCRS <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 lonlatCRS_no <- 4326
 
 plotGlobalChange <- function(all, tit, w_sf, clim, refFirstYear, refLastYear, output){
+
+  # all = data126[[i]]
+  # tit = tit
+  # w_sf = world_sf 
+  # clim = clim
+  # refFirstYear = refFirstYear
+  # refLastYear = refLastYear
+  # output = output[i]
   
   # if history and future are given together 
   if(length(all)>1){
@@ -70,7 +79,9 @@ plotGlobalChange <- function(all, tit, w_sf, clim, refFirstYear, refLastYear, ou
       legend.title.align = 0.5) +
     guides(fill = guide_colourbar(title.position = "right"))
   
+  rm(x,dat)
   return(gg)
+  
 }
 
 plotGlobalYear <- function(dat, tit, w_sf){
@@ -140,12 +151,8 @@ plotTimeseries <- function(all, tit, date){
   refDecade<-mean(refDecade$Biomass, na.rm = TRUE)
   df2$BiomassChange = (df2$Biomass - refDecade)/refDecade * 100
   
-  # otherwise consider all years and do the mean over first decade 
-  # df2$BiomassChange = (df2$Biomass - mean(df2$Biomass[1:10], na.rm = TRUE))/mean(df2$Biomass[1:10], na.rm = TRUE) * 100
-  
   gg <- ggplot(data = df2, aes(x = Year, y = BiomassChange)) +
     geom_line() +
-    #ylim(-5,3)+
     geom_smooth(method = "lm") +
     ggtitle(tit) +
     theme_bw() +

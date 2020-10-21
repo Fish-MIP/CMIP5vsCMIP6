@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Plotting global models outputs"
 author: "Camilla Novaglio"
 date: "12/10/2020"
 output: html_document
@@ -21,288 +21,128 @@ source("/Users/nov017/R-projects/CMIP5vsCMIP6/R/Funcs_plot.R")
 library('ncdf4')
 
 # data 
-input_loc_2b <- "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/marine-fishery_global_ISIMIP2b/"
+input_loc_2b <- "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/"
 save_loc <- "/Users/nov017/R-projects/CMIP5vsCMIP6/figs/"
 
 # variables 
 cmip<-c("CMIP5", "CMIP6")
-mod <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL", "EcoTroph", "FEISTY", "ZooMSS")
+mod <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL") # "EcoTroph", "FEISTY", "ZooMSS")
 protocol <- c("picontrol","historical", "future")
+future<-c("SSP126", "SSP585")
 var <- c("tcb","tpb", "bp30cm", "bp30to90cm", "bp90cm")
-time<-c("monthly", "annual")
 
-# load all data and explore dimensions 
-# try one model only - cmip5
+# models for CMIP5 ----
 
 # APECOSM ----
-
-hist <- stack(paste0(input_loc_2b, mod[1], "/ipsl-cm5a-lr/", portocol[2], "apecosm_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_no-oa_",var[1],"_global_monthly_1950_2005.nc4"))
-
-fut126 <- stack(paste0(input_loc_2b, mod[1], "/ipsl-cm5a-lr/", portocol[3],"apecosm_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_no-oa_",var[1],"_global_monthly_2006_2100.nc4"))
-
-fut585 <- stack(paste0(input_loc_2b, mod[1], "/ipsl-cm5a-lr/", portocol[3],"apecosm_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_no-oa_",var[1],"_global_monthly_2006_2100.nc4"))
-
-# add together input data
-all126 <- list(hist = hist, fut = fut126)
-
-# title 
-tit126 <- paste0(mod[1], " IPSL SSP126 ",var[1]," (1950-2100 Change ", cmip[1], ")")
-
-# reference years and time scale 
-refFirstYear<-(1990-1950)*12
-refLastYear<-(2090-2006)*12
-output<-"monthly"
-date = seq(as.Date("1950-1-1"), as.Date("2100-12-1"), by = output)
-
-# map of change 
-map_cmip5 <- plotGlobalChange(all126, tit126, world_sf, clim, refFirstYear, refLastYear, output)
-ts_cmip5 <- plotTimeseries(all, tit, date)
-
-
-
-
-
-### original working  code on gem48
-
-
-#### CMIP5 ----
-
-gg_map_cmip5 <- list()
-gg_ts_cmip5 <- list()
-clim <- c(-50, 50)
-
-### explore data and rotation ----
-# nc <- nc_open("/../../rd/gem/private/fishmip_outputs/aug_2017/netcdf/dbpm_ipsl-cm5a-lr_rcp26_no-fishing_no-oa_tcb.nc")
-# print(nc)
-# data_attributes <-ncatt_get(nc,"tcb")
-# after stack: hist_rotate<-raster::rotate(hist)
-
-# APECOSM ----
-hist <- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/APECOSM/ipsl-cm5a-lr/historical/apecosm_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_no-oa_tcb_global_monthly_1950_2005.nc4")
-dim(hist) # (2005-1950+1)*12 = 672 it means montly  values between these dates 
-
-### ssp126
-v = 2
-m = 1
-c = 1
-fut<- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/APECOSM/ipsl-cm5a-lr/future/apecosm_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2100.nc4")
-dim(fut)# (2100-2006+1)*12 = 1140
-tit <- paste0(mod[m], " IPSL SSP126 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-all <- list(hist = hist, fut = fut)
-#  this should be part of the loop... 
-refFirstYear<-(1990-1950)*12
-refLastYear<-(2090-2006)*12
-output<-"montly"
-# gg_map_cmip5[[1]] <- plotGlobalChange(all, tit, world_sf, clim)
-# date = seq(as.Date("1950-1-1"), as.Date("2100-12-1"), by = "months")
-# gg_ts_cmip5[[1]] <- plotTimeseries(all, tit)
-
-### ssp585
-v = 2
-m = 1
-c = 1
-fut<- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/APECOSM/ipsl-cm5a-lr/future/apecosm_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2100.nc4")
-dim(fut)# (2100-2006+1)*12 = 1140
-tit <- paste0(mod[m], " IPSL SSP585 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-tit <- paste0(mod[m], " " ,cmip[c])
-all<-list(hist = hist, fut = fut)
-gg_map_cmip5[[2]] <- plotGlobalChange(all, tit, world_sf, clim)
-# gg_ts_cmip5[[2]] <- plotTimeseries(all, tit)
-
-rm(hist, fut, all)
-# does the above compare to Lotze? YES! 
+h_yearsA <- "1950_2005"
+f_yearsA<- "2006_2100"
+outputA<-"monthly"
+oaA<-"no-oa"
 
 # BOATS ----
-
-hist <- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/BOATS/ipsl-cm5a-lr/historical/boats_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_no-oa_tcb_global_monthly_1971_2005.nc4")
-dim(hist) # (2005-1971+1)*12 = 420
-
-### ssp126
-v = 2
-m = 2
-c = 1
-fut<- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/BOATS/ipsl-cm5a-lr/future/boats_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2099.nc4")
-dim(fut) # (2099-2006+1)*12 = 1128
-tit <- paste0(mod[m], " IPSL SSP126 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-all<-list(hist = hist, fut = fut)
-#  this should be part of the loop... 
-refFirstYear<-(1990-1971)*12
-refLastYear<-(2090-2006)*12
-output<-"montly"
-# gg_map_cmip5[[3]] <- plotGlobalChange(all, tit, world_sf, clim)
-#  date = seq(as.Date("1971-1-1"), as.Date("2099-12-1"), by = "months")
-# gg_ts_cmip5[[3]] <- plotTimeseries(all, tit)
-
-### ssp585
-v = 2
-m = 2
-c = 1
-fut <- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/BOATS/ipsl-cm5a-lr/future/boats_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2099.nc4")
-dim(fut) # (2099-2006+1)*12 = 1128
-tit <- paste0(mod[m], " IPSL SSP585 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-tit <- paste0(mod[m], " " ,cmip[c])
-all<-list(hist = hist, fut = fut)
-gg_map_cmip5[[4]] <- plotGlobalChange(all, tit, world_sf, clim)
-# gg_ts_cmip5[[4]] <- plotTimeseries(all, tit)
-
-rm(hist, fut, all)
-# does this compare to Lotze? 
+h_yearsB <- "1971_2005"
+f_yearsB<- "2006_2099"
+outputB<-"monthly"
+oaB<-"no-oa"
 
 # DBEM ----
-# dbem_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_oa_tcb_global_annual_1951_2005.nc4
-# dbem_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_oa_tcb_global_annual_2006_2099.nc4
-# dbem_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_oa_tcb_global_annual_2006_2099.nc4
-
-hist <- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/DBEM/ipsl-cm5a-lr/historical/dbem_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_oa_tcb_global_annual_1951_2005.nc4")
-dim(hist) # 2005-1951+1
-
-### ssp126
-v = 2
-m = 3
-c = 1
-fut<- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/DBEM/ipsl-cm5a-lr/future/dbem_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_oa_tcb_global_annual_2006_2099.nc4")
-dim(fut) # 2099-2006+1
-tit <- paste0(mod[m], " IPSL SSP126 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-all<-list(hist = hist, fut = fut)
-#  this should be part of the loop... 
-refFirstYear<-(1990-1951)
-refLastYear<-(2090-2006)
-output<-"annual"
-# gg_map_cmip5[[5]] <- plotGlobalChange(all, tit, world_sf, clim)
-# date = seq(as.Date("1951-1-1"), as.Date("2099-12-1"), by = "years")
-# gg_ts_cmip5[[5]] <- plotTimeseries(all, tit)
-
-### ssp585
-v = 2
-m = 3
-c = 1
-fut <- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/DBEM/ipsl-cm5a-lr/future/dbem_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_oa_tcb_global_annual_2006_2099.nc4")
-dim(fut) # (2099-2006+1)*12 = 1128
-tit <- paste0(mod[m], " IPSL SSP585 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-tit <- paste0(mod[m], " " ,cmip[c])
-all<-list(hist = hist, fut = fut)
-gg_map_cmip5[[6]] <- plotGlobalChange(all, tit, world_sf, clim)
-# gg_ts_cmip5[[6]] <- plotTimeseries(all, tit)
-
-rm(hist, fut, all)
-# does this compare to Lotze? 
+h_yearsD <- "1951_2005"
+f_yearsD<- "2006_2099"
+outputD<-"annual"
+oaD<-"oa"
 
 # DBPM ----
-# dbpm_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_no-oa_tcb_global_monthly_1950_2005.nc4
-# dbpm_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2100.nc4
-# dbpm_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2100.nc4
-
-hist <- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/DBPM/ipsl-cm5a-lr/historical/dbpm_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_no-oa_tcb_global_monthly_1950_2005.nc4")
-dim(hist) # (2005-1950+1)*12 = 672
-
-### ssp126
-v = 2
-m = 4
-c = 1
-fut<- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/DBPM/ipsl-cm5a-lr/future/dbpm_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2100.nc4")
-dim(fut) # (2100-2006+1)*12 = 1140
-tit <- paste0(mod[m], " IPSL SSP126 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-all<-list(hist = hist, fut = fut)
-#  this should be part of the loop... 
-refFirstYear<-(1990-1950)*12
-refLastYear<-(2090-2006)*12
-output<-"montly"
-# gg_map_cmip5[[7]] <- plotGlobalChange(all, tit, world_sf, clim)
-# date = seq(as.Date("1950-1-1"), as.Date("2100-12-1"), by = "months")
-# gg_ts_cmip5[[7]] <- plotTimeseries(all, tit)
-
-### ssp585
-v = 2
-m = 4
-c = 1
-fut<- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/DBPM/ipsl-cm5a-lr/future/dbpm_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2100.nc4")
-dim(fut) # (2099-2006+1)*12 = 1128
-tit <- paste0(mod[m], " IPSL SSP585 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-tit <- paste0(mod[m], " " ,cmip[c])
-all<-list(hist = hist, fut = fut)
-gg_map_cmip5[[8]] <- plotGlobalChange(all, tit, world_sf, clim)
-# gg_ts_cmip5[[8]] <- plotTimeseries(all, tit)
-
-rm(hist, fut, all)
-# does this compare to Lotze? 
+h_yearsDB <- "1950_2005"
+f_yearsDB<- "2006_2100"
+outputDB<-"monthly"
+oaDB<-"no-oa"
 
 # EcoOcean ----  
-# ecoocean_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_no-oa_tcb_global_monthly_1971_2005.nc4
-# ecoocean_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2100.nc4
-# ecoocean_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2100.nc4
+h_yearsE <- "1971_2005"
+f_yearsE<- "2006_2100"
+outputE<-"monthly"
+oaE<-"no-oa"
 
-hist <- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/EcoOcean/ipsl-cm5a-lr/historical/ecoocean_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_no-oa_tcb_global_monthly_1971_2005.nc4")
-dim(hist) # (2005-1971+1)*12 
+# macroecological ----  
+h_yearsM <- "1950_2005"
+f_yearsM<- "2006_2100"
+outputM<-"annual"
+oaM<-"no-oa"
 
-### ssp126
-v = 2
-m = 5
-c = 1
-fut<- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/EcoOcean/ipsl-cm5a-lr/future/ecoocean_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2100.nc4")
-dim(fut) # (2099-2006+1)*12 = 1128 # this is till 2099 not 2100
-tit <- paste0(mod[m], " IPSL SSP126 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-all<-list(hist = hist, fut = fut)
-#  this should be part of the loop... 
-refFirstYear<-(1990-1971)*12
-refLastYear<-(2090-2006)*12
-output<-"montly"
-# gg_map_cmip5[[9]] <- plotGlobalChange(all, tit, world_sf, clim)
-# date = seq(as.Date("1971-1-1"), as.Date("2099-12-1"), by = "months") 
-# gg_ts_cmip5[[9]] <- plotTimeseries(all, tit)
+# extract data ---- 
+# consider only ipsl and tcb 
 
-### ssp585
-v = 2
-m = 5
-c = 1
-fut<- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/EcoOcean/ipsl-cm5a-lr/future/ecoocean_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_no-oa_tcb_global_monthly_2006_2100.nc4")
-dim(fut) # (2099-2006+1)*12 = 1128
-tit <- paste0(mod[m], " IPSL SSP585 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-tit <- paste0(mod[m], " " ,cmip[c])
-all<-list(hist = hist, fut = fut)
-gg_map_cmip5[[10]] <- plotGlobalChange(all, tit, world_sf, clim)
-# gg_ts_cmip5[[10]] <- plotTimeseries(all, tit)
+h_years <-c(h_yearsA, h_yearsB, h_yearsD, h_yearsDB, h_yearsE, h_yearsM)
+f_years <-c(f_yearsA, f_yearsB, f_yearsD, f_yearsDB, f_yearsE, f_yearsM)
+output <-c(outputA, outputB, outputD, outputDB, outputE, outputM)
+oa <-c(oaA, oaB, oaD, oaDB, oaE, oaM)
 
-rm(hist, fut, all)
-# does this compare to Lotze? 
+data126<-list()
+dim<-list() # dim of the future - just to check 
+# data585<-list()
 
-# MACROECOLOGICAL ----
-# macroecological_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_no-oa_tcb_global_annual_1950_2005.nc4
-# macroecological_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_no-oa_tcb_global_annual_2006_2100.nc4
-# macroecological_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_no-oa_tcb_global_annual_2006_2100.nc4
+for (i in 1:length(mod)){
 
-hist <- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/MACROECOLOGICAL/ipsl-cm5a-lr/historical/macroecological_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_no-oa_tcb_global_annual_1950_2005.nc4")
-dim(hist) # ANNUAL  - need to change function 
+  hist <- stack(paste0(input_loc_2b, mod[i], "/ipsl-cm5a-lr/", protocol[2],"/", tolower(mod[i]), "_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_",oa[i],"_",var[1],"_global_", output[i], "_", h_years[i], ".nc4"))
 
-### ssp126
-v = 2
-m = 6
-c = 1
-fut<- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/MACROECOLOGICAL/ipsl-cm5a-lr/future/macroecological_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_no-oa_tcb_global_annual_2006_2100.nc4")
-dim(fut)
-tit <- paste0(mod[m], " IPSL SSP126 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-all<-list(hist = hist, fut = fut)
-#  this should be part of the loop... 
-refFirstYear<-(1990-1950)
-refLastYear<-(2090-2006)
-output<-"annual"
-# gg_map_cmip5[[11]] <- plotGlobalChange(all, tit, world_sf, clim)
-# date = seq(as.Date("1950-1-1"), as.Date("2100-12-1"), by = "years")
-# gg_ts_cmip5[[11]] <- plotTimeseries(all, tit)
+  fut126 <- stack(paste0(input_loc_2b, mod[i], "/ipsl-cm5a-lr/", protocol[3], "/", tolower(mod[i]), "_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_",oa[i],"_",var[1],"_global_",output[i], "_",f_years[i],".nc4"))
 
-### ssp585
-v = 2
-m = 6
-c = 1
-fut<- stack("/../../rd/gem/private/fishmip_outputs/marine-fishery_global_ISIMIP2b/MACROECOLOGICAL/ipsl-cm5a-lr/future/macroecological_ipsl-cm5a-lr_nobc_rcp8p5_wo-diaz_no-fishing_no-oa_tcb_global_annual_2006_2100.nc4")
-dim(fut) # (2099-2006+1)*12 = 1128
-tit <- paste0(mod[m], " IPSL SSP585 ",var[v]," (1950-2100 Change ", cmip[c], ")")
-tit <- paste0(mod[m], " " ,cmip[c])
-all<-list(hist = hist, fut = fut)
-gg_map_cmip5[[12]] <- plotGlobalChange(all, tit, world_sf, clim)
-# gg_ts_cmip5[[12]] <- plotTimeseries(all, tit)
+ # add together input data
+ all126 <- list(hist = hist, fut = fut126)
+ 
+ data126[[i]]<-all126
+ names(data126)[[i]]<-mod[[i]]
+ dim[[i]]<-dim(fut126)
+ names(dim)[[i]]<-mod[[i]]
+  
+ rm(all126)
+ 
+}
 
-rm(hist, fut, all)
-# does this compare to Lotze? 
+# NOTE <- DBEM dimension is doubled - 0.5 grid cell resolution? Needs fixing, though plots are produced anyway....
+# delete from all variables for now 
+# data126$DBEM<-NULL
+# mod <- c("APECOSM", "BOATS", "DBPM","EcoOcean", "MACROECOLOGICAL") # "EcoTroph", "FEISTY", "ZooMSS")
+# h_years <-c(h_yearsA, h_yearsB, h_yearsDB, h_yearsE, h_yearsM)
+# f_years <-c(f_yearsA, f_yearsB, f_yearsDB, f_yearsE, f_yearsM)
+# output <-c(outputA, outputB, outputDB, outputE, outputM)
+# oa <-c(oaA, oaB, oaDB, oaE, oaM)
+
+# plot data 
+# consider ssp126
+
+map<-list()
+ts <-list()
+
+for (i in 1:length(data126)){ 
+  
+  i = 5
+  
+  # map of change
+  clim <- c(-50, 50)
+  
+  # reference years
+  refFirstYear<-(1990-as.numeric(substr(h_years[i], start = 1, stop = 4)))
+  refLastYear<-(2090-as.numeric(substr(f_years[i], start = 1, stop = 4)))
+  if(output[i]=="monthly"){
+    refFirstYear = refFirstYear*12
+    refLastYear = refLastYear*12
+  }
+  
+  tit <- paste0(mod[i], " IPSL ", future[1], " ", var[1]," (1990s-2090s Change ", cmip[1], ")")
+  map[[i]] <- plotGlobalChange(data126[[i]], tit, world_sf, clim, refFirstYear, refLastYear, output[i])
+  names(map)[[i]]<-mod[[i]]
+  
+  # # trends 
+  # tit <- paste0(mod[i], " IPSL ", future[1], " ", var[1]," (Change relative to 1990s ", cmip[1], ")")
+  # date = seq(as.Date(paste0(substr(h_years[i], start = 1, stop = 4),"-1-1")), as.Date(paste0(substr(f_years[i], start = 6, stop = 9),"-12-1")), by = ifelse(output[i]=="monthly","month","year"))
+  # ts[[i]] <- plotTimeseries(data126[[i]], tit, date)
+  # names(ts)[[i]]<-mod[[i]]
+  
+}
+
+names(map) 
+
 
 #### CMIP6 ----
 
