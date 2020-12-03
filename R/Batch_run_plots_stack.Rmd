@@ -1,0 +1,350 @@
+---
+title: "Plotting global models outputs"
+author: "Camilla Novaglio"
+date: "12/10/2020"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+Load libraries and define variables
+
+```{r load CMIP5}
+
+rm(list=ls())
+source("/Users/nov017/R-projects/CMIP5vsCMIP6/R/Funcs_plot.R")
+library('ncdf4')
+
+# saving outputs location  
+save_loc <- "/Users/nov017/R-projects/CMIP5vsCMIP6/figs/"
+
+# variables 
+cmip<-c("CMIP5", "CMIP6")
+mod <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL")
+protocol <- c("picontrol","historical", "future")
+future<-c("SSP126", "SSP585")
+var <- c("tcb","tpb", "bp30cm", "bp30to90cm", "bp90cm")
+
+```
+
+Load global ISIMIP2b model data 
+
+```{r}
+
+# CMIP5 data location
+input_loc <- "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/"
+
+# APECOSM ----
+h_yearsA <- "1950_2005"
+f_yearsA<- "2006_2100"
+outputA<-"monthly"
+oaA<-"no-oa"
+
+# BOATS ----
+h_yearsB <- "1971_2005"
+f_yearsB<- "2006_2099"
+outputB<-"monthly"
+oaB<-"no-oa"
+
+# DBEM ----
+h_yearsD <- "1951_2005"
+f_yearsD<- "2006_2099"
+outputD<-"annual"
+oaD<-"oa"
+
+# DBPM ----
+h_yearsDB <- "1950_2005"
+f_yearsDB<- "2006_2100"
+outputDB<-"monthly"
+oaDB<-"no-oa"
+
+# EcoOcean ----  
+h_yearsE <- "1971_2005"
+f_yearsE<- "2006_2100"
+outputE<-"monthly"
+oaE<-"no-oa"
+
+# macroecological ----  
+h_yearsM <- "1950_2005"
+f_yearsM<- "2006_2100"
+outputM<-"annual"
+oaM<-"no-oa"
+
+# extract data ---- 
+h_years <-c(h_yearsA, h_yearsB, h_yearsD, h_yearsDB, h_yearsE, h_yearsM)
+f_years <-c(f_yearsA, f_yearsB, f_yearsD, f_yearsDB, f_yearsE, f_yearsM)
+output <-c(outputA, outputB, outputD, outputDB, outputE, outputM)
+oa <-c(oaA, oaB, oaD, oaDB, oaE, oaM)
+
+data126<-list()
+dim<-list()
+
+for (i in 1:length(mod)){
+
+  hist <- stack(paste0(input_loc, mod[i], "/ipsl-cm5a-lr/", protocol[2],"/", tolower(mod[i]), "_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_",oa[i],"_",var[1],"_global_", output[i], "_", h_years[i], ".nc4"))
+  
+  fut126 <- stack(paste0(input_loc, mod[i], "/ipsl-cm5a-lr/", protocol[3], "/", tolower(mod[i]), "_ipsl-cm5a-lr_nobc_rcp2p6_wo-diaz_no-fishing_",oa[i],"_",var[1],"_global_",output[i], "_",f_years[i],".nc4"))
+ all126 <- list(hist = hist, fut = fut126)
+ 
+ data126[[i]]<-all126
+ names(data126)[[i]]<-mod[[i]]
+ dim[[i]]<-dim(fut126)
+ names(dim)[[i]]<-mod[[i]]
+  
+ rm(all126)
+ 
+}
+
+data126_CMIP5<-data126
+
+# NOTE <- DBEM dimension is doubled - 0.5 grid cell resolution - see Derek's code
+
+```
+
+Plot global ISIMIP2b model outputs
+
+```{r map CMIP5}
+
+map<-list()
+# ts <-list()
+
+for (i in 1:length(data126_CMIP5)){ 
+
+  # map of change
+  clim <- c(-50, 50)
+  
+  # reference years
+  refFirstYear<-(1990-as.numeric(substr(h_years[i], start = 1, stop = 4)))
+  refLastYear<-(2090-as.numeric(substr(f_years[i], start = 1, stop = 4)))
+  if(output[i]=="monthly"){
+    refFirstYear = refFirstYear*12
+    refLastYear = refLastYear*12
+  }
+  
+  tit <- paste0(mod[i], " IPSL ", future[1], " ", var[1]," (1990s-2090s Change ", cmip[1], ")")
+  map[[i]] <- plotGlobalChange(data126_CMIP5[[i]], tit, world_sf, clim, refFirstYear, refLastYear, output[i])
+  names(map)[[i]]<-mod[[i]]
+  
+  # trends 
+  # tit <- paste0(mod[i], " IPSL ", future[1], " ", var[1]," (Change relative to 1990s ", cmip[1], ")")
+  # date = seq(as.Date(paste0(substr(h_years[i], start = 1, stop = 4),"-1-1")), as.Date(paste0(substr(f_years[i], start = 6, stop = 9),"-12-1")), by = ifelse(output[i]=="monthly","month","year"))
+  # ts[[i]] <- plotTimeseries(data126[[i]], tit, date)
+  # names(ts)[[i]]<-mod[[i]]
+  
+}
+
+map_CMIP5<-map
+
+map_CMIP5$DBEM
+
+```
+
+Load global ISIMIP3b model data
+
+```{r load CMIP6}
+
+input_loc <- "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP3b/marine-fishery_global_ISIMIP3b/"
+
+mod <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL", "EcoTroph", "FEISTY", "ZooMSS") 
+mod <- c("BOATS","DBPM","MACROECOLOGICAL","FEISTY","ZooMSS") 
+
+# APECOSM ----
+
+# BOATS ----
+h_yearsB <- "1950_2014"
+f_yearsB<- "2015_2100"
+earthB<-"_ipsl-cm6a-lr_nobc_"
+outputB<-"monthly"
+extensionB<-".nc"
+
+# DBEM ----
+
+# DBPM ----
+h_yearsDB <- "1850_2014"
+f_yearsDB<- "2015_2100"
+earthDB<-"_ipsl_cm6a_lr_nobc_"
+outputDB<-"montly" # Spelling error to fix !!!!!! 
+extensionDB <-".nc4"
+
+# EcoOcean ----  
+
+# macroecological ----  
+h_yearsM <- "1950_2014"
+f_yearsM<- "2015-2100"
+earthM<-"_ipsl-cm6a-lr_nobc_"
+outputM<-"annual"
+extensionM<-".nc"
+
+# EcoTroph ----  
+
+# FEISTY ----  
+h_yearsF <- "1950-2014"
+f_yearsF<- "2015-2100"
+earthF<-"_ipsl-cm6a_nobc_"
+outputF<-"monthly"
+extensionF<-".nc"
+
+# ZooMSS ----  
+h_yearsZ <- "1950_2014"
+f_yearsZ<- "2015_2100"
+earthZ<-"_ipsl-cm6a-lr_nobasd_"
+outputZ<-"annual"
+extensionZ<-".nc"
+
+# extract data ---- 
+h_years <-c(h_yearsB, h_yearsDB, h_yearsM, h_yearsF, h_yearsZ)
+f_years <-c(f_yearsB, f_yearsDB, f_yearsM, f_yearsF, f_yearsZ)
+earth <-c(earthB, earthDB, earthM, earthF, earthZ)
+output <-c(outputB, outputDB, outputM, outputF, outputZ)
+extension <-c(extensionB, extensionDB,extensionM, extensionF,extensionZ)
+
+data126<-list()
+dim<-list()
+
+for (i in 1:length(mod)){
+  
+  # i = 4
+  hist <- stack(paste0(input_loc, mod[i], "/_tmp/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod[i]), earth[i], "historical_nat_default_",var[1],"_global_", output[i], "_", h_years[i], extension[i]))
+
+  fut126 <- stack(paste0(input_loc, mod[i], "/_tmp/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod[i]), earth[i], "ssp126_nat_default_",var[1],"_global_",output[i], "_",f_years[i],extension[i]))
+
+ all126 <- list(hist = hist, fut = fut126)
+ data126[[i]]<-all126
+ names(data126)[[i]]<-mod[[i]]
+ dim[[i]]<-dim(hist)
+ names(dim)[[i]]<-mod[[i]]
+  
+ rm(all126)
+ 
+}
+
+data126_CMIP6<-data126
+
+# warnings  are due to FEISTY - need to upload and check 
+# problem with  the file content - the coordinates are not provided in the standard way. Long and lat are normally dimensions, not variables and are in this case redundant. Should ask the source to fix this.  
+i = 4
+dir<-paste0(input_loc, mod[i], "/_tmp/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod[i]), earth[i], "historical_nat_default_",var[1],"_global_", output[i], "_", h_years[i], extension[i])
+nc_data_feisty<-nc_open(dir)
+# stack(nc_data_feisty) cannot stack this 
+
+# nc<-nc_open(dir)
+# for( i in 1:nc$ndims ) {
+# 	print(paste("Here is information about dimension number",i,":"))
+# 	d <- nc$dim[[i]]
+# 	print(paste("    Name  :",d$name))
+# 	print(paste("    Units :",d$units))
+# 	print(paste("    Length:",d$len))
+# 	print("    Values:")
+# 	print(d$vals)
+# 	print(paste("    Unlimited:",d$unlim))
+# }
+# 
+# nc$dim[[2]]$vals<-ncvar_get(nc_data_feisty, "LAT")[1,] # lat 180 (-89; 89)
+# nc$dim[[1]]$vals<-ncvar_get(nc_data_feisty, "LON")[,1] # lon 360 (-180; 179)
+# nc_close( nc )
+# trial<-stack(nc)
+# 
+ 
+# Set up the RasterStack manually? ... kind of working but not 100% sure what I am doing - better re-check
+ndvi.array_feisty <- ncvar_get(nc_data_feisty, "tcb")
+input_stack_hist <- stack(brick(ndvi.array_feisty, xmn=-180, xmx=179, ymn=-89.5, ymx=89.5, crs = "+proj=longlat +datum=WGS84")) #transpose = TRUE))
+
+# future ssp126
+dir<-paste0(input_loc, mod[i], "/_tmp/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod[i]), earth[i], "ssp126_nat_default_",var[1],"_global_",output[i], "_",f_years[i],extension[i])
+nc_data_feisty<-nc_open(dir)
+ndvi.array_feisty <- ncvar_get(nc_data_feisty, "tcb") 
+input_stack_ssp126 <- stack(brick(ndvi.array_feisty, xmn=-180, xmx=179, ymn=-89.5, ymx=89.5, crs = "+proj=longlat +datum=WGS84")) #, transpose = TRUE))
+
+feisty<-list(hist= input_stack_hist, fut= input_stack_ssp126)
+data126_CMIP6$FEISTY<-feisty
+
+# # check dimensions for all .nc files? 
+# what does stack do??? 
+i = 5
+dir<-paste0(input_loc, mod[i], "/_tmp/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod[i]), earth[i], "historical_nat_default_",var[1],"_global_", output[i], "_", h_years[i], extension[i])
+data<-nc_open(dir)
+ncvar_get(data, "lat") # 1: 89.5 to -89.5 (BOATS); 2: -89.5 to 89.5; 3: -89.5 to 89.5; 4: -89.5 to 89.5; 5: -89.5 to 89.5
+ncvar_get(data, "lon") # 1: -179.5 to 179.5 (BOATS); 2: -180 to 179; 3: -179.5 to 179.5 (MACROECOLOGICAL); 4: -180 to 179; 5: -180 to 179
+
+dataStack<-stack(dir)
+
+# # Does stack transform them into latlong -180, 180, -90, 90 when lat ad long are dimensions?
+# i = 1
+# data126[[i]][[i]]
+
+```
+
+Plot global ISIMIP3b model outputs
+
+```{r plot CMIP6}
+
+map<-list()
+
+for (i in 1:length(data126_CMIP6)){ 
+
+  # map of change
+  clim <- c(-50, 50)
+  
+  # reference years
+  refFirstYear<-(1990-as.numeric(substr(h_years[i], start = 1, stop = 4)))
+  refLastYear<-(2090-as.numeric(substr(f_years[i], start = 1, stop = 4)))
+  if(output[i]!="annual"){
+    refFirstYear = refFirstYear*12
+    refLastYear = refLastYear*12
+  }
+  
+  tit <- paste0(mod[i], " IPSL ", future[1], " ", var[1]," (1990s-2090s Change ", cmip[2], ")")
+  map[[i]] <- plotGlobalChange(data126_CMIP6[[i]], tit, world_sf, clim, refFirstYear, refLastYear, output[i])
+  names(map)[[i]]<-mod[[i]]
+  
+}
+
+map_CMIP6<-map
+map_CMIP6$FEISTY
+
+```
+
+Put all maps together 
+
+```{r multipanel plot}
+
+library(patchwork)
+
+layout <- "
+AB
+CD
+E#
+F#
+G#
+HI
+#J
+#K
+"
+
+pt<-map_CMIP5$DBPM + map_CMIP6$DBPM + 
+    map_CMIP5$MACROECOLOGICAL + map_CMIP6$MACROECOLOGICAL+  
+    map_CMIP5$DBEM +
+    map_CMIP5$APECOSM + 
+    map_CMIP5$EcoOcean + 
+    map_CMIP5$BOATS+ map_CMIP6$BOATS +
+    map_CMIP6$ZooMSS + 
+    map_CMIP6$FEISTY +
+  plot_layout(design = layout)
+
+pt<-pt + plot_annotation(
+  title = 'Change in total consumer biomass 1990s-2090s, IPSL SSP585 CMIP5 vs CMIP6
+  ',
+  theme = theme(plot.title = element_text(size = 28)))
+
+tiff(paste0(save_loc,"IPSL_CMIP5vsCMIP5_summary.tiff"), height=30, width=20, units ='in', res=300)
+pt 
+dev.off()
+
+# detailed plots 
+# dbpm # this should be ssp126 vs ssp585 so need to run both above  
+# tiff("IPSL_CMIP5.tiff", height=10, width=20, units ='in', res=300)
+# (map_cmip5$DBPM+map_cmip5$DBPM+ts_cmip5$DBPM)/   
+#   (map_cmip5$MACROECOLOGICAL+map_cmip5$MACROECOLOGICAL+ts_cmip5$MACROECOLOGICAL)  
+# dev.off()
+
+```
