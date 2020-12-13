@@ -92,9 +92,8 @@ plot_FISH_MIP <- function(data_to_plot,
                            plot.title = element_text(size=12, hjust = 0.5)))
 
   r1_gg <- ggplot() + 
-    geom_sf(data = r.1.sf, aes(fill = layer), colour = NA)+
-    geom_sf(data = world_sf, size = 0.05, fill = "grey20") +
-    # geom_tile(data = r.1.df, aes(x=x, y=y, fill = Sp)) + # this is if you plot the dataframe but not looking good
+    geom_sf(data = world_sf, size = 0.05, fill = "grey20")+
+    geom_tile(data = r.1.df, aes(x=x, y=y, fill = Sp)) + # this is if you plot the dataframe but not looking good
     scale_fill_gradient2(low = colour_scheme[1], 
                          mid = colour_scheme[2],  
                          high = colour_scheme[3], 

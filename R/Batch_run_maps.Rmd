@@ -133,6 +133,7 @@ data_ipsl_CMIP5<-list()
 
 for (i in 1:length(mod_ipsl)){
 
+  # i = 1
   filename<-paste0(mod_ipsl[i], "/ipsl-cm5a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), "_ipsl-cm5a-lr_nobc_hist_wo-diaz_no-fishing_",oa[i],"_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], ".nc4")
   
   hist<- averageFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = TRUE)
@@ -336,6 +337,7 @@ model_stat<-function(data){
   
   # data = data_all_CMIP5
   
+  #### CHECK NA + NA = 0 not NA !!!! see crop maps. this could explain some of the differences between Lotze and  your plots in both maps and trends in changes as you then avarage values across all cells
   X <- lapply(data, `[[`, 'diff_8p5')
   X <- lapply(X, function(x) replace(x, !is.finite(x), NA))
   Y <- do.call(cbind, X)
@@ -430,6 +432,12 @@ model_agreement_all_CMIP5<- res_all$model_agreement
 # 
 #   }
 # }
+
+# save model_average_ipsl_CMIP5 to plot together with crop data... Might need to change folder 
+save(model_average_all_CMIP5, file = "/Users/nov017/fishmip_outputs/CMIP6vsCMIP5_fig_temp/model_average_all_CMIP5.RData")
+
+
+
 
 # Define a layout function
 mean_plot_colour_values = c(-50,50)
