@@ -11,13 +11,13 @@ editor_options:
 
 DBEM before Xmas
 
-EcoOcean netcdf in progress - Ryan
+APECOSM updated runs ? 
 
 work on DBPM -> check senescence + fix netcdf (OK but see discussion on re-run)
 
 # TO CHECK 
 
-*Model average* - in particular agreement as it seems not to be meaningful given the other maps (agreement  should be high when  all model show e.g. increases). also strange white cells along the coasts for CMIP5 agreement. 
+Model average - in particular agreement as it seems not to be meaningful given the other maps (agreement should be high when all model show increases or decreases). also strange white cells along the coasts for CMIP5 agreement - DONE and it seems all OK now able to reproduce Lotze exactly  
 
 Models maps CMIP6 - why do i have to invert matrices?  
 
@@ -36,11 +36,11 @@ library(viridis)
 library(tidyr)
 library(dplyr)
 
-source("/Users/nov017/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
-source("/Users/nov017/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
+source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
+source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
 
 # saving outputs location  
-save_loc <- "/Users/nov017/Dropbox/CMIP5vsCMIP6/figs/"
+save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/figs/"
 
 # variables 
 cmip<-c("CMIP5", "CMIP6")
@@ -68,6 +68,7 @@ colour_scheme2 <- c(low = 'red', mid = "white",  high = 'royalBlue1')
 # Download and process world outline
 library(sf)
 library(rnaturalearth)
+library("rgeos")
 world <- ne_countries(scale = "medium", returnclass = "sf")
 robCRS <- CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
 world_sf <- st_transform(world, crs = st_crs(robCRS)) # Convert to different CRS
@@ -79,7 +80,7 @@ world_sf <- st_transform(world, crs = st_crs(robCRS)) # Convert to different CRS
 ```{r}
 
 # CMIP5 data location
-directory = "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/"
+directory = "/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP2b/"
 
 # APECOSM ----
 h_yearsA <- "1950_2005"
@@ -160,13 +161,13 @@ names(data_ipsl_CMIP5)
 
 # add Zoom IPSL ----
 
-directory_zoom<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/historical/"
+directory_zoom<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/historical/"
 filename<-"zoomss_ipsl-cm5a-lr_nobc_historical_nosoc_co2_tcb_global_annual_1950_2005.nc4"
 yearmonth1 = as.yearmon("1990-01")
 yearmonth2 = as.yearmon("1999-01")
 hist<-averageFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = TRUE)
 
-directory_zoom<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/future/"
+directory_zoom<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/future/"
 filename<-"zoomss_ipsl-cm5a-lr_nobc_rcp26_nosoc_co2_tcb_global_annual_2006_2100.nc4"
 yearmonth1 = as.yearmon("2090-01")
 yearmonth2 = as.yearmon("2099-01")
@@ -225,13 +226,13 @@ names(data_gfdl_CMIP5)
 
 # add zoom GFDL ----
 
-directory_zoom<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/historical/"
+directory_zoom<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/historical/"
 filename<-"zoomss_gfdl-esm2m_nobc_historical_nosoc_co2_tcb_global_annual_1950_2005.nc4"
 yearmonth1 = as.yearmon("1990-01")
 yearmonth2 = as.yearmon("1999-01")
 hist<-averageFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = TRUE)
 
-directory_zoom<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/future/"
+directory_zoom<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/future/"
 filename<-"zoomss_gfdl-esm2m_nobc_rcp26_nosoc_co2_tcb_global_annual_2006_2100.nc4"
 yearmonth1 = as.yearmon("2090-01")
 yearmonth2 = as.yearmon("2099-01")
@@ -259,30 +260,12 @@ DBPM dimension 0.5 deg - here taken care of
 
 ## plot IPSL ----
 
-# map_ipsl1990_CMIP5<-list()
-# map_ipsl2090_CMIP5<-list()
-# map_ipsl126_CMIP5<-list()
 map_ipsl585_CMIP5<-list()
 
 mod_ipsl<-c(mod_ipsl, "ZooMSS")
 model_type_ipsl<-ifelse(mod_ipsl == "DBEM","DBEM", NA) # this is because DBEM need to be plotted in 0.5 deg
 
 for (i in 1:length(data_ipsl_CMIP5)){ 
-
-  # # map of tcb in 1990s  
-  # tit <- paste(mod_ipsl[i], "IPSL no-fishing 1990-1999", variable_to_extract[1], data_ipsl_CMIP5[[i]]$hist$data_units, cmip[1], sep =" ")
-  # map_ipsl1990_CMIP5[[i]]<-plot_FISH_MIP(data_ipsl_CMIP5[[i]]$hist$fishvar, tit, main_plot_colour_values, colour_scheme = colour_scheme1, coltitle = "Biomass", model_type = model_type_ipsl[i])
-  # names(map_ipsl1990_CMIP5)[[i]]<-mod_ipsl[[i]]
-  # 
-  # # map of tcb in 2090s as per spp585  
-  # tit <- paste(mod_ipsl[i], "IPSL RCP8.5 no-fishing 2090-2099", variable_to_extract[1], data_ipsl_CMIP5[[i]]$hist$data_units, cmip[1], sep =" ")
-  # map_ipsl2090_CMIP5[[i]]<-plot_FISH_MIP(data_ipsl_CMIP5[[i]]$fut585$fishvar, tit, main_plot_colour_values, colour_scheme = colour_scheme1, coltitle = "Biomass", model_type = model_type_ipsl[i])
-  # names(map_ipsl2090_CMIP5)[[i]]<-mod_ipsl[[i]]
-  # 
-  # # maps of percentage change 
-  # tit <- paste(mod_ipsl[i], "IPSL RCP2.6 no-fishing percentage change", variable_to_extract[1], data_ipsl_CMIP5[[i]]$hist$data_units, cmip[1], sep =" ")
-  # map_ipsl126_CMIP5[[i]]<-plot_FISH_MIP(data_ipsl_CMIP5[[i]]$diff_ipsl_2p6, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)", model_type = model_type_ipsl[i])
-  # names(map_ipsl126_CMIP5)[[i]]<-mod_ipsl[[i]]
   
   tit <- paste(mod_ipsl[i], "IPSL RCP8.5 no-fishing percentage change", variable_to_extract[1], data_ipsl_CMIP5[[i]]$hist$data_units, cmip[1], sep =" ")
   map_ipsl585_CMIP5[[i]]<-plot_FISH_MIP(data_ipsl_CMIP5[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)", model_type = model_type_ipsl[i])
@@ -293,7 +276,7 @@ for (i in 1:length(data_ipsl_CMIP5)){
 }
 
 names(map_ipsl585_CMIP5)
-map_ipsl585_CMIP5$ZooMSS
+# map_ipsl585_CMIP5$ZooMSS
 
 ### plot GFDL ----
 
@@ -333,136 +316,98 @@ data_gfdl_CMIP5$DBEM$diff_8p5 = data_gfdl_CMIP5$DBEM$diff_8p5[lons_to_use, lats_
 # 3 options here: ipsl, gfdl, or combined depending on data_ipsl_CMIP5
 # also other options would  be to consider spp126 ('diff_2p6')
 
+# old version in Derek's code and here vectorised 
+
 model_stat<-function(data){
   
-  # data = data_all_CMIP5
-  
-  #### CHECK NA + NA = 0 not NA !!!! see crop maps. this could explain some of the differences between Lotze and  your plots in both maps and trends in changes as you then avarage values across all cells
+  # data = data_ipsl_CMIP5
+
   X <- lapply(data, `[[`, 'diff_8p5')
   X <- lapply(X, function(x) replace(x, !is.finite(x), NA))
   Y <- do.call(cbind, X)
   Y <- array(Y, dim=c(dim(X[[1]]), length(X)))
   model_average_new<-apply(Y, c(1, 2), mean, na.rm = TRUE)
+  # model_average_new[!is.finite(model_average_new)]<-NA # just to make sure that all NaN and Inf resulting from mean() are treated as NA 
   model_sd_new<-apply(Y, c(1, 2), sd, na.rm = TRUE)
-
+  # model_sd_new[!is.finite(model_sd_new)]<-NA
+  
   X <- lapply(data, `[[`, 'diff_8p5')
   Y <- do.call(cbind, X)
   Y <- array(Y, dim=c(dim(X[[1]]), length(X)))
 
   #  this takes into account agreement on both positive or negative changes. - i.e. if most models show positive change agreement will be high and vice versa. 
-  temp<-apply(Y, c(1,2), function(x) ifelse(sum(is.na(x)>0), NA, length(x[which(x>0)]))) # sum the number of values that are >0 - including inf
+  temp<-apply(Y, c(1,2), function(x) length(x[which(x>=0)])) # sum the number of values that are > = 0 (increase or stable) 
   temp2<-apply(Y, c(1,2), function(x) length(x[which(!is.na(x))])) # sum the number of values that are different from na and nan - including inf
+  
   temp4<-temp/temp2
   model_agreement_new<-ifelse(is.na(temp4), NA, ifelse(temp4>0.5, temp4*100, (1-temp4)*100)) 
-  
+  # if 0/7 = 0 -> 100 # [1,88]
+  # if 1/7 = 0.14 it means that 1 over 7 models show increases hence model strongly agree on the decrease -> (1-temp4)*100) = 86%
+  # if 2/7 = 0.28 -> 72% on decreases
+  # if 3/7 = 0.42 -> 57% on decreases 
+  # if 4/7 = 0.57 -> 0.57*100 = 57% on increases 
+  # if 5/7 = 0.71 -> 71% in increases 
+  # if 6/7 = 0.85 -> 85% on increases 
+  # if 7/7 = 100% on increases 
+  # model_agreement_new[!is.finite(model_agreement_new)]<-NA
+
   return(list(model_average = model_average_new, model_sd = model_sd_new, model_agreement = model_agreement_new))
 }
 
-# remove DBEM first 
+# remove DBEM first but keep option with DBEM just in case 
+data_ipsl_CMIP52<-data_ipsl_CMIP5
 data_ipsl_CMIP5$DBEM<-NULL
 data_gfdl_CMIP5$DBEM<-NULL
-names(data_ipsl_CMIP5)
 
-res_ipsl<-model_stat(data_ipsl_CMIP5)
-model_average_ipsl_CMIP5<-res_ipsl$model_average
-model_sd_ipsl_CMIP5<-res_ipsl$model_sd
-model_agreement_ipsl_CMIP5<- res_ipsl$model_agreement
+# if you want the plot to be exactly as per Lotze use '2' version of data 
+# data_ipsl_CMIP52$ZooMSS<-NULL
+# data_gfdl_CMIP52$ZooMSS<-NULL
 
-res_gfdl<-model_stat(data_gfdl_CMIP5)
-model_average_gfdl_CMIP5<-res_gfdl$model_average
-model_sd_gfdl_CMIP5<-res_gfdl$model_sd
-model_agreement_gfdl_CMIP5<- res_gfdl$model_agreement
+# res_ipsl<-model_stat(data_ipsl_CMIP5)
+# model_average_ipsl_CMIP5<-res_ipsl$model_average
+# model_sd_ipsl_CMIP5<-res_ipsl$model_sd
+# model_agreement_ipsl_CMIP5<- res_ipsl$model_agreement
+# 
+# res_gfdl<-model_stat(data_gfdl_CMIP5)
+# model_average_gfdl_CMIP5<-res_gfdl$model_average
+# model_sd_gfdl_CMIP5<-res_gfdl$model_sd
+# model_agreement_gfdl_CMIP5<- res_gfdl$model_agreement
+
+# if you want the plot to be exactly as per Lotze (DBEM gfdl in agreemetn was not considered)
+# data_gfdl_CMIP52$DBEM$diff_8p5<-NULL
 
 res_all<-model_stat(c(data_ipsl_CMIP5, data_gfdl_CMIP5))
 model_average_all_CMIP5<-res_all$model_average
 model_sd_all_CMIP5<-res_all$model_sd
-model_agreement_all_CMIP5<- res_all$model_agreement
-
-# # old version 
-# model_average = matrix(nrow = 360, ncol = 180)
-# model_agreement = matrix(nrow = 360, ncol = 180)
-# model_sd = matrix(nrow = 360, ncol = 180)
-# sum = 0
-# 
-# for (ii in 1:360)
-# {
-#   for (jj in 1:180)
-#   {
-#     
-#     ii = 1
-#     jj = 1
-#     
-#     # Model average - comparison between 
-#       xx = c(data_ipsl_CMIP5$BOATS$diff_ipsl_8p5[ii,jj],
-#              data_ipsl_CMIP5$DBPM$diff_ipsl_8p5[ii,jj],
-#              data_ipsl_CMIP5$APECOSM$diff_ipsl_8p5[ii,jj],
-#              data_ipsl_CMIP5$EcoOcean$diff_ipsl_8p5[ii,jj],
-#              data_ipsl_CMIP5$MACROECOLOGICAL$diff_ipsl_8p5[ii,jj],
-#              data_ipsl_CMIP5$DBEM$diff_ipsl_8p5[ii,jj]) # add ZooMMS???
-#       xx[is.nan(xx)] = NA
-#       xx[is.infinite(xx)] = NA
-#       model_average[ii,jj] = mean(xx, na.rm = T)
-#       model_sd[ii,jj] = sd(xx, na.rm = T)
-#       
-#       # Model agreement (from Derek paper1) - it's % because it's calculated from e.g. diff_ipsl_8p5 (delta - or % change)
-#       xx = sum(data_ipsl_CMIP5$BOATS$diff_ipsl_8p5[ii,jj]>0,
-#                data_ipsl_CMIP5$DBPM$diff_ipsl_8p5[ii,jj]>0,
-#                data_ipsl_CMIP5$APECOSM$diff_ipsl_8p5[ii,jj]>0,
-#                data_ipsl_CMIP5$EcoOcean$diff_ipsl_8p5[ii,jj]>0,
-#                data_ipsl_CMIP5$MACROECOLOGICAL$diff_ipsl_8p5[ii,jj]>0,
-#                data_ipsl_CMIP5$DBEM$diff_ipsl_8p5[ii,jj]>0)
-# 
-#       yy = sum(!is.na(data_ipsl_CMIP5$BOATS$diff_ipsl_8p5[ii,jj]),
-#                !is.na(data_ipsl_CMIP5$DBPM$diff_ipsl_8p5[ii,jj]),
-#                !is.na(data_ipsl_CMIP5$APECOSM$diff_ipsl_8p5[ii,jj]),
-#                !is.na(data_ipsl_CMIP5$EcoOcean$diff_ipsl_8p5[ii,jj]),
-#                !is.na(data_ipsl_CMIP5$MACROECOLOGICAL$diff_ipsl_8p5[ii,jj]),
-#                !is.na(data_ipsl_CMIP5$DBEM$diff_ipsl_8p5[ii,jj]))
-# 
-#     if (is.na(xx/yy))
-#     {
-#       model_agreement[ii,jj] = NA
-#     }
-#     else {
-#       if ((xx/yy)>0.5)
-#         model_agreement[ii,jj] = xx/yy * 100
-#       else
-#         model_agreement[ii,jj] = (1 - xx/yy) * 100
-#     }
-# 
-#   }
-# }
+model_agreement_all_CMIP5<- res_all$model_agreement 
 
 # save model_average_ipsl_CMIP5 to plot together with crop data... Might need to change folder 
-save(model_average_all_CMIP5, file = "/Users/nov017/fishmip_outputs/CMIP6vsCMIP5_fig_temp/model_average_all_CMIP5.RData")
-
-
-
+# save(model_average_all_CMIP5, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/model_average_all_CMIP5.RData")
 
 # Define a layout function
 mean_plot_colour_values = c(-50,50)
 sd_plot_colour_values = c(0,50)
 model_agreement_plot_colour_values = c(50,100)
 
-# define title IPSL
-maptitle_average = paste("Mean % change IPSL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
-maptitle_sd = paste("Standard Deviation IPSL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
-maptitle_agreement = paste("Agreement IPSL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
-
-# Plot the model average and standard deviation
-avarage_CMIP5_ipsl<-plot_FISH_MIP(model_average_ipsl_CMIP5, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
-sd_CMIP5_ipsl<-plot_FISH_MIP(model_sd_ipsl_CMIP5, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
-agreement_CMIP5_ipsl<-plot_FISH_MIP(model_agreement_ipsl_CMIP5, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)") # why is this white along all coasts?!
-
-# define title GFDL
-maptitle_average = paste("Mean % change GFDL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
-maptitle_sd = paste("Standard Deviation GFDL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
-maptitle_agreement = paste("Agreement GFDL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
-
-# Plot the model average and standard deviation
-avarage_CMIP5_gfdl<-plot_FISH_MIP(model_average_gfdl_CMIP5, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
-sd_CMIP5_gfdl<-plot_FISH_MIP(model_sd_gfdl_CMIP5, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
-agreement_CMIP5_gfdl<-plot_FISH_MIP(model_agreement_gfdl_CMIP5, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)") 
+# # define title IPSL
+# maptitle_average = paste("Mean % change IPSL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
+# maptitle_sd = paste("Standard Deviation IPSL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
+# maptitle_agreement = paste("Agreement IPSL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
+# 
+# # Plot the model average and standard deviation
+# avarage_CMIP5_ipsl<-plot_FISH_MIP(model_average_ipsl_CMIP5, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
+# sd_CMIP5_ipsl<-plot_FISH_MIP(model_sd_ipsl_CMIP5, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
+# agreement_CMIP5_ipsl<-plot_FISH_MIP(model_agreement_ipsl_CMIP5, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)") # why is this white along all coasts?!
+# 
+# # define title GFDL
+# maptitle_average = paste("Mean % change GFDL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
+# maptitle_sd = paste("Standard Deviation GFDL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
+# maptitle_agreement = paste("Agreement GFDL RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
+# 
+# # Plot the model average and standard deviation
+# avarage_CMIP5_gfdl<-plot_FISH_MIP(model_average_gfdl_CMIP5, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
+# sd_CMIP5_gfdl<-plot_FISH_MIP(model_sd_gfdl_CMIP5, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
+# agreement_CMIP5_gfdl<-plot_FISH_MIP(model_agreement_gfdl_CMIP5, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)") 
 
 # define title All
 maptitle_average = paste("Mean % change RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
@@ -472,7 +417,7 @@ maptitle_agreement = paste("Agreement RCP 8.5, 1990s to 2090s CMIP5", sep=" ")
 # Plot the model average and standard deviation
 avarage_CMIP5_all<-plot_FISH_MIP(model_average_all_CMIP5, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
 sd_CMIP5_all<-plot_FISH_MIP(model_sd_all_CMIP5, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
-agreement_CMIP5_all<-plot_FISH_MIP(model_agreement_all_CMIP5, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)") # this is WRONG  - I think it's because of how NA and Inf are handled 
+agreement_CMIP5_all<-plot_FISH_MIP(model_agreement_all_CMIP5, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)")
 
 ```
 
@@ -480,7 +425,7 @@ agreement_CMIP5_all<-plot_FISH_MIP(model_agreement_all_CMIP5, maptitle_agreement
 
 ```{r load CMIP6}
 
-directory <- "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP3b/"
+directory <- "/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/"
 
 mod_ipsl <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL", "EcoTroph", "FEISTY", "ZooMSS") 
 mod_ipsl <- c("APECOSM","BOATS","DBPM","MACROECOLOGICAL","FEISTY","ZooMSS") 
@@ -501,7 +446,7 @@ outputB<-"monthly"
 extensionB<-".nc"
 
 # DBEM ----
-# coming mid Nov 
+# coming before Xmas 
 
 # DBPM ----
 h_yearsDB <- "1850_2014"
@@ -511,7 +456,7 @@ outputDB<-"monthly" # Spelling error fixed in new netcdf and now manually fixed 
 extensionDB <-".nc4"
 
 # EcoOcean ----  
-# still in csv 
+# added below  
 
 # macroecological ----  
 h_yearsM <- "1950_2014"
@@ -560,7 +505,7 @@ data_ipsl_CMIP6<-list()
 for (i in 1:length(mod_ipsl)){
 
   #  i = 1
-  # file<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP3b/APECOSM/_tmp/ipsl-cm6a-lr/historical/apecosm_ipsl-esm4_nobc_historical_nat_default_tcb_global_monthly_1950_1989.nc"
+  # file<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/APECOSM/_tmp/ipsl-cm6a-lr/historical/apecosm_ipsl-esm4_nobc_historical_nat_default_tcb_global_monthly_1950_1989.nc"
   filename<-paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
   
   hist<- averageFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = TRUE, CMIP =  6)
@@ -654,16 +599,99 @@ if(can_model_units_be_standardized(data_units, convert_to_kg_km))
 }
 
 # hist is the beginning of the future files and  I am assuming is the same for both futures 
-file<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc"
+file<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc"
 hist<-averageFishCDF_EcoTroph(file, time1_h, time2_h)
 fut126<-averageFishCDF_EcoTroph(file, time1_f, time2_f)
-file<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc"
+file<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc"
 fut585<-averageFishCDF_EcoTroph(file, time1_f, time2_f)
 
-diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100 # DELTA == % change? 
+diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100 
 diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
 
 data_ipsl_CMIP6$EcoTroph<-list(hist = hist, fut126 = fut126, fut585 = fut585, diff_2p6 = diff_2p6, diff_8p5 = diff_8p5)
+
+# add EcoOcean IPSL ----
+
+# this is very different as inputs are RDS files ... I hope it changes so that we don't have to guess stuff
+
+averageFishCDF_EcoOcean<-function(file, time1, time2, average_whole_period = TRUE, convert_to_kg_km = TRUE, type = "hist"){
+  
+  # data_ipsl_CMIP6$BOATS$hist
+  # time1 = time1_h
+  # time2 = time2_h
+  # type = "fut"
+  
+  # Open the netcdf file
+  nc <- file
+  # Extract important information
+  data_attributes <- "guess" # should be "tcb"
+  main_title <- "guess"
+  data_units <- "guess"
+    
+  lon <- data_ipsl_CMIP6$BOATS$hist$lon
+  lat <- data_ipsl_CMIP6$BOATS$hist$lat
+
+  # time_vector <- convert_model_dates_CMIP6(nc, model_type) 
+  time_months <- seq(1, dim(nc)[3])
+  
+  if(type == "hist"){
+    yearmonth = as.yearmon("1949-12") + time_months[1] / 12
+  }else{
+    yearmonth = as.yearmon("2006-01") + time_months[1] / 12
+  }
+
+  time_months = as.yearmon(yearmonth + seq(0, (length(time_months) - 1)) / 12)     
+  tail(time_months)
+  time_vector<-time_months
+  print(time_months[1])
+  print(time_months[length(time_months)])
+
+  # line 488 in original function
+  # Create a new matrix to hold the results
+  new_var_mat = array(rep(0, length(lon) * length(lat)), c(length(lon), length(lat)))
+      
+  # Get the correct time period to extract
+  tpte = time_period_to_extract(time1, time2, time_vector)
+
+  # Now get the variable of interest
+  temp_array1 <-nc[, , tpte$start_point_to_extract:tpte$end_point_to_extract]
+  dim(temp_array1)
+  
+  # Extract averages
+  for (ii in 1:length(lon)){
+    for (jj in 1:length(lat))
+      {
+      # Fill in 2D matrix of whole time-period averages 
+      new_var_mat[ii, jj] = mean(temp_array1[ii, jj, ])
+    }
+    }
+  years = paste(as.character(time1_h), "to", as.character(time2_h), sep=" ")
+
+  # this should be done when we know the data units 
+  new_var_mat = new_var_mat * 1000
+  data_units = "kg km-2" 
+    
+  return_list <- list(
+        main_title = main_title,
+        data_units = data_units,
+        lon = lon,
+        lat = lat,
+        years = years,
+        fishvar = new_var_mat
+      )
+}
+
+file<-readRDS("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_historical_nosoc_default_tcb_global_monthly_1950-2005.RDS")
+hist<-averageFishCDF_EcoOcean(file, time1_h, time2_h, type = "hist")
+file<-readRDS("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp126_nosoc_default_tcb_global_monthly_2006_2100.RDS")
+fut126<-averageFishCDF_EcoOcean(file, time1_f, time2_f, type = "fut")
+file<-readRDS("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp585_nosoc_default_tcb_global_monthly_2006_2100.RDS")
+fut585<-averageFishCDF_EcoOcean(file, time1_f, time2_f, type = "fut")
+
+diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100  
+diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
+
+data_ipsl_CMIP6$EcoOcean<-list(hist = hist, fut126 = fut126, fut585 = fut585, diff_2p6 = diff_2p6, diff_8p5 = diff_8p5)
 
 # extract data GFDL ---- 
 
@@ -713,10 +741,10 @@ names(data_gfdl_CMIP6)
 # add EcoTroph GFDL ----
 
 # hist is the beginning of the future files and  I am assuming is the same for both futures 
-file<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc"
+file<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc"
 hist<-averageFishCDF_EcoTroph(file, time1_h, time2_h)
 fut126<-averageFishCDF_EcoTroph(file, time1_f, time2_f)
-file<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc"
+file<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc"
 fut585<-averageFishCDF_EcoTroph(file, time1_f, time2_f)
 
 diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100 
@@ -725,6 +753,20 @@ diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
 data_gfdl_CMIP6$EcoTroph<-list(hist = hist, fut126 = fut126, fut585 = fut585, diff_2p6 = diff_2p6, diff_8p5 = diff_8p5)
 
 names(data_gfdl_CMIP6)
+
+# add EcoOcean GFDL ----
+
+file<-readRDS("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoOcean CMIP6 RDS files/ecoocean_gfdl_nobc_historical_nosoc_default_tcb_global_monthly_1950-2005.RDS")
+hist<-averageFishCDF_EcoOcean(file, time1_h, time2_h, type = "hist")
+file<-readRDS("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp126_nosoc_default_tcb_global_monthly_2006_2100.RDS")
+fut126<-averageFishCDF_EcoOcean(file, time1_f, time2_f, type = "fut")
+file<-readRDS("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp585_nosoc_default_tcb_global_monthly_2006_2100.RDS")
+fut585<-averageFishCDF_EcoOcean(file, time1_f, time2_f, type = "fut")
+
+diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100 
+diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
+
+data_gfdl_CMIP6$EcoOcean<-list(hist = hist, fut126 = fut126, fut585 = fut585, diff_2p6 = diff_2p6, diff_8p5 = diff_8p5)
 
 ```
 
@@ -790,6 +832,26 @@ data_ipsl_CMIP6$EcoTroph$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP6$EcoTroph
 data_ipsl_CMIP6$EcoTroph$diff_2p6<- fliplr_matrix(data_ipsl_CMIP6$EcoTroph$diff_2p6)
 data_ipsl_CMIP6$EcoTroph$diff_8p5<- fliplr_matrix(data_ipsl_CMIP6$EcoTroph$diff_8p5)
 
+data_ipsl_CMIP6$EcoOcean$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP6$EcoOcean$hist$fishvar)
+data_ipsl_CMIP6$EcoOcean$fut126$fishvar<- fliplr_matrix(data_ipsl_CMIP6$EcoOcean$fut126$fishvar)
+data_ipsl_CMIP6$EcoOcean$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP6$EcoOcean$fut585$fishvar)
+data_ipsl_CMIP6$EcoOcean$diff_2p6<- fliplr_matrix(data_ipsl_CMIP6$EcoOcean$diff_2p6)
+data_ipsl_CMIP6$EcoOcean$diff_8p5<- fliplr_matrix(data_ipsl_CMIP6$EcoOcean$diff_8p5)
+
+move_hemispheres<- function(data_to_flip)
+{
+  temp= data_to_flip
+  data_to_flip[1:180,] = temp[181:360,]
+  data_to_flip[181:360,] = temp[1:180,]
+  data_to_flip
+}
+  
+data_ipsl_CMIP6$EcoOcean$hist$fishvar<- move_hemispheres(data_ipsl_CMIP6$EcoOcean$hist$fishvar)
+data_ipsl_CMIP6$EcoOcean$fut126$fishvar<- move_hemispheres(data_ipsl_CMIP6$EcoOcean$fut126$fishvar)
+data_ipsl_CMIP6$EcoOcean$fut585$fishvar<- move_hemispheres(data_ipsl_CMIP6$EcoOcean$fut585$fishvar)
+data_ipsl_CMIP6$EcoOcean$diff_2p6<- move_hemispheres(data_ipsl_CMIP6$EcoOcean$diff_2p6)
+data_ipsl_CMIP6$EcoOcean$diff_8p5<- move_hemispheres(data_ipsl_CMIP6$EcoOcean$diff_8p5)
+
 map_ipsl585_CMIP6<-list()
 
 names(data_ipsl_CMIP6)
@@ -806,10 +868,10 @@ for (i in 1:length(data_ipsl_CMIP6)){
 }
 
 names(map_ipsl585_CMIP6)
-map_ipsl585_CMIP6$FEISTY
-# map_ipsl585_CMIP6$EcoTroph
 
 # plot GFDL ----
+
+# flip matrix 
 
 data_gfdl_CMIP6$MACROECOLOGICAL$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$hist$fishvar)
 data_gfdl_CMIP6$MACROECOLOGICAL$fut126$fishvar<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$fut126$fishvar)
@@ -835,6 +897,20 @@ data_gfdl_CMIP6$EcoTroph$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$EcoTroph
 data_gfdl_CMIP6$EcoTroph$diff_2p6<- fliplr_matrix(data_gfdl_CMIP6$EcoTroph$diff_2p6)
 data_gfdl_CMIP6$EcoTroph$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$EcoTroph$diff_8p5)
 
+# flip matrix
+data_gfdl_CMIP6$EcoOcean$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$EcoOcean$hist$fishvar)
+data_gfdl_CMIP6$EcoOcean$fut126$fishvar<- fliplr_matrix(data_gfdl_CMIP6$EcoOcean$fut126$fishvar)
+data_gfdl_CMIP6$EcoOcean$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$EcoOcean$fut585$fishvar)
+data_gfdl_CMIP6$EcoOcean$diff_2p6<- fliplr_matrix(data_gfdl_CMIP6$EcoOcean$diff_2p6)
+data_gfdl_CMIP6$EcoOcean$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$EcoOcean$diff_8p5)
+
+# move emisphere  
+data_gfdl_CMIP6$EcoOcean$hist$fishvar<- move_hemispheres(data_gfdl_CMIP6$EcoOcean$hist$fishvar)
+data_gfdl_CMIP6$EcoOcean$fut126$fishvar<- move_hemispheres(data_gfdl_CMIP6$EcoOcean$fut126$fishvar)
+data_gfdl_CMIP6$EcoOcean$fut585$fishvar<- move_hemispheres(data_gfdl_CMIP6$EcoOcean$fut585$fishvar)
+data_gfdl_CMIP6$EcoOcean$diff_2p6<- move_hemispheres(data_gfdl_CMIP6$EcoOcean$diff_2p6)
+data_gfdl_CMIP6$EcoOcean$diff_8p5<- move_hemispheres(data_gfdl_CMIP6$EcoOcean$diff_8p5)
+
 map_gfdl585_CMIP6<-list()
 names(data_gfdl_CMIP6)
 
@@ -850,7 +926,6 @@ for (i in 1:length(data_gfdl_CMIP6)){
 }
 
 names(map_gfdl585_CMIP6)
-map_gfdl585_CMIP6$FEISTY
 
 ```
 
@@ -865,40 +940,40 @@ map_gfdl585_CMIP6$FEISTY
 data_ipsl_CMIP6$DBEM<-NULL
 data_gfdl_CMIP6$DBEM<-NULL
 
-res_ipsl<-model_stat(data_ipsl_CMIP6)
-model_average_ipsl_CMIP6<-res_ipsl$model_average
-model_sd_ipsl_CMIP6<-res_ipsl$model_sd
-model_agreement_ipsl_CMIP6<- res_ipsl$model_agreement
-
-res_gfdl<-model_stat(data_gfdl_CMIP6)
-model_average_gfdl_CMIP6<-res_gfdl$model_average
-model_sd_gfdl_CMIP6<-res_gfdl$model_sd
-model_agreement_gfdl_CMIP6<- res_gfdl$model_agreement
+# res_ipsl<-model_stat(data_ipsl_CMIP6)
+# model_average_ipsl_CMIP6<-res_ipsl$model_average
+# model_sd_ipsl_CMIP6<-res_ipsl$model_sd
+# model_agreement_ipsl_CMIP6<- res_ipsl$model_agreement
+# 
+# res_gfdl<-model_stat(data_gfdl_CMIP6)
+# model_average_gfdl_CMIP6<-res_gfdl$model_average
+# model_sd_gfdl_CMIP6<-res_gfdl$model_sd
+# model_agreement_gfdl_CMIP6<- res_gfdl$model_agreement
 
 res_all<-model_stat(c(data_ipsl_CMIP6, data_gfdl_CMIP6))
 model_average_all_CMIP6<-res_all$model_average
 model_sd_all_CMIP6<-res_all$model_sd
 model_agreement_all_CMIP6<- res_all$model_agreement
 
-# define title IPSL
-maptitle_average = paste("Mean % change IPSL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
-maptitle_sd = paste("Standard Deviation IPSL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
-maptitle_agreement = paste("Agreement IPSL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
-
-# Plot the model average and standard deviation
-avarage_CMIP6_ipsl<-plot_FISH_MIP(model_average_ipsl_CMIP6, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
-sd_CMIP6_ipsl<-plot_FISH_MIP(model_sd_ipsl_CMIP6, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
-agreement_CMIP6_ipsl<-plot_FISH_MIP(model_agreement_ipsl_CMIP6, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)") # why is this white along all coasts?!
-
-# define title GFDL
-maptitle_average = paste("Mean % change GFDL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
-maptitle_sd = paste("Standard Deviation GFDL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
-maptitle_agreement = paste("Agreement GFDL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
-
-# Plot the model average and standard deviation
-avarage_CMIP6_gfdl<-plot_FISH_MIP(model_average_gfdl_CMIP6, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
-sd_CMIP6_gfdl<-plot_FISH_MIP(model_sd_gfdl_CMIP6, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
-agreement_CMIP6_gfdl<-plot_FISH_MIP(model_agreement_gfdl_CMIP6, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)") 
+# # define title IPSL
+# maptitle_average = paste("Mean % change IPSL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
+# maptitle_sd = paste("Standard Deviation IPSL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
+# maptitle_agreement = paste("Agreement IPSL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
+# 
+# # Plot the model average and standard deviation
+# avarage_CMIP6_ipsl<-plot_FISH_MIP(model_average_ipsl_CMIP6, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
+# sd_CMIP6_ipsl<-plot_FISH_MIP(model_sd_ipsl_CMIP6, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
+# agreement_CMIP6_ipsl<-plot_FISH_MIP(model_agreement_ipsl_CMIP6, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)") # why is this white along all coasts?!
+# 
+# # define title GFDL
+# maptitle_average = paste("Mean % change GFDL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
+# maptitle_sd = paste("Standard Deviation GFDL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
+# maptitle_agreement = paste("Agreement GFDL RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
+# 
+# # Plot the model average and standard deviation
+# avarage_CMIP6_gfdl<-plot_FISH_MIP(model_average_gfdl_CMIP6, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
+# sd_CMIP6_gfdl<-plot_FISH_MIP(model_sd_gfdl_CMIP6, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
+# agreement_CMIP6_gfdl<-plot_FISH_MIP(model_agreement_gfdl_CMIP6, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)") 
 
 # define title All
 maptitle_average = paste("Mean % change RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
@@ -925,11 +1000,12 @@ latitude <- ncvar_get(nc, "lat")
 delta_average_limits = c(-100, 100)
 delta_sd_limits = c(0,100)
 
+# calcualtes delata as scatter plot of CMIP5 vs CMIP6
+
 delta_fun<-function(data5, data6, plot_limits = delta_limits, labels){
   
-  # data5 = model_sd_all_CMIP5
-  # data6 = model_sd_all_CMIP6
-  # plot_limits = delta_sd_limits
+  data5 = model_average_all_CMIP5
+  data6 = model_average_all_CMIP6
   
   # transform in df with lat and long 
   delta_CMIP5<-as.data.frame(data5) %>% 
@@ -944,7 +1020,8 @@ delta_fun<-function(data5, data6, plot_limits = delta_limits, labels){
 
   # combine 
   delta<-delta_CMIP5 %>% 
-    full_join(delta_CMIP6)
+    full_join(delta_CMIP6) # %>% 
+    # mutate(color = ifelse(lat> 66.5 | lat < -66.5, "polar", ifelse(lat <23.5 & lat> -23.5, "tropic", "temperate"))) # but need to fix code to appropriately consider ranges - also could color by temperature? See Ryan?
   
   st<-summary(lm(delta$value_cmip6~delta$value_cmip5))
   int = st$coefficients[1,1]
@@ -977,57 +1054,77 @@ delta_fun<-function(data5, data6, plot_limits = delta_limits, labels){
   return(delta_plot = delta_plot)
 }
 
-delta_average_ipsl<-delta_fun(model_average_ipsl_CMIP5, model_average_ipsl_CMIP6, delta_average_limits, labels = c("Biomass mean % change IPSL RCP 8.5 CMIP5","Biomass mean % change IPSL RCP 8.5 CMIP6"))
-delta_sd_ipsl<-delta_fun(model_sd_ipsl_CMIP5, model_sd_ipsl_CMIP6, delta_sd_limits, labels = c("Biomass SD IPSL RCP 8.5 CMIP5","Biomass SD IPSL RCP 8.5 CMIP6"))
-
-delta_average_gfdl<-delta_fun(model_average_gfdl_CMIP5, model_average_gfdl_CMIP6, delta_average_limits, labels = c("Biomass mean % change GFDL RCP 8.5 CMIP5","Biomass mean % change GFDL RCP 8.5 CMIP6"))
-delta_sd_gfdl<-delta_fun(model_sd_gfdl_CMIP5, model_sd_gfdl_CMIP6, delta_sd_limits, labels = c("Biomass SD IPSL RCP 8.5 CMIP5","Biomass SD IPSL RCP 8.5 CMIP6"))
+# delta_average_ipsl<-delta_fun(model_average_ipsl_CMIP5, model_average_ipsl_CMIP6, delta_average_limits, labels = c("Biomass mean % change IPSL RCP 8.5 CMIP5","Biomass mean % change IPSL RCP 8.5 CMIP6"))
+# delta_sd_ipsl<-delta_fun(model_sd_ipsl_CMIP5, model_sd_ipsl_CMIP6, delta_sd_limits, labels = c("Biomass SD IPSL RCP 8.5 CMIP5","Biomass SD IPSL RCP 8.5 CMIP6"))
+# 
+# delta_average_gfdl<-delta_fun(model_average_gfdl_CMIP5, model_average_gfdl_CMIP6, delta_average_limits, labels = c("Biomass mean % change GFDL RCP 8.5 CMIP5","Biomass mean % change GFDL RCP 8.5 CMIP6"))
+# delta_sd_gfdl<-delta_fun(model_sd_gfdl_CMIP5, model_sd_gfdl_CMIP6, delta_sd_limits, labels = c("Biomass SD IPSL RCP 8.5 CMIP5","Biomass SD IPSL RCP 8.5 CMIP6"))
 
 delta_average_all<-delta_fun(model_average_all_CMIP5, model_average_all_CMIP6, delta_average_limits,labels = c("Biomass mean % change RCP 8.5 CMIP5","Biomass mean % change RCP 8.5 CMIP6"))
 delta_sd_all<-delta_fun(model_sd_all_CMIP5, model_sd_all_CMIP6, delta_sd_limits, labels = c("Biomass SD IPSL RCP 8.5 CMIP5","Biomass SD IPSL RCP 8.5 CMIP6"))
 
-# delta map - TO CHECK 
-# both negative or both positive means agreement, one positive and one negative means disagreements and these values range according to the magnitude of the agreement/disagreement: NO! 
-# delta_map_data_all<-((model_average_all_CMIP6 - model_average_all_CMIP5)/model_average_all_CMIP5)*100 
-delta_map_data_all<-model_average_all_CMIP6/model_average_all_CMIP5
-# model_average_all_CMIP6 - model_average_all_CMIP5 * 100 - 100 # WHAT DOES THIS MEAN? CHECK ALSO ABOVE - I cannot do the same with negative values...  
+# delta map 
 
-maptitle_detla<-"Delta (mean % change RCP 8.5 CMIP6 / mean change RCP 8.5 CMIP5)"
-delta_map_all<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-1, 1), colour_scheme = c("#af8dc3", "#f7f7f7", "#7fbf7b"), coltitle = "Biomass \nrelative \nchange \n", legend_ticks = 3)
+# option 1 - subtract (julia)
+delta_map_data_all<-model_average_all_CMIP6 - model_average_all_CMIP5
+maptitle_detla<-"Delta (CMIP6 change - CMIP5 change)"
+delta_map_all_difference<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-50, 50), colour_scheme = c("#fdb863", "#f7f7f7","#b2abd2"), coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 5) 
+# if 1 - 5 = -4 # CMIP6 decreased 4 times
+# if 1 - (-5) = 6 # CMIP6 increased 6 times 
+# if -1 - 5 = -6 # CMIP6 decreased 6 times 
+# if -1 - (-5) = 4 # CMIP increased 4 times # it means that CMIP6 
+# e.g. 
+# model_average_all_CMIP5 = -5 (tcb 5% decrease between 1990 and 2090) # where model_average_all_CMIP5 is the mean of diff_8p5 (diff in tcb between the 2 decades) across all models
+# model_average_all_CMIP6 = -3 (tcb 3% decrease between 1990 and 2090)
+# -3 - -5 = 2 CMIP6 decreased less than CMIP5 by 2 - i.e. positive values indicate that tcb in CMIP6 increased more or decreased less between 1990 and 2090 than tcb in CMIP5 for the same period.  
 
-# better to do something similar to agreement? see model_stat. this gives 100%  agreement if biomass in both cmips is decreasing/increasing and 50% is they disagree... (agreement on the direction of change....but  does not tell you which direction.)
+# # option 2 divide (Derek but in another contest as here we have negative values so we use the below)
+# delta_map_data_all<-(model_average_all_CMIP6 / model_average_all_CMIP5) * 100 - 100
+# maptitle_detla<-"Delta ((CMIP6 change / CMIP5 change)*100)"
+# delta_map_all_divide<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-100, 100), colour_scheme = c("#fdb863", "#f7f7f7","#b2abd2"), coltitle = "Difference \nin \nchange \n", legend_ticks = 3)
+# # if 1/5*100 - 100 = -80% # CMIP6 decreased
+# # if 1/-5*100 - 100 = -120% # CMIP6 decreased - WRONG
+
+# option 3 percentage - same as Julia above if you do abs() but less meaningful as inputs are already % 
+delta_map_data_all<-((model_average_all_CMIP6 - model_average_all_CMIP5)/abs(model_average_all_CMIP5)) * 100 
+maptitle_detla<-"Delta (((CMIP6 change - CMIP5 change)/|CMIP5 change|) * 100)"
+delta_map_all_percentage<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-100, 100), colour_scheme = c("#fdb863", "#f7f7f7","#b2abd2"), coltitle = "(%) Difference \nin \nchange \n", legend_ticks = 5)
+# if ((1 - 5)/5)*100 = -80 # CMIP6 decreased 4 times
+# if ((1 - -5)/5)*100 = 120 # CMIP6 increased 6 times 
+# if ((-1 - 5)/-5)*100 = 120 # WRONG
+# if ((-1 - -5)/-5)*100 = -80 # WRONG
+# if ((-1 - 5)/5)*100 = -120 # CMIP6 decrease 6 times - ok if denominator is absolute
+# if ((-1 - -5)/5)*100 = 80 # CMIP increase 4 times - ok if denominator is absolute
+
+# agreement on the direction of change between CMIPs see model_stat. this gives 100%  agreement if biomass in both cmips is decreasing/increasing and 50% is they disagree... (agreement on the direction of change....but  does not tell you which direction.)
 # create array with both matrices 
 trial<-array(NA, dim=c(dim(model_average_all_CMIP5)[1],dim(model_average_all_CMIP5)[2],2))
 trial[,,1]<-model_average_all_CMIP5
 trial[,,2]<-model_average_all_CMIP6
 # apply model_stat code to calculate agreement in biomass changes between cmips
-temp<-apply(trial, c(1,2), function(x) ifelse(sum(is.na(x)>0), NA, length(x[which(x>0)]))) 
+temp<-apply(trial, c(1,2), function(x) length(x[which(x>0)])) 
 temp2<-apply(trial, c(1,2), function(x) length(x[which(!is.na(x))])) #
 temp4<-temp/temp2
 trial_data<-ifelse(is.na(temp4), NA, ifelse(temp4>0.5, temp4*100, (1-temp4)*100))
 trial_data[which(trial_data ==100)]<-1
 trial_data[which(trial_data ==50)]<-0
-trial<-plot_FISH_MIP(trial_data, "CMIPs agreement on the direction of change", c(0,1) ,colour_scheme = c("#af8dc3", "#f7f7f7", "#7fbf7b"), coltitle = "CMIPs \nagreement", legend_ticks = 3) 
-delta_map_all_agreement<-trial
+delta_map_all_agreement<-plot_FISH_MIP(trial_data, "CMIPs agreement on the direction of change", c(0,1) ,colour_scheme = c("#fdb863", "#f7f7f7","#b2abd2"), coltitle = "CMIPs \nagreement", legend_ticks = 2) 
 
-# model's discrepancy from average (withing the CMIP6) 
-# can do with either IPSL or GFDL but not with ALL as you don't have a mean of the 2 for each model 
-# can do for CMIP5 also
-delta_average_boats<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$BOATS$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
-delta_average_dbmp<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$DBPM$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
-delta_average_macroecological<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$MACROECOLOGICAL$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
-delta_average_feisty<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$FEISTY$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
-delta_average_zoomss<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$ZooMSS$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
-delta_average_ecotroph<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$EcoTroph$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
-
-# model's discrepancy from average (withing the CMIP5) 
-# can do with either IPSL or GFDL but not with ALL as you don't have a mean of the 2 for each model 
-# can do for CMIP5 also
-delta_average_boats_cmip5<-delta_fun(model_average_ipsl_CMIP5, data_ipsl_CMIP5$BOATS$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
-delta_average_dbmp_cmip5<-delta_fun(model_average_ipsl_CMIP5, data_ipsl_CMIP5$DBPM$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
-delta_average_macroecological_cmip5<-delta_fun(model_average_ipsl_CMIP5, data_ipsl_CMIP5$MACROECOLOGICAL$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
-delta_average_apecosm_cmip5<-delta_fun(model_average_ipsl_CMIP5, data_ipsl_CMIP5$APECOSM$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
-delta_average_ecoocean_cmip5<-delta_fun(model_average_ipsl_CMIP5, data_ipsl_CMIP5$EcoOcean$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
+# # model's discrepancy from average (withing the CMIP6) 
+# # can do with either IPSL or GFDL but not with ALL as you don't have a mean of the 2 for each model 
+# delta_average_boats<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$BOATS$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
+# delta_average_dbmp<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$DBPM$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
+# delta_average_macroecological<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$MACROECOLOGICAL$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
+# delta_average_feisty<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$FEISTY$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
+# delta_average_zoomss<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$ZooMSS$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
+# delta_average_ecotroph<-delta_fun(model_average_ipsl_CMIP6, data_ipsl_CMIP6$EcoTroph$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
+# 
+# # model's discrepancy from average (withing the CMIP5) 
+# delta_average_boats_cmip5<-delta_fun(model_average_ipsl_CMIP5, data_ipsl_CMIP5$BOATS$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
+# delta_average_dbmp_cmip5<-delta_fun(model_average_ipsl_CMIP5, data_ipsl_CMIP5$DBPM$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
+# delta_average_macroecological_cmip5<-delta_fun(model_average_ipsl_CMIP5, data_ipsl_CMIP5$MACROECOLOGICAL$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
+# delta_average_apecosm_cmip5<-delta_fun(model_average_ipsl_CMIP5, data_ipsl_CMIP5$APECOSM$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
+# delta_average_ecoocean_cmip5<-delta_fun(model_average_ipsl_CMIP5, data_ipsl_CMIP5$EcoOcean$diff_8p5, delta_average_limits, labels = c("Biomass mean % change","Biomass model % change"))
 
 ```
 
@@ -1037,10 +1134,11 @@ delta_average_ecoocean_cmip5<-delta_fun(model_average_ipsl_CMIP5, data_ipsl_CMIP
 
 library(patchwork)
 
-# FIG 1 model average CMIP5, model average CMIP6, delta CMIP5 vs CMIP6
+# FIG 2 model average CMIP5, model average CMIP6, delta CMIP5 vs CMIP6
 layout <- "
 AB
 CD
+E#
 "
 
 # see what's already there 
@@ -1049,10 +1147,11 @@ CD
 # delta_map_all<-delta_map_all + ggtitle("C") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
 pt<-avarage_CMIP5_all + avarage_CMIP6_all + 
-  delta_map_all+ delta_map_all_agreement +
+  delta_map_all_difference + delta_map_all_percentage +
+  delta_map_all_agreement +
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig2.pdf"), height=7, width=15)
+pdf(paste0(save_loc,"Fig2.pdf"), height=10, width=15)
 pt 
 dev.off()
 
@@ -1073,7 +1172,7 @@ pt<-map_ipsl585_CMIP5$DBPM + map_ipsl585_CMIP6$DBPM +
     map_ipsl585_CMIP5$MACROECOLOGICAL + map_ipsl585_CMIP6$MACROECOLOGICAL+  
     # map_ipsl585_CMIP5$DBEM +
     map_ipsl585_CMIP5$APECOSM + map_ipsl585_CMIP6$APECOSM +
-    map_ipsl585_CMIP5$EcoOcean + 
+    map_ipsl585_CMIP5$EcoOcean + map_ipsl585_CMIP6$EcoOcean +
     map_ipsl585_CMIP5$BOATS+ map_ipsl585_CMIP6$BOATS +
     map_ipsl585_CMIP5$ZooMSS + map_ipsl585_CMIP6$ZooMSS +
     map_ipsl585_CMIP6$FEISTY +
@@ -1100,7 +1199,7 @@ CD
 EF
 "
 
-pt<-avarage_CMIP5_all + avarage_CMIP6_all + 
+pt<-avarage_CMIP5_all + avarage_CMIP6_all + # this is same as Fig2 first raw
     sd_CMIP5_all + sd_CMIP6_all +  
     agreement_CMIP5_all + agreement_CMIP6_all +  
     plot_layout(design = layout)
@@ -1115,16 +1214,16 @@ pdf(paste0(save_loc,"ALL_models_average_map.pdf"), height=10, width=15)
 pt 
 dev.off()
 
-# Delta mean over all models and all earth  inputs  
+# Delta mean over all models and all earth inputs  
 layout <- "
 A
 B
 C
 "
 
-delta_average_ipsl<-delta_average_ipsl + ggtitle("IPSL") + theme(plot.title = element_text(size = 12, face = "bold"))
-delta_average_gfdl<-delta_average_gfdl + ggtitle("GFDL") + theme(plot.title = element_text(size = 12, face = "bold"))
-delta_average_all<-delta_average_all + ggtitle("ALL") + theme(plot.title = element_text(size = 12, face = "bold"))
+# delta_average_ipsl<-delta_average_ipsl + ggtitle("IPSL") + theme(plot.title = element_text(size = 12, face = "bold"))
+# delta_average_gfdl<-delta_average_gfdl + ggtitle("GFDL") + theme(plot.title = element_text(size = 12, face = "bold"))
+# delta_average_all<-delta_average_all + ggtitle("ALL") + theme(plot.title = element_text(size = 12, face = "bold"))
 
 pt<-delta_average_ipsl + delta_average_gfdl + delta_average_all +
     plot_layout(design = layout)
@@ -1133,11 +1232,16 @@ pt<-pt + plot_annotation(
   title = 'Delta average RCP 8.5',
   theme = theme(plot.title = element_text(size = 20)))
 
+# pdf(paste0(save_loc,"delta_scatterplot.pdf"), height=12, width=8)
+# # tiff(paste0(save_loc,"20201104_IPSL_CMIP5vsCMIP5_mean.tiff"), height=10, width=20, units ='in', res=300)
+# pt 
+# dev.off()
+
+# only all instead - can also be colored by lat?
 pdf(paste0(save_loc,"delta_scatterplot.pdf"), height=12, width=8)
 # tiff(paste0(save_loc,"20201104_IPSL_CMIP5vsCMIP5_mean.tiff"), height=10, width=20, units ='in', res=300)
-pt 
+delta_average_all 
 dev.off()
-
 
 ```
 

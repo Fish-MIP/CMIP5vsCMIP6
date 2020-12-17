@@ -11,12 +11,19 @@ editor_options:
 
 DBEM before Xmas
 
-EcoOcean netcdf in progress - Ryan
+EcoOcean netcdf in progress - need to add RDS files 
 
 work on DBPM -> check senescence + fix netcdf (OK but see discussion on re-run)
 
 # TO CHECK 
+
 time series for CMIP6 where ssp585 does not start where historical ends 
+
+no error values in historical CMIP6
+
+Derek comment about values being <0 in CMIP6 - see pdf 
+
+thicker lines in CMIP6 when CMIP6 < CMIP5
 
 # Load libraries for netcdf and define variables
 
@@ -29,10 +36,10 @@ library(viridis)
 library(tidyr)
 library(dplyr)
 
-source("/Users/nov017/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
+source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
 
 # saving outputs location  
-save_loc <- "/Users/nov017/Dropbox/CMIP5vsCMIP6/figs/"
+save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/figs/"
 
 # variables 
 cmip<-c("CMIP5", "CMIP6")
@@ -49,7 +56,7 @@ variable_to_extract <-c("tcb","tpb", "bp30cm", "bp30to90cm", "bp90cm")
 ```{r}
 
 # CMIP5 data location
-directory = "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/"
+directory = "/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP2b/"
 
 # APECOSM ----
 h_yearsA <- "1950_2005"
@@ -101,8 +108,8 @@ yearmonth2_fut<-rep(NA, length(mod_ipsl))
 cmip = 5
 
 # 2 ways of doing  this: 
-# option 1: use averageFishCDF(average_whole_period = FALSE) which extracts data and merges info by month if the  model's output is monthly. Then merge info by grid cell in get_timeSgeteries() 
-# option 2: use extractFishCDF() which extracts everything without manipulation data. Then merge info by month and grid cell all together in get_timeSgeteries() - i.e. option 2 - you don't mean twice: by months first -> lat long year; and by year next -> year. you only mean once: by year -> year. Results slightly change but the process is much faster. Need to merge this with the codes that produces maps so that you extract data only once and process it both ways. 
+# option 1: use averageFishCDF(average_whole_period = FALSE) which extracts data and merges info by month if the  model's output is monthly. Then merge info by grid cell in get_timeSeries() 
+# option 2: use extractFishCDF() which extracts everything without manipulation data. Then merge info by month and grid cell all together in get_timeSeries() - i.e. option 2 - you don't mean twice: by months first -> lat long year; and by year next -> year. you only mean once: by year -> year. Results slightly change but the process is much faster. Need to merge this with the codes that produces maps so that you extract data only once and process it both ways. 
 # CN note: what's the deal with DBEM? a huge average of everything in terms of grids - should I consider 1 value every 2 grids as per maps?
 
 data_ipsl_CMIP5<-list()
@@ -124,7 +131,7 @@ for (i in 1:length(mod_ipsl)){
   fut585<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE)
   
   # apply function to extract time series
-  all<-get_timeSgeteries(hist, fut126, fut585)
+  all<-get_timeSeries(hist, fut126, fut585)
 
   data_ipsl_CMIP5[[i]]<-list(all = all)
   names(data_ipsl_CMIP5)[[i]]<-mod_ipsl[[i]]
@@ -137,20 +144,20 @@ names(data_ipsl_CMIP5)
 
 # add ZOOM GFDL ----
 
-directory_zoom<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/historical/"
+directory_zoom<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/historical/"
 filename<-"zoomss_ipsl-cm5a-lr_nobc_historical_nosoc_co2_tcb_global_annual_1950_2005.nc4"
 yearmonth1 = NA
 yearmonth2 = NA
 hist<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = FALSE)
 
-directory_zoom<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/future/"
+directory_zoom<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/future/"
 filename<-"zoomss_ipsl-cm5a-lr_nobc_rcp26_nosoc_co2_tcb_global_annual_2006_2100.nc4"
 fut126<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = FALSE)
 
 filename<-"zoomss_ipsl-cm5a-lr_nobc_rcp85_nosoc_co2_tcb_global_annual_2006_2100.nc4"
 fut585<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = FALSE)
 
-all<-get_timeSgeteries(hist, fut126, fut585)
+all<-get_timeSeries(hist, fut126, fut585)
 
 data_ipsl_CMIP5$ZooMSS<-list(all = all)
 rm(hist, fut126, fut585, all)
@@ -181,7 +188,7 @@ for (i in 1:length(mod_gfdl)){
   fut585<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE)
   
   # apply function to extract time series
-  all<-get_timeSgeteries(hist, fut126, fut585)
+  all<-get_timeSeries(hist, fut126, fut585)
   
   data_gfdl_CMIP5[[i]]<-list(all = all)
   names(data_gfdl_CMIP5)[[i]]<-mod_gfdl[[i]]
@@ -194,18 +201,18 @@ names(data_gfdl_CMIP5)
 
 ## add ZOOM GFDL ----
 
-directory_zoom<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/historical/"
+directory_zoom<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/historical/"
 filename<-"zoomss_gfdl-esm2m_nobc_historical_nosoc_co2_tcb_global_annual_1950_2005.nc4"
 hist<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = FALSE)
 
-directory_zoom<-"/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/future/"
+directory_zoom<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP2b/ZooMSS/_tmp/future/"
 filename<-"zoomss_gfdl-esm2m_nobc_rcp26_nosoc_co2_tcb_global_annual_2006_2100.nc4"
 fut126<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = FALSE)
 
 filename<-"zoomss_gfdl-esm2m_nobc_rcp85_nosoc_co2_tcb_global_annual_2006_2100.nc4"
 fut585<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = FALSE)
 
-all<-get_timeSgeteries(hist, fut126, fut585)
+all<-get_timeSeries(hist, fut126, fut585)
 
 data_gfdl_CMIP5$ZooMSS<-list(all = all)
 rm(hist, fut126, fut585, all)
@@ -227,7 +234,7 @@ data_gfdl_CMIP5$DBEM<-NULL
 
 ```{r}
 
-directory <- "/Users/nov017/fishmip_outputs/marine-fishery_global_ISIMIP3b/"
+directory <- "/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/"
 
 mod_ipsl <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL", "EcoTroph", "FEISTY", "ZooMSS") 
 mod_ipsl <- c("APECOSM","BOATS","DBPM","MACROECOLOGICAL","FEISTY","ZooMSS") 
@@ -248,7 +255,7 @@ outputB<-"monthly"
 extensionB<-".nc"
 
 # DBEM ----
-# coming mid Nov 
+# coming before Xmas 
 
 # DBPM ----
 h_yearsDB <- "1850_2014"
@@ -258,7 +265,7 @@ outputDB<-"monthly" # Spelling error fixed in new netcdf and now manually fixed 
 extensionDB <-".nc4"
 
 # EcoOcean ----  
-# still in csv 
+# added below  
 
 # macroecological ----  
 h_yearsM <- "1950_2014"
@@ -314,7 +321,7 @@ for (i in 1:length(mod_ipsl)){
   fut585<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE,CMIP = 6)
   
   # apply function to extract time series
-  all<-get_timeSgeteries(hist, fut126, fut585)
+  all<-get_timeSeries(hist, fut126, fut585)
 
   data_ipsl_CMIP6[[i]]<-list(all = all)
   names(data_ipsl_CMIP6)[[i]]<-mod_ipsl[[i]]
@@ -323,25 +330,120 @@ for (i in 1:length(mod_ipsl)){
  
 }
 
+all
+
 names(data_ipsl_CMIP6)
 
 # add EcoTrpoh IPSL ----
+# no need for speceific function - the only thing is that the variable to extract is called "Band1" - you could adjust this in Batch_run_map.Rmd too 
 
-# hist is the beginning of the future files and  I am assuming is the same for both futures 
-filename_E<-"EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc"
-fut126<-extractFishCDF(directory, filename_E , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = FALSE, CMIP =  6)
-# cut into hist and  fut
+source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
+filename<-"EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc"
+combined<-extractFishCDF(directory, filename , "Band1", yearmonth1, yearmonth2, average_whole_period = FALSE, CMIP = 6)
+# hist
+start_point_to_extract = which(1971 == combined$years)
+end_point_to_extract = which(2014 == combined$years)
+hist<-combined
+hist$fishvar <- hist$fishvar[, , start_point_to_extract:end_point_to_extract]
+hist$years <- hist$years[start_point_to_extract:end_point_to_extract]
+# 126
+start_point_to_extract = which(2015 == combined$years)
+end_point_to_extract = which(2100 == combined$years)
+fut126<-combined
+fut126$fishvar <- fut126$fishvar[, , start_point_to_extract:end_point_to_extract]
+fut126$years <- fut126$years[start_point_to_extract:end_point_to_extract]
+file<-"EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc"
+fut585<-extractFishCDF(directory, filename , "Band1", yearmonth1, yearmonth2, average_whole_period = FALSE, CMIP = 6)
+fut585$fishvar <- fut585$fishvar[, , start_point_to_extract:end_point_to_extract]
+fut585$years <- fut585$years[start_point_to_extract:end_point_to_extract]
 
-filename_E<-"EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc"
-fut585<-extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = FALSE, CMIP =  6)
-# delete hist from this file 
 
-# apply function to extract time series
-all<-get_timeSgeteries(hist, fut126, fut585)
+# # apply function - SOMETHING IS WORNG HERE! and BELOw so these files are not considered right now
+# output[i] == "annual"
+# 
+# all<-get_timeSeries(hist, fut126, fut585)
+# 
+# data_ipsl_CMIP6$EcoTroph<-list(all = all)
+# 
+# rm(hist, fut126, fut585, all126, hist_2, refDecade, fut585_2, all)
+# 
+# # add EcoOcean IPSL ----
+# 
+# # this is very different as inputs are RDS files ... I hope it changes so that we don't have to guess stuff
+# 
+# extractFishCDF_EcoOcean<-function(file, average_whole_period = FALSE, convert_to_kg_km = TRUE, type = "hist"){
+#   
+#   type = "hist"
+#   
+#   # Open the netcdf file
+#   nc <- file
+#   # Extract important information
+#   data_attributes <- "guess" # should be "tcb"
+#   main_title <- "guess"
+#   data_units <- "guess"
+#     
+#   # neeed lat and lon from somewhere 
+#   # lon <- data_ipsl_CMIP6$BOATS$hist$lon
+#   # lat <- data_ipsl_CMIP6$BOATS$hist$lat
+# 
+#   # time_vector <- convert_model_dates_CMIP6(nc, model_type) 
+#   time_months <- seq(1, dim(nc)[3])
+#   
+#   if(type == "hist"){
+#     yearmonth = as.yearmon("1949-12") + time_months[1] / 12
+#   }else{
+#     yearmonth = as.yearmon("2006-01") + time_months[1] / 12
+#   }
+# 
+#   time_months = as.yearmon(yearmonth + seq(0, (length(time_months) - 1)) / 12)     
+#   time_vector<-time_months
+#   print(time_months[1])
+#   print(time_months[length(time_months)])
+# 
+#   # extract all 
+#   new_var_mat <- nc # ncvar_get(nc, variable)
+#   years = time_vector
+# 
+#   # this should be done when we know the data units 
+#   new_var_mat = new_var_mat * 1000
+#   data_units = "kg km-2" 
+#     
+#   return_list <- list(
+#         main_title = main_title,
+#         data_units = data_units,
+#         lon = lon,
+#         lat = lat,
+#         years = years,
+#         fishvar = new_var_mat
+#       )
+# }
+# 
+# file<-readRDS("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_historical_nosoc_default_tcb_global_monthly_1950-2005.RDS")
+# hist<-extractFishCDF_EcoOcean(file, type = "hist")
+# file<-readRDS("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp126_nosoc_default_tcb_global_monthly_2006_2100.RDS")
+# fut126<-extractFishCDF_EcoOcean(file, type = "fut")
+# file<-readRDS("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp585_nosoc_default_tcb_global_monthly_2006_2100.RDS")
+# fut585<-extractFishCDF_EcoOcean(file, type = "fut")
+# 
+# # apply function to extract time series
+# all<-get_timeSeries(hist, fut126, fut585)
+# 
+# data_ipsl_CMIP6$EcoOcean<-list(all = all)
+# 
+# rm(hist, fut126, fut585, all126, hist_2, refDecade, fut585_2, all)
 
-data_ipsl_CMIP6$EcoTroph<-list(all = all)
 
-rm(hist, fut126, fut585, all126, hist_2, refDecade, fut585_2, all)
+
+
+
+
+
+
+
+
+
+
+
 
 # extract data GFDL ---- 
 
@@ -371,7 +473,7 @@ for (i in 1:length(mod_gfdl)){
   fut585<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE,CMIP = 6)
   
   # apply function to extract time series
-  all<-get_timeSgeteries(hist, fut126, fut585)
+  all<-get_timeSeries(hist, fut126, fut585)
 
   data_gfdl_CMIP6[[i]]<-list(all = all)
   names(data_gfdl_CMIP6)[[i]]<-mod_gfdl[[i]]
@@ -382,23 +484,7 @@ for (i in 1:length(mod_gfdl)){
 
 names(data_gfdl_CMIP6)
 
-# add EcoTrpoh IPSL ----
-
-# hist is the beginning of the future files and  I am assuming is the same for both futures 
-filename_E<-"EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc"
-fut126<-extractFishCDF(directory, filename_E , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = FALSE, CMIP =  6)
-# cut into hist and  fut
-
-filename_E<-"EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc"
-fut585<-extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = FALSE, CMIP =  6)
-# delete hist from this file 
-
-# apply function to extract time series
-all<-get_timeSgeteries(hist, fut126, fut585)
-
-data_gfdl_CMIP6$EcoTroph<-list(all = all)
-
-rm(hist, fut126, fut585, all126, hist_2, refDecade, fut585_2, all)
+# add EcoTrpoh GFDL and EcoOcean GFDL ----
 
 ```
 
@@ -453,7 +539,18 @@ all<-data_ipsl_CMIP5_tcb %>%
   summarise(mean = mean(tcbChange, na.rm = TRUE), 
             sd = sd(tcbChange, na.rm = TRUE)) %>% 
   mutate(sd_min = mean - sd, 
-         sd_max = mean + sd)
+         sd_max = mean + sd) 
+
+# create dots when CMIP6 < CMIP6 
+trial<-all %>% 
+  dplyr::select(cmip, mean, protocol, year) %>%
+  spread(cmip, mean) %>% 
+  mutate(A = ifelse(`6`< `5`,`5`, NA)) %>% 
+  gather("cmip","mean", -c(protocol, year, A)) %>% 
+  mutate(cmip = as.numeric(cmip))
+
+all<-all %>% 
+  full_join(trial)
 
 ```
 
@@ -469,12 +566,13 @@ ggplot(all, aes(x=year, y = mean,  color = protocol))+
 # transform in functions and move to Funcs_plot.r 
 
 a<-ggplot(filter(all, cmip==5), aes(group = protocol, x=year,y = mean, ymin = sd_min, ymax = sd_max))+
+  annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
   geom_ribbon(aes(fill = protocol), alpha=0.2)+
   geom_line(aes(color = protocol)) +
-  geom_vline(xintercept = 2005.5, color = "grey80", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey80", size = 1)+
-  geom_hline(yintercept = 0, color = "grey80", size = 1)+
-  scale_y_continuous(limits = c(-26, 5),name = "Change in biomass (%)") +
+  geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
+  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+  geom_hline(yintercept = 0, color = "grey60", size = 1)+
+  scale_y_continuous(limits = c(-26, 12),name = "Change in biomass (%)") +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
   scale_color_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
   scale_fill_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
@@ -489,14 +587,16 @@ a<-ggplot(filter(all, cmip==5), aes(group = protocol, x=year,y = mean, ymin = sd
         strip.text.x = element_text(face = "bold"),
         legend.position = c(0.15, 0.2),
         legend.key = element_rect(fill = "transparent", colour = "transparent"))
-  
-b<-ggplot(filter(all, cmip==6), aes(group = protocol, x=year,y = mean, ymin = sd_min, ymax = sd_max))+
-  geom_ribbon(aes(fill = protocol), alpha=0.2)+
+
+b<-ggplot(filter(all, cmip==6), aes(group = protocol, x=year, y = mean))+
+  annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
+  geom_ribbon(aes(ymin = sd_min, ymax = sd_max, fill = protocol), alpha=0.2)+
   geom_line(aes(color = protocol)) +
-  geom_vline(xintercept = 2015, color = "grey80", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey80", size = 1)+
-  geom_hline(yintercept = 0, color = "grey80", size = 1)+
-  scale_y_continuous(limits = c(-26, 5),name = "") +
+  geom_point(aes(y = A, color = protocol), size = 0.8)+
+  geom_vline(xintercept = 2015, color = "grey60", size = 2)+
+  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+  geom_hline(yintercept = 0, color = "grey60", size = 1)+
+  scale_y_continuous(limits = c(-26, 12),name = "") +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
   scale_color_manual(values = c("black","blue" ,"red"), name = "", labels = c("Historical", "RCP2.6", "RCP8.6"))+
   scale_fill_manual(values = c("black","blue" ,"red"), name = "", labels = c("Historical", "RCP2.6", "RCP8.6"))+
@@ -510,8 +610,9 @@ b<-ggplot(filter(all, cmip==6), aes(group = protocol, x=year,y = mean, ymin = sd
         panel.border = element_rect(colour = "black"),
         strip.text.x = element_text(face = "bold"),
         legend.position = "none")
-  
+b  
 
+filter(all, year >2005, year <2010)
 
 library(patchwork)
 
@@ -531,6 +632,26 @@ plot
 dev.off()
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

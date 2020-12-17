@@ -18,10 +18,14 @@ plot_FISH_MIP <- function(data_to_plot,
                           legend_ticks = 5){
   
   # # trial
-  # model_type = NA 
-  # data_to_plot = model_average
-  # data_title = maptitle_average
+  # data_ipsl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)"
+  # data_to_plot = data_ipsl_CMIP6$BOATS$diff_8p5
+  # data_title = "A"
   # colour_scheme = colour_scheme2
+  # coltitle = ""
+  # latlon_limits = NA 
+  # model_type = NA 
+  # legend_ticks = 5
 
   # overwrite limits  
   # plot_limits = c(-50, 50)
@@ -64,10 +68,10 @@ plot_FISH_MIP <- function(data_to_plot,
   projection(r2) <- lonlatCRS
   
   # option 1: convert RasterLayer to a data.frame. this gives strange maps
-  cc_rob <-projectRaster(r2, crs = robCRS, over = T) # Convert RasterLayer object to Robinson Projection
-  r.1 <- rasterToPoints(cc_rob) # convert RasterLayer to SpatialPixelsDataFrame 
-  r.1.df <- as.data.frame(r.1) # convert SpatialPixelsDataFrame to dataframe
-  colnames(r.1.df) <-c("x","y","Sp")
+  # cc_rob <-projectRaster(r2, crs = robCRS, over = T) # Convert RasterLayer object to Robinson Projection
+  # r.1 <- rasterToPoints(cc_rob) # convert RasterLayer to SpatialPixelsDataFrame 
+  # r.1.df <- as.data.frame(r.1) # convert SpatialPixelsDataFrame to dataframe
+  # colnames(r.1.df) <-c("x","y","Sp")
   
   # alternative: convert r2 (rasterLayer) to geom_sf object. This gives better maps 
   r.1.sf<-rasterToPolygons(r2) # convert Rasterlayer to spatial polygon dataframe 
@@ -92,11 +96,13 @@ plot_FISH_MIP <- function(data_to_plot,
                            plot.title = element_text(size=12, hjust = 0.5)))
 
   r1_gg <- ggplot() + 
+    geom_sf(data = r.1.sf, aes(fill = layer), colour = NA)+
     geom_sf(data = world_sf, size = 0.05, fill = "grey20")+
-    geom_tile(data = r.1.df, aes(x=x, y=y, fill = Sp)) + # this is if you plot the dataframe but not looking good
+    # geom_tile(data = r.1.df, aes(x=x, y=y, fill = Sp)) + # this is if you plot the dataframe but not looking good
     scale_fill_gradient2(low = colour_scheme[1], 
                          mid = colour_scheme[2],  
                          high = colour_scheme[3], 
+                         # na.value = "yellow",
                          limits = c(plot_limits[1], plot_limits[2]),
                          midpoint = ((plot_limits[2]-plot_limits[1])/2 + plot_limits[1]),
                          oob = scales::squish, 
@@ -113,7 +119,7 @@ plot_FISH_MIP <- function(data_to_plot,
     labs(title = data_title) +
     theme_opts 
   
-  rm(r.1.sf,r.1.df)
+  rm(r.1.sf)
   return(r1_gg)
 
 }

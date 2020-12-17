@@ -187,14 +187,18 @@ convert_model_dates_CMIP6 <- function(netcdf_file, model_type)
   {
     yearmonth = as.yearmon("1950-01") + time_months[1]
     print(yearmonth) 
-  }else
+  }else if (model_type$ECOTROPH) # 
+  {
+    yearmonth = as.yearmon("1950-01")
+    print(yearmonth) 
+  } else
   {
     yearmonth = as.yearmon("1601-01") + time_months[1] / 12
     print(yearmonth)
   }
   
   # Convert to months or years
-  if (model_type$DBEM || model_type$MACROECOLOGICAL || model_type$SSDBEM || model_type$ZOOMSS) # these are the  annual model 
+  if (model_type$DBEM || model_type$MACROECOLOGICAL || model_type$SSDBEM || model_type$ZOOMSS || model_type$ECOTROPH) # these are the  annual model 
   {
     time_months = floor(as.numeric(as.yearmon(yearmonth + seq(0, (length(time_months) - 1)))))
   } else
@@ -446,12 +450,12 @@ extractFishCDF <- function(directory,
   
   
   # # trial
-  # variable = variable_to_extract[1]
+  # variable = "Band1"
   # average_whole_period = FALSE
   # time1 = yearmonth1[2]
   # time2 = yearmonth2[2]
-  # convert_to_kg_km = TRUE 
-  # CMIP = 5
+  # convert_to_kg_km = TRUE
+  # CMIP = 6
   
   model_type <- get_model_type(filename)
   
@@ -505,10 +509,20 @@ extractFishCDF <- function(directory,
 
 get_timeSeries<-function(hist, fut126, fut585){
   
+  # hist$fishvar
+  # output[i] == "annula"
+  
   dimnames(hist$fishvar)<-list(hist$lon, hist$lat, hist$years)
+  dim(hist$fishvar)
   if(output[i] == "monthly"){
     hist$fishvar<-hist$fishvar[,,which(hist$years >= "Jan 1971")] # consider only what's needed 
-  }else{
+    }else{
+    
+    # # SOMETHING WRONG HERE for the added files EcoOecana dn ecoTroph .... 
+    # class(hist$years)
+    # yearmon(1787) # no difference .... 
+    # new<-hist$fishvar[,,which(yearmon(hist$years) >= "1971")] 
+    
     hist$fishvar<-hist$fishvar[,,which(hist$years >= "1971")] 
   }
   hist_2<-as.data.frame.table(hist$fishvar) %>%
