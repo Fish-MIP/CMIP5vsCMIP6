@@ -517,12 +517,6 @@ get_timeSeries<-function(hist, fut126, fut585){
   if(output[i] == "monthly"){
     hist$fishvar<-hist$fishvar[,,which(hist$years >= "Jan 1971")] # consider only what's needed 
     }else{
-    
-    # # SOMETHING WRONG HERE for the added files EcoOecana dn ecoTroph .... 
-    # class(hist$years)
-    # yearmon(1787) # no difference .... 
-    # new<-hist$fishvar[,,which(yearmon(hist$years) >= "1971")] 
-    
     hist$fishvar<-hist$fishvar[,,which(hist$years >= "1971")] 
   }
   hist_2<-as.data.frame.table(hist$fishvar) %>%
