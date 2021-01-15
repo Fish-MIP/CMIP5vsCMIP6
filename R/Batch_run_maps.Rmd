@@ -9,21 +9,11 @@ editor_options:
 
 # TO DO 
 
-DBEM before Xmas
-
-APECOSM updated runs ? 
-
 work on DBPM -> check senescence + fix netcdf (OK but see discussion on re-run)
 
 # TO CHECK 
 
-Model average - in particular agreement as it seems not to be meaningful given the other maps (agreement should be high when all model show increases or decreases). also strange white cells along the coasts for CMIP5 agreement - DONE and it seems all OK now able to reproduce Lotze exactly  
-
 Models maps CMIP6 - why do i have to invert matrices?  
-
-CMIPs delta plots maps - not sure what's best to plot 
-
-CMIPs Delta plot scatter - why 'all' is not a reflection of 'ipsl' and 'gfdl'? because you are averaging across all models and protocols, not doing the mean of one averaged protocol vs the other. 
 
 # Load libraries for netcdf and define variables
 
@@ -354,10 +344,10 @@ model_stat<-function(data){
   return(list(model_average = model_average_new, model_sd = model_sd_new, model_agreement = model_agreement_new))
 }
 
-# remove DBEM first but keep option with DBEM just in case 
-data_ipsl_CMIP52<-data_ipsl_CMIP5
-data_ipsl_CMIP5$DBEM<-NULL
-data_gfdl_CMIP5$DBEM<-NULL
+# # remove DBEM first but keep option with DBEM just in case 
+# data_ipsl_CMIP52<-data_ipsl_CMIP5
+# data_ipsl_CMIP5$DBEM<-NULL
+# data_gfdl_CMIP5$DBEM<-NULL
 
 # if you want the plot to be exactly as per Lotze use '2' version of data 
 # data_ipsl_CMIP52$ZooMSS<-NULL
@@ -421,9 +411,21 @@ agreement_CMIP5_all<-plot_FISH_MIP(model_agreement_all_CMIP5, maptitle_agreement
 
 ```
 
+# save outputs ISIMIP2b temp 
+
+```{r}
+
+data_summaries_CMIP5<-res_all
+map_summaries_CMIP5<-list(avarage_CMIP5_all = avarage_CMIP5_all, sd_CMIP5_all = sd_CMIP5_all, agreement_CMIP5_all = agreement_CMIP5_all)
+save(data_ipsl_CMIP5, data_gfdl_CMIP5, map_ipsl585_CMIP5, map_gfdl585_CMIP5, data_summaries_CMIP5, map_summaries_CMIP5, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP5.RData")
+
+```
+
 # Load global ISIMIP3b model data
 
 ```{r load CMIP6}
+
+# run first 2 sections if you are not running the CMIP5 sections
 
 directory <- "/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/"
 
@@ -446,7 +448,7 @@ outputB<-"monthly"
 extensionB<-".nc"
 
 # DBEM ----
-# coming before Xmas 
+# added below
 
 # DBPM ----
 h_yearsDB <- "1850_2014"
@@ -561,7 +563,7 @@ averageFishCDF_EcoTroph<-function(file, time1, time2, average_whole_period = TRU
   time_vector<-time_months
   print(time_months[1])
   print(time_months[length(time_months)])
-  print("but  hist and fut will extract at different time points")
+  # print("but  hist and fut will extract at different time points")
 
   #  opposite of averaging the whole period ... line 488 in original function
   # Create a new matrix to hold the results
@@ -636,9 +638,9 @@ averageFishCDF_EcoOcean<-function(file, time1, time2, average_whole_period = TRU
   
   if(type == "hist"){
     yearmonth = as.yearmon("1949-12") + time_months[1] / 12
-  }else{
-    yearmonth = as.yearmon("2006-01") + time_months[1] / 12
-  }
+    }else{
+      yearmonth = as.yearmon("2006-01") + time_months[1] / 12 # this should be 2015 for CMIP6 but these files adopted CMIP5 convention
+      }
 
   time_months = as.yearmon(yearmonth + seq(0, (length(time_months) - 1)) / 12)     
   tail(time_months)
@@ -692,6 +694,84 @@ diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100
 diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
 
 data_ipsl_CMIP6$EcoOcean<-list(hist = hist, fut126 = fut126, fut585 = fut585, diff_2p6 = diff_2p6, diff_8p5 = diff_8p5)
+
+# add DBEM IPSL ----
+
+# these are RData files similar to EcoOcean but the data layout is very different
+
+averageFishCDF_DBEM<-function(file, time1, time2, average_whole_period = TRUE, convert_to_kg_km = TRUE){
+  
+  # # data_ipsl_CMIP6$BOATS$hist
+  # time1 = time1_h
+  # time2 = time2_h
+  # type = "hist"
+  
+  # Open the netcdf file
+  nc <- file
+  # Extract important information
+  data_attributes <- "tcb"
+  main_title <- "guess"
+  data_units <- "guess"
+    
+  lon <- unique(coord$lon)
+  lat <- unique(coord$lat)
+
+  # time_vector <- convert_model_dates_CMIP6(nc, model_type) 
+  time_months <- seq(1951, 2100)
+  yearmonth = as.yearmon("1951-01")
+
+  time_months = as.yearmon(yearmonth + seq(0, (length(time_months) - 1)))     
+  time_vector<-time_months
+  print(time_months[1])
+  print(time_months[length(time_months)])
+
+  # line 488 in original function
+  # Create a new matrix to hold the results
+  new_var_mat = array(rep(0, length(lon) * length(lat)), c(length(lon), length(lat)))
+      
+  # Get the correct time period to extract
+  tpte = time_period_to_extract(time1, time2, time_vector)
+
+  # Now get the variable of interest
+  # dimension and data format are different than for other models, so need different way of extracting data. GRID CELL X YEAR
+  temp_array1 <-nc[,tpte$start_point_to_extract:tpte$end_point_to_extract]
+  # Extract averages
+  new_var_vec<-rowMeans(temp_array1)
+  new_var_df<-cbind(coord, new_var_vec)
+  new_var_df<-new_var_df[,-1]
+  library(reshape2)
+  new_var_mat<-acast(new_var_df, lon~lat, value.var="new_var_vec")
+  
+  years = paste(as.character(time1_h), "to", as.character(time2_h), sep=" ")
+
+  # this should be done when we know the data units 
+  new_var_mat = new_var_mat * 1000
+  data_units = "kg km-2" 
+    
+  return_list <- list(
+        main_title = main_title,
+        data_units = data_units,
+        lon = lon,
+        lat = lat,
+        years = years,
+        fishvar = new_var_mat
+      )
+}
+
+coord<-read.delim("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/DBEM_RData/Lat_Lon.txt", header = FALSE, sep = ",")
+colnames(coord)<-c("grid", "lon", "lat")
+file<-load("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/DBEM_RData/C6IPSL26F0_t2_Abd.RData")
+file<-sppfnlmap
+hist<-averageFishCDF_DBEM(file, time1_h, time2_h)
+fut126<-averageFishCDF_DBEM(file, time1_f, time2_f)
+file<-load("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/DBEM_RData/C6IPSL85F0_t2_Abd.RData")
+file<-sppfnlmap
+fut585<-averageFishCDF_DBEM(file, time1_f, time2_f)
+
+diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100  
+diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
+
+data_ipsl_CMIP6$DBEM<-list(hist = hist, fut126 = fut126, fut585 = fut585, diff_2p6 = diff_2p6, diff_8p5 = diff_8p5)
 
 # extract data GFDL ---- 
 
@@ -768,6 +848,21 @@ diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
 
 data_gfdl_CMIP6$EcoOcean<-list(hist = hist, fut126 = fut126, fut585 = fut585, diff_2p6 = diff_2p6, diff_8p5 = diff_8p5)
 
+# add DBEM IPSL ----
+
+file<-load("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/DBEM_RData/C6GFDL26F0_t2_Abd.RData")
+file<-sppfnlmap
+hist<-averageFishCDF_DBEM(file, time1_h, time2_h)
+fut126<-averageFishCDF_DBEM(file, time1_f, time2_f)
+file<-load("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/DBEM_RData/C6GFDL85F0_t2_Abd.RData")
+file<-sppfnlmap
+fut585<-averageFishCDF_DBEM(file, time1_f, time2_f)
+
+diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100  
+diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
+
+data_gfdl_CMIP6$DBEM<-list(hist = hist, fut126 = fut126, fut585 = fut585, diff_2p6 = diff_2p6, diff_8p5 = diff_8p5)
+
 ```
 
 # Plot global ISIMIP3b model outputs
@@ -776,8 +871,7 @@ data_gfdl_CMIP6$EcoOcean<-list(hist = hist, fut126 = fut126, fut585 = fut585, di
 
 ########## first you need to FLIP MATRICES 
 
-fliplr_matrix<- function(data_to_flip)
-{
+fliplr_matrix<- function(data_to_flip){
   temp= data_to_flip
   for (ii in 1:dim(data_to_flip)[2])
     data_to_flip[,ii] = temp[,dim(data_to_flip)[2] - ii + 1]
@@ -838,8 +932,14 @@ data_ipsl_CMIP6$EcoOcean$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP6$EcoOcean
 data_ipsl_CMIP6$EcoOcean$diff_2p6<- fliplr_matrix(data_ipsl_CMIP6$EcoOcean$diff_2p6)
 data_ipsl_CMIP6$EcoOcean$diff_8p5<- fliplr_matrix(data_ipsl_CMIP6$EcoOcean$diff_8p5)
 
-move_hemispheres<- function(data_to_flip)
-{
+data_ipsl_CMIP6$DBEM$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP6$DBEM$hist$fishvar)
+data_ipsl_CMIP6$DBEM$fut126$fishvar<- fliplr_matrix(data_ipsl_CMIP6$DBEM$fut126$fishvar)
+data_ipsl_CMIP6$DBEM$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP6$DBEM$fut585$fishvar)
+data_ipsl_CMIP6$DBEM$diff_2p6<- fliplr_matrix(data_ipsl_CMIP6$DBEM$diff_2p6)
+data_ipsl_CMIP6$DBEM$diff_8p5<- fliplr_matrix(data_ipsl_CMIP6$DBEM$diff_8p5)
+
+
+move_hemispheres<- function(data_to_flip){
   temp= data_to_flip
   data_to_flip[1:180,] = temp[181:360,]
   data_to_flip[181:360,] = temp[1:180,]
@@ -853,14 +953,15 @@ data_ipsl_CMIP6$EcoOcean$diff_2p6<- move_hemispheres(data_ipsl_CMIP6$EcoOcean$di
 data_ipsl_CMIP6$EcoOcean$diff_8p5<- move_hemispheres(data_ipsl_CMIP6$EcoOcean$diff_8p5)
 
 map_ipsl585_CMIP6<-list()
-
 names(data_ipsl_CMIP6)
+
+model_type_ipsl<-ifelse(names(data_ipsl_CMIP6) == "DBEM","DBEM", NA) # this is because DBEM need to be plotted in 0.5 deg
 
 for (i in 1:length(data_ipsl_CMIP6)){ 
   
   # i = 1
   tit <- paste(names(data_ipsl_CMIP6)[i], "IPSL RCP8.5 no-fishing percentage change", variable_to_extract[1], data_ipsl_CMIP6[[i]]$hist$data_units, cmip[2], sep =" ")
-  map_ipsl585_CMIP6[[i]]<-plot_FISH_MIP(data_ipsl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)")
+  map_ipsl585_CMIP6[[i]]<-plot_FISH_MIP(data_ipsl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)", model_type = model_type_ipsl[i])
   names(map_ipsl585_CMIP6)[[i]]<-names(data_ipsl_CMIP6)[[i]]
   
   rm(tit)
@@ -868,6 +969,7 @@ for (i in 1:length(data_ipsl_CMIP6)){
 }
 
 names(map_ipsl585_CMIP6)
+# map_ipsl585_CMIP6$DBEM
 
 # plot GFDL ----
 
@@ -897,14 +999,19 @@ data_gfdl_CMIP6$EcoTroph$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$EcoTroph
 data_gfdl_CMIP6$EcoTroph$diff_2p6<- fliplr_matrix(data_gfdl_CMIP6$EcoTroph$diff_2p6)
 data_gfdl_CMIP6$EcoTroph$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$EcoTroph$diff_8p5)
 
-# flip matrix
 data_gfdl_CMIP6$EcoOcean$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$EcoOcean$hist$fishvar)
 data_gfdl_CMIP6$EcoOcean$fut126$fishvar<- fliplr_matrix(data_gfdl_CMIP6$EcoOcean$fut126$fishvar)
 data_gfdl_CMIP6$EcoOcean$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$EcoOcean$fut585$fishvar)
 data_gfdl_CMIP6$EcoOcean$diff_2p6<- fliplr_matrix(data_gfdl_CMIP6$EcoOcean$diff_2p6)
 data_gfdl_CMIP6$EcoOcean$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$EcoOcean$diff_8p5)
 
-# move emisphere  
+data_gfdl_CMIP6$DBEM$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$DBEM$hist$fishvar)
+data_gfdl_CMIP6$DBEM$fut126$fishvar<- fliplr_matrix(data_gfdl_CMIP6$DBEM$fut126$fishvar)
+data_gfdl_CMIP6$DBEM$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$DBEM$fut585$fishvar)
+data_gfdl_CMIP6$DBEM$diff_2p6<- fliplr_matrix(data_gfdl_CMIP6$DBEM$diff_2p6)
+data_gfdl_CMIP6$DBEM$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$DBEM$diff_8p5)
+
+# move hemisphere  
 data_gfdl_CMIP6$EcoOcean$hist$fishvar<- move_hemispheres(data_gfdl_CMIP6$EcoOcean$hist$fishvar)
 data_gfdl_CMIP6$EcoOcean$fut126$fishvar<- move_hemispheres(data_gfdl_CMIP6$EcoOcean$fut126$fishvar)
 data_gfdl_CMIP6$EcoOcean$fut585$fishvar<- move_hemispheres(data_gfdl_CMIP6$EcoOcean$fut585$fishvar)
@@ -914,11 +1021,13 @@ data_gfdl_CMIP6$EcoOcean$diff_8p5<- move_hemispheres(data_gfdl_CMIP6$EcoOcean$di
 map_gfdl585_CMIP6<-list()
 names(data_gfdl_CMIP6)
 
+model_type_gfdl<-ifelse(names(data_gfdl_CMIP6) == "DBEM","DBEM", NA) # this is because DBEM need to be plotted in 0.5 deg
+
 for (i in 1:length(data_gfdl_CMIP6)){ 
   
   # i = 1
   tit <- paste(names(data_gfdl_CMIP6)[i], "GFDL RCP8.5 no-fishing percentage change", variable_to_extract[1], data_gfdl_CMIP6[[i]]$hist$data_units, cmip[2], sep =" ")
-  map_gfdl585_CMIP6[[i]]<-plot_FISH_MIP(data_gfdl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)")
+  map_gfdl585_CMIP6[[i]]<-plot_FISH_MIP(data_gfdl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)", model_type = model_type_gfdl[i])
   names(map_gfdl585_CMIP6)[[i]]<-names(data_gfdl_CMIP6)[[i]]
   
   rm(tit)
@@ -926,6 +1035,7 @@ for (i in 1:length(data_gfdl_CMIP6)){
 }
 
 names(map_gfdl585_CMIP6)
+# map_gfdl585_CMIP6$EcoOcean
 
 ```
 
@@ -935,10 +1045,15 @@ names(map_gfdl585_CMIP6)
 
 # RCP 8.5
 # # MAKE SURE THAT ALL MATRICES ARE ON ONE DEGREE SCALE - if not see CMIP5 above for DBEM 
+lons_to_use = seq(1,719,2)
+lats_to_use = seq(1,359,2)
 
-# remove DBEM first 
-data_ipsl_CMIP6$DBEM<-NULL
-data_gfdl_CMIP6$DBEM<-NULL
+data_ipsl_CMIP6$DBEM$diff_8p5 = data_ipsl_CMIP6$DBEM$diff_8p5[lons_to_use, lats_to_use] 
+data_gfdl_CMIP6$DBEM$diff_8p5 = data_gfdl_CMIP6$DBEM$diff_8p5[lons_to_use, lats_to_use] 
+
+# # remove DBEM first 
+# data_ipsl_CMIP6$DBEM<-NULL
+# data_gfdl_CMIP6$DBEM<-NULL
 
 # res_ipsl<-model_stat(data_ipsl_CMIP6)
 # model_average_ipsl_CMIP6<-res_ipsl$model_average
@@ -984,6 +1099,27 @@ maptitle_agreement = paste("Agreement RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
 avarage_CMIP6_all<-plot_FISH_MIP(model_average_all_CMIP6, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
 sd_CMIP6_all<-plot_FISH_MIP(model_sd_all_CMIP6, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
 agreement_CMIP6_all<-plot_FISH_MIP(model_agreement_all_CMIP6, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)") 
+
+```
+
+# save outputs ISIMIP3b temp 
+
+```{r}
+
+data_summaries_CMIP6<-res_all
+map_summaries_CMIP6<-list(avarage_CMIP6_all = avarage_CMIP6_all, sd_CMIP6_all = sd_CMIP6_all, agreement_CMIP6_all = agreement_CMIP6_all)
+save(data_ipsl_CMIP6, data_gfdl_CMIP6, map_ipsl585_CMIP6, map_gfdl585_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP6.RData")
+
+```
+
+# load data 
+
+```{r}
+
+rm(list=ls())
+load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP5.RData")
+load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP6.RData")
+save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/figs/"
 
 ```
 
@@ -1159,26 +1295,28 @@ dev.off()
 # can do with  GFDL too 
 
 layout <- "
-AB
+AB 
 CD
 EF
-G#
-HI
-JK
-#L
-#M
+GH
+IJ
+KL
+MN
+#O
+#P
 "
-pt<-map_ipsl585_CMIP5$DBPM + map_ipsl585_CMIP6$DBPM + 
-    map_ipsl585_CMIP5$MACROECOLOGICAL + map_ipsl585_CMIP6$MACROECOLOGICAL+  
-    # map_ipsl585_CMIP5$DBEM +
-    map_ipsl585_CMIP5$APECOSM + map_ipsl585_CMIP6$APECOSM +
-    map_ipsl585_CMIP5$EcoOcean + map_ipsl585_CMIP6$EcoOcean +
-    map_ipsl585_CMIP5$BOATS+ map_ipsl585_CMIP6$BOATS +
-    map_ipsl585_CMIP5$ZooMSS + map_ipsl585_CMIP6$ZooMSS +
-    map_ipsl585_CMIP6$FEISTY +
-    map_ipsl585_CMIP6$EcoTroph +
+pt<-map_ipsl585_CMIP5$DBPM + map_ipsl585_CMIP6$DBPM + # AB
+    map_ipsl585_CMIP5$MACROECOLOGICAL + map_ipsl585_CMIP6$MACROECOLOGICAL +# CD
+    map_ipsl585_CMIP5$DBEM + map_ipsl585_CMIP6$DBEM + # EF
+    map_ipsl585_CMIP5$APECOSM + map_ipsl585_CMIP6$APECOSM + # EF
+    map_ipsl585_CMIP5$EcoOcean + map_ipsl585_CMIP6$EcoOcean + # GH
+    map_ipsl585_CMIP5$BOATS+ map_ipsl585_CMIP6$BOATS + # IJ
+    map_ipsl585_CMIP5$ZooMSS + map_ipsl585_CMIP6$ZooMSS + # KL
+    map_ipsl585_CMIP6$FEISTY + # #M
+    map_ipsl585_CMIP6$EcoTroph + # #N
   plot_layout(design = layout)
-
+    
+    
 pt<-pt + plot_annotation(
   title = 'Change in tcb 1990s-2090s, IPSL RCP8.5 CMIP5 vs CMIP6
   ',
