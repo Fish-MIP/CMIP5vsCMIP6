@@ -521,6 +521,10 @@ get_timeSeries<-function(hist, fut126, fut585){
   }
   hist_2<-as.data.frame.table(hist$fishvar) %>%
     `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+    # weight by grid area (smaller at higher lats)
+    mutate(lat = as.numeric(as.character(lat))) %>% 
+    mutate(lat2 = cos(abs(lat) * (pi/180))) %>% # transom lat in radiant and calculate cosine. These values are not 0-1 because lats are not 0-90 but 0.5-89.5 (midpoint of the grid cell)
+    mutate(tcb = tcb * lat2) %>% 
     mutate(year = round(as.numeric(as.character(year1)))) %>%
     group_by(year) %>% 
     dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
@@ -539,6 +543,9 @@ get_timeSeries<-function(hist, fut126, fut585){
   }
   fut126_2<-as.data.frame.table(fut126$fishvar) %>% 
     `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+    mutate(lat = as.numeric(as.character(lat))) %>% 
+    mutate(lat2 = cos(abs(lat) * (pi/180))) %>% 
+    mutate(tcb = tcb * lat2) %>% 
     mutate(year = round(as.numeric(as.character(year1)))) %>%
     group_by(year) %>% 
     dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
@@ -565,6 +572,9 @@ get_timeSeries<-function(hist, fut126, fut585){
   }
   fut585_2<-as.data.frame.table(fut585$fishvar) %>%
     `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+    mutate(lat = as.numeric(as.character(lat))) %>% 
+    mutate(lat2 = cos(abs(lat) * (pi/180))) %>% 
+    mutate(tcb = tcb * lat2) %>% 
     mutate(year = round(as.numeric(as.character(year1)))) %>%
     group_by(year) %>% 
     dplyr::summarise(tcb = mean(tcb, na.rm=TRUE)) %>% 
@@ -598,13 +608,28 @@ averageEnvironmentalCDF <-
            convert_to_kg_km = TRUE, hist = TRUE, ipsl = FALSE)
   {
     
-    model_type <- get_model_type(filename)
+    # directory = "/Users/camillan/fishmip_inputs/marine-fishery_global_ISIMIP3b/"
+    # filename= "ipsl-cm6a-lr_r1i1p1f1_historical_tos_onedeg_global_monthly_1850_2014.nc"
+    # variable = "tos"
+    # time1 = as.yearmon("1990-01")
+    # time2 = as.yearmon("1999-12")
+    # average_whole_period = FALSE
+    # convert_to_kg_km = TRUE # I don't understand this .... 
+    # hist = TRUE
+    # ipsl = TRUE
+      
+    
+    
+    
+    
+    model_type <- get_model_type(filename) # I don't understand this as it's not an ecosystem model but an earth model ... 
     
     # Open the netcdf file
-    nc <- nc_open(paste(directory, filename, sep = "\\"))
+    nc <- nc_open(paste0(directory, filename))
     
     # Look at the attributes and dimensions
     # print(nc)
+    # nc$var
     
     # Extract important information
     data_attributes <- ncatt_get(nc, variable)
@@ -612,34 +637,56 @@ averageEnvironmentalCDF <-
     main_title <- data_attributes$long_field_name
     data_units <- data_attributes$units
     
-    if (!ipsl)
-    {
-      lon <- ncvar_get(nc, "LONGITUDE")
-      lat <- ncvar_get(nc, "LATITUDE")
-      
-      time_vector <-  ncvar_get(nc, "TIME")
-    } else
-    {
-      lon <- ncvar_get(nc, "longitude")
-      lat <- ncvar_get(nc, "latitude")
-      
-      time_vector <-  ncvar_get(nc, "time")      
+    # maybe CMIP%? 
+    # if (!ipsl)
+    # {
+    #   lon <- ncvar_get(nc, "LONGITUDE")
+    #   lat <- ncvar_get(nc, "LATITUDE")
+    #   
+    #   time_vector <-  ncvar_get(nc, "TIME")
+    # } else
+    # {
+    #   lon <- ncvar_get(nc, "longitude")
+    #   lat <- ncvar_get(nc, "latitude")
+    #   
+    #   time_vector <-  ncvar_get(nc, "time")      
+    # }
+    
+    lon <- ncvar_get(nc, "lon")
+    lat <- ncvar_get(nc, "lat")
+    time_vector <- ncvar_get(nc, "time")
+
+    # maybe CMIP5? 
+    # if (hist)
+    # {
+    #   yearmonth = as.yearmon("1950-01") + time_vector[1] 
+    #   print(yearmonth)    
+    #   time_months = floor(as.numeric(as.yearmon(yearmonth + seq(0, (length(time_vector) - 1)))))
+    #   time_vector <- time_months
+    # } else
+    # {
+    #   yearmonth = as.yearmon("2006-01") + time_vector[1] 
+    #   print(yearmonth)    
+    #   time_months = floor(as.numeric(as.yearmon(yearmonth + seq(0, (length(time_vector) - 1)))))
+    #   time_vector <- time_months      
+    # }
+    
+    # CMIP6 - it starts in 2988.5
+    # months since 1601-1-1 00:00:00
+    # gregorian
+    
+    # dim(time_vector) # 1980 
+    # 1850_2014, 165 years *12 months = 1980 data points 
+    
+    # if hist 
+    if(hist == TRUE){
+      yearmonth = as.yearmon("1850-1-1") + 0.08333333 # is this 0.0833 necessary? should we just start extracting from Jan? 
+    }else{
+      yearmonth = as.yearmon("2015-1-1") + 0.08333333
     }
     
-
-    if (hist)
-    {
-      yearmonth = as.yearmon("1950-01") + time_vector[1] 
-      print(yearmonth)    
-      time_months = floor(as.numeric(as.yearmon(yearmonth + seq(0, (length(time_vector) - 1)))))
-      time_vector <- time_months
-    } else
-    {
-      yearmonth = as.yearmon("2006-01") + time_vector[1] 
-      print(yearmonth)    
-      time_months = floor(as.numeric(as.yearmon(yearmonth + seq(0, (length(time_vector) - 1)))))
-      time_vector <- time_months      
-    }
+    time_months = as.yearmon(yearmonth + seq(0, (length(time_vector) - 1)) / 12)
+    time_vector <- time_months
     
     # Extract averages
     if (!average_whole_period)
@@ -665,9 +712,11 @@ averageEnvironmentalCDF <-
       new_var_mat = array(rep(0, num_years * length(lon) * length(lat)),
                           c(length(lon), length(lat), num_years))
       
+      dim(new_var_mat)
+      
       # Now get the variable of interest
       if (names(nc$dim)[length(nc$dim)] != "TIME")
-        print("Warning: might be assuming wrong dimension for time from NetCDF file")
+        print("Warning: might be assuming wrong dimension for time from NetCDF file") # CN don't understand this!
       ta1 <- 
         ncvar_get(nc, variable)[, , ]
       temp_array1 <-
@@ -729,11 +778,12 @@ averageEnvironmentalCDF <-
       years = paste(as.character(time1), "to", as.character(time2), sep=" ")
     }
     
-    if(can_model_units_be_standardized(data_units, convert_to_kg_km))
-    {
-      new_var_mat = new_var_mat * 1000
-      data_units = "kg C km-2"
-    }
+    # CN don't understand this - maybe for phy, zoo and PP?
+    # if(can_model_units_be_standardized(data_units, convert_to_kg_km))
+    # {
+    #   new_var_mat = new_var_mat * 1000
+    #   data_units = "kg C km-2"
+    # }
     
     return_list <-
       list(
