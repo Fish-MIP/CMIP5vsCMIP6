@@ -9,6 +9,8 @@ editor_options:
 
 # TO DO 
 
+weight agreement between CMIP5 and CMIP6 by change - line 1240 and diary 
+
 work on DBPM -> check senescence + fix netcdf (OK but see discussion on re-run)
 
 # TO CHECK 
@@ -1116,7 +1118,7 @@ save(data_ipsl_CMIP6, data_gfdl_CMIP6, map_ipsl585_CMIP6, map_gfdl585_CMIP6, dat
 
 ```{r}
 
-rm(list=ls())
+# rm(list=ls())
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP5.RData")
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP6.RData")
 save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/figs/"
@@ -1129,6 +1131,7 @@ save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/figs/"
 
 # get lat and long from random file 
 filename<-"ZooMSS/_tmp/gfdl-esm4/future/zoomss_gfdl-esm4_nobasd_ssp585_nat_default_tcb_global_annual_2015_2100.nc"
+directory <- "/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/"
 nc <- nc_open(paste(directory, filename, sep = ""))
 longitude <- ncvar_get(nc, "lon")
 latitude <- ncvar_get(nc, "lat")
@@ -1140,8 +1143,8 @@ delta_sd_limits = c(0,100)
 
 delta_fun<-function(data5, data6, plot_limits = delta_limits, labels){
   
-  data5 = model_average_all_CMIP5
-  data6 = model_average_all_CMIP6
+  # data5 = model_average_all_CMIP5
+  # data6 = model_average_all_CMIP6
   
   # transform in df with lat and long 
   delta_CMIP5<-as.data.frame(data5) %>% 
@@ -1196,19 +1199,18 @@ delta_fun<-function(data5, data6, plot_limits = delta_limits, labels){
 # delta_average_gfdl<-delta_fun(model_average_gfdl_CMIP5, model_average_gfdl_CMIP6, delta_average_limits, labels = c("Biomass mean % change GFDL RCP 8.5 CMIP5","Biomass mean % change GFDL RCP 8.5 CMIP6"))
 # delta_sd_gfdl<-delta_fun(model_sd_gfdl_CMIP5, model_sd_gfdl_CMIP6, delta_sd_limits, labels = c("Biomass SD IPSL RCP 8.5 CMIP5","Biomass SD IPSL RCP 8.5 CMIP6"))
 
-delta_average_all<-delta_fun(model_average_all_CMIP5, model_average_all_CMIP6, delta_average_limits,labels = c("Biomass mean % change RCP 8.5 CMIP5","Biomass mean % change RCP 8.5 CMIP6"))
-delta_sd_all<-delta_fun(model_sd_all_CMIP5, model_sd_all_CMIP6, delta_sd_limits, labels = c("Biomass SD IPSL RCP 8.5 CMIP5","Biomass SD IPSL RCP 8.5 CMIP6"))
+delta_average_all<-delta_fun(data_summaries_CMIP5$model_average, data_summaries_CMIP6$model_average, delta_average_limits,labels = c("Biomass mean % change RCP 8.5 CMIP5","Biomass mean % change RCP 8.5 CMIP6"))
+delta_sd_all<-delta_fun(data_summaries_CMIP5$model_sd, data_summaries_CMIP6$model_sd, delta_sd_limits, labels = c("Biomass SD IPSL RCP 8.5 CMIP5","Biomass SD IPSL RCP 8.5 CMIP6"))
 
 # delta map 
-
-# option 1 - subtract (julia)
-delta_map_data_all<-model_average_all_CMIP6 - model_average_all_CMIP5
+# option 1 - subtract (julia) - OK
+delta_map_data_all<-data_summaries_CMIP6$model_average - data_summaries_CMIP5$model_average
 maptitle_detla<-"Delta (CMIP6 change - CMIP5 change)"
 delta_map_all_difference<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-50, 50), colour_scheme = c("#fdb863", "#f7f7f7","#b2abd2"), coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 5) 
 # if 1 - 5 = -4 # CMIP6 decreased 4 times
 # if 1 - (-5) = 6 # CMIP6 increased 6 times 
 # if -1 - 5 = -6 # CMIP6 decreased 6 times 
-# if -1 - (-5) = 4 # CMIP increased 4 times # it means that CMIP6 
+# if -1 - (-5) = 4 # CMIP6 increased 4 times 
 # e.g. 
 # model_average_all_CMIP5 = -5 (tcb 5% decrease between 1990 and 2090) # where model_average_all_CMIP5 is the mean of diff_8p5 (diff in tcb between the 2 decades) across all models
 # model_average_all_CMIP6 = -3 (tcb 3% decrease between 1990 and 2090)
@@ -1222,9 +1224,10 @@ delta_map_all_difference<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-5
 # # if 1/-5*100 - 100 = -120% # CMIP6 decreased - WRONG
 
 # option 3 percentage - same as Julia above if you do abs() but less meaningful as inputs are already % 
-delta_map_data_all<-((model_average_all_CMIP6 - model_average_all_CMIP5)/abs(model_average_all_CMIP5)) * 100 
-maptitle_detla<-"Delta (((CMIP6 change - CMIP5 change)/|CMIP5 change|) * 100)"
-delta_map_all_percentage<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-100, 100), colour_scheme = c("#fdb863", "#f7f7f7","#b2abd2"), coltitle = "(%) Difference \nin \nchange \n", legend_ticks = 5)
+# TO DO - DELETE
+# delta_map_data_all<-((model_average_all_CMIP6 - model_average_all_CMIP5)/abs(model_average_all_CMIP5)) * 100
+# maptitle_detla<-"Delta (((CMIP6 change - CMIP5 change)/|CMIP5 change|) * 100)"
+# delta_map_all_percentage<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-100, 100), colour_scheme = c("#fdb863", "#f7f7f7","#b2abd2"), coltitle = "(%) Difference \nin \nchange \n", legend_ticks = 5)
 # if ((1 - 5)/5)*100 = -80 # CMIP6 decreased 4 times
 # if ((1 - -5)/5)*100 = 120 # CMIP6 increased 6 times 
 # if ((-1 - 5)/-5)*100 = 120 # WRONG
@@ -1234,9 +1237,15 @@ delta_map_all_percentage<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-1
 
 # agreement on the direction of change between CMIPs see model_stat. this gives 100%  agreement if biomass in both cmips is decreasing/increasing and 50% is they disagree... (agreement on the direction of change....but  does not tell you which direction.)
 # create array with both matrices 
-trial<-array(NA, dim=c(dim(model_average_all_CMIP5)[1],dim(model_average_all_CMIP5)[2],2))
-trial[,,1]<-model_average_all_CMIP5
-trial[,,2]<-model_average_all_CMIP6
+# TO DO - weight according to degree of change or used delta as an alpha factor
+
+
+
+
+
+trial<-array(NA, dim=c(dim(data_summaries_CMIP5$model_average)[1],dim(data_summaries_CMIP5$model_average)[2],2))
+trial[,,1]<-data_summaries_CMIP5$model_average
+trial[,,2]<-data_summaries_CMIP6$model_average
 # apply model_stat code to calculate agreement in biomass changes between cmips
 temp<-apply(trial, c(1,2), function(x) length(x[which(x>0)])) 
 temp2<-apply(trial, c(1,2), function(x) length(x[which(!is.na(x))])) #
@@ -1274,7 +1283,6 @@ library(patchwork)
 layout <- "
 AB
 CD
-E#
 "
 
 # see what's already there 
@@ -1282,9 +1290,8 @@ E#
 # avarage_CMIP6_all<-avarage_CMIP6_all + ggtitle("B") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
 # delta_map_all<-delta_map_all + ggtitle("C") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
-pt<-avarage_CMIP5_all + avarage_CMIP6_all + 
-  delta_map_all_difference + delta_map_all_percentage +
-  delta_map_all_agreement +
+pt<-map_summaries_CMIP5$avarage_CMIP5_all + map_summaries_CMIP6$avarage_CMIP6_all + 
+  delta_map_all_difference + delta_map_all_agreement +
   plot_layout(design = layout)
 
 pdf(paste0(save_loc,"Fig2.pdf"), height=10, width=15)
