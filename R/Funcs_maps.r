@@ -18,7 +18,7 @@ plot_FISH_MIP <- function(data_to_plot,
                           legend_ticks = 5){
   
   # # trial
-  # data_ipsl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)"
+  # data_ipsl_CMIP5[[1]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)"
   # data_to_plot = data_ipsl_CMIP6$BOATS$diff_8p5
   # data_title = "A"
   # colour_scheme = colour_scheme2

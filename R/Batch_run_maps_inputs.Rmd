@@ -1,0 +1,461 @@
+---
+title: "Plotting global models inputs"
+author: "Camilla Novaglio"
+date: "02/02/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# TO DO 
+
+# Load libraries for netcdf and define variables
+
+```{r load CMIP5}
+
+rm(list=ls())
+library(grid)
+library(zoo)
+library(viridis)
+library(tidyr)
+library(dplyr)
+
+source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
+source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
+
+# saving outputs location  
+save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/figs/"
+
+# variables - TO CHANGE 
+cmip<-c("CMIP5", "CMIP6")
+protocol <- c("picontrol","historical", "future")
+future<-c("SSP126", "SSP585")
+```
+
+# load libraries for plotting and define criteria 
+
+```{r}
+
+# Define color/legend limits 
+main_plot_colour_values_tos = c(0,30) # C and following Ryan paper  
+
+# for CMIP6.... units checked by checking max and min in 2030 for each variable # MAX are too high for all variables ...   num_dp = 0 inside the plotting function can be used to regulate the digits
+main_plot_colour_values_pp = c(1.7e-09,3e-06) # mol m-2 s-1 # ryan paper is in mg C m-2 d-1
+main_plot_colour_values_phyto = c(0.014, 0.37) # mol m-2 # ryan paper is in mg C m-2
+main_plot_colour_values_zoo = c(0.0031,0.53) # mol m-2 # ryan paper is in mg C m-2
+delta_plot_colour_values = c(-50,50)
+
+# define a color scheme 
+colour_scheme1 <- c(low = 'white', mid = "skyblue1",  high = 'royalblue1')
+colour_scheme2 <- c(low = 'red', mid = "white",  high = 'royalBlue1')
+
+# Download and process world outline
+library(sf)
+library(rnaturalearth)
+library("rgeos")
+world <- ne_countries(scale = "medium", returnclass = "sf")
+robCRS <- CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+world_sf <- st_transform(world, crs = st_crs(robCRS)) # Convert to different CRS
+
+```
+
+# Load ISIMIP3b inputs 
+
+```{r}
+
+# CMIP6 data location
+directory = "/Users/camillan/fishmip_inputs/marine-fishery_global_ISIMIP3b/"
+
+# extract data IPSL ---- 
+
+variable_to_extract <-c("tos", "intpp", "phyc-vint", "zooc-vint")
+
+yearmonth1<- as.yearmon("1990-01")
+yearmonth2<- as.yearmon("1999-12")
+
+yearmonth1_fut<- as.yearmon("2090-01")
+yearmonth2_fut<- as.yearmon("2099-12")
+
+data_ipsl_CMIP6<-list()
+
+for (i in 1:length(variable_to_extract)){
+
+  filename<-paste0("ipsl-cm6a-lr_r1i1p1f1_historical_", variable_to_extract[i],"_onedeg_global_monthly_1850_2014.nc")
+  
+  hist<- averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1, yearmonth2, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = TRUE)
+  
+  filename<-paste0("ipsl-cm6a-lr_r1i1p1f1_ssp126_", variable_to_extract[i],"_onedeg_global_monthly_2015_2100.nc")
+  
+  fut126<-averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = FALSE)
+  
+  filename<-paste0("ipsl-cm6a-lr_r1i1p1f1_ssp585_", variable_to_extract[i],"_onedeg_global_monthly_2015_2100.nc")
+  
+  fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = FALSE)
+  
+  fut585_2030<-averageEnvironmentalCDF(directory, filename , variable_to_extract[i], as.yearmon("2030-01"), as.yearmon("2030-12"), average_whole_period = FALSE, convert_to_kg_km = FALSE, hist = FALSE) # mean annual temp in 2030
+  fut585_2030<-fut585_2030$fishvar[,,1]
+  
+  diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100
+  diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
+  
+  data_ipsl_CMIP6[[i]]<-list(hist = hist, fut126 = fut126, fut585_2030 = fut585_2030, fut585 = fut585, diff_2p6 = diff_2p6, diff_8p5 = diff_8p5)
+  names(data_ipsl_CMIP6)[[i]]<-variable_to_extract[[i]]
+  
+  rm(hist, fut126, fut585, fut585_2030, diff_2p6, diff_8p5)
+ 
+}
+
+names(data_ipsl_CMIP6)
+
+# calcualte data ranges: 
+min(data_ipsl_CMIP5$`zooc-vint`$fut585_2030, na.rm = TRUE)
+
+# extract data GFDL ---- 
+
+data_gfdl_CMIP6<-list()
+
+for (i in 1:length(variable_to_extract)){
+
+  filename<-paste0("gfdl-esm4_r1i1p1f1_historical_", variable_to_extract[i],"_onedeg_global_monthly_1850_2014.nc")
+  
+  hist<- averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1, yearmonth2, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = TRUE)
+  
+  filename<-paste0("gfdl-esm4_r1i1p1f1_ssp126_", variable_to_extract[i],"_onedeg_global_monthly_2015_2100.nc")
+  
+  fut126<- averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = FALSE)
+  
+  filename<-paste0("gfdl-esm4_r1i1p1f1_ssp585_", variable_to_extract[i],"_onedeg_global_monthly_2015_2100.nc")
+  
+  fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = FALSE)
+  
+  fut585_2030<-averageEnvironmentalCDF(directory, filename , variable_to_extract[i], as.yearmon("2030-01"), as.yearmon("2030-12"), average_whole_period = FALSE, convert_to_kg_km = FALSE, hist = FALSE) # mean annual temp in 2030
+  fut585_2030<-fut585_2030$fishvar[,,1]
+  
+  diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100
+  diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
+  
+  data_gfdl_CMIP6[[i]]<-list(hist = hist, fut126 = fut126,  fut585_2030 = fut585_2030, fut585 = fut585, diff_2p6 = diff_2p6, diff_8p5 = diff_8p5)
+  names(data_gfdl_CMIP6)[[i]]<-variable_to_extract[[i]]
+  
+  rm(hist, fut126, fut585, diff_2p6, diff_8p5, fut585_2030)
+ 
+}
+
+names(data_gfdl_CMIP6)
+
+```
+
+# Plot ISIMIP3b inputs
+
+```{r map CMIP6}
+
+## plot IPSL ----
+
+titles<-c("Sea surface temperature", "Net primary production","Phytoplankton carbon","Zooplankton carbon")
+coltitles<-c("C", "mol m-2 s-1","mol m-2","mol m-2") # transform these?! legend is not coming up as it should - also tweek values? 
+color<-list(main_plot_colour_values_tos, main_plot_colour_values_pp, main_plot_colour_values_phyto, main_plot_colour_values_zoo) 
+
+map_ipsl585_CMIP6<-list()
+map_ipsl585_CMIP6_2030<-list()
+
+for (i in 1:length(data_ipsl_CMIP6)){ 
+  
+  tit <- paste("IPSL RCP8.5", titles[i], "change (1990s vs 2090s)",cmip[2],sep =" ")
+  map_ipsl585_CMIP6[[i]]<-plot_FISH_MIP(data_ipsl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "change \n (%)", model_type = NA)
+  names(map_ipsl585_CMIP6)[[i]]<-variable_to_extract[[i]]
+  
+  tit <- paste("IPSL RCP8.5", titles[i], "in 2030", cmip[2], sep =" ") # can change year....
+  map_ipsl585_CMIP6_2030[[i]]<-plot_FISH_MIP(data_ipsl_CMIP6[[i]]$fut585_2030, tit, color[[i]], colour_scheme = colour_scheme2, coltitle = coltitles[i], model_type = NA)
+  names(map_ipsl585_CMIP6_2030)[[i]]<-variable_to_extract[[i]]
+
+  rm(tit)
+  
+}
+
+names(map_ipsl585_CMIP6)
+map_ipsl585_CMIP6_2030$intpp
+
+
+##### Arrivata qui - to update according to above plotting loop for ipsl
+
+
+
+### plot GFDL ----
+
+map_gfdl585_CMIP6<-list()
+
+for (i in 1:length(data_gfdl_CMIP6)){ 
+  
+  tit <- paste("GFDL RCP8.5", titles[i], cmip[2], sep =" ")
+  map_gfdl585_CMIP6[[i]]<-plot_FISH_MIP(data_gfdl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = coltitles[i], model_type = NA)
+  names(map_gfdl585_CMIP6)[[i]]<-variable_to_extract[[i]]
+  
+  tit <- paste("GFDL RCP8.5", titles[i], "in 2030", cmip[2], sep =" ")
+  map_gfdl585_CMIP6[[i]]<-plot_FISH_MIP(data_gfdl_CMIP6[[i]]$fut585_2030, tit, color[i], colour_scheme = colour_scheme2, coltitle = titles[i], model_type = NA)
+  names(map_gfdl585_CMIP6)[[i]]<-variable_to_extract[[i]]
+  
+  rm(tit)
+  
+}
+
+names(map_gfdl585_CMIP6)
+
+```
+
+# Model average for CMIP6
+
+Do we need this (mean between earth models)?? if so, need to adjust the code for input data rather than model output data
+
+```{r}
+
+model_stat<-function(data){
+  
+  # data =
+
+  X <- lapply(data, `[[`, 'diff_8p5')
+  X <- lapply(X, function(x) replace(x, !is.finite(x), NA))
+  Y <- do.call(cbind, X)
+  Y <- array(Y, dim=c(dim(X[[1]]), length(X)))
+  model_average_new<-apply(Y, c(1, 2), mean, na.rm = TRUE)
+  model_sd_new<-apply(Y, c(1, 2), sd, na.rm = TRUE)
+  
+  X <- lapply(data, `[[`, 'diff_8p5')
+  Y <- do.call(cbind, X)
+  Y <- array(Y, dim=c(dim(X[[1]]), length(X)))
+
+  #  this takes into account agreement on both positive or negative changes. - i.e. if most models show positive change agreement will be high and vice versa. 
+  temp<-apply(Y, c(1,2), function(x) length(x[which(x>=0)])) # sum the number of values that are > = 0 (increase or stable) 
+  temp2<-apply(Y, c(1,2), function(x) length(x[which(!is.na(x))])) # sum the number of values that are different from na and nan - including inf
+  
+  temp4<-temp/temp2
+  model_agreement_new<-ifelse(is.na(temp4), NA, ifelse(temp4>0.5, temp4*100, (1-temp4)*100)) 
+
+  return(list(model_average = model_average_new, model_sd = model_sd_new, model_agreement = model_agreement_new))
+}
+
+res_all<-model_stat(c(data_ipsl_CMIP6, data_gfdl_CMIP6))
+model_average_all_CMIP6<-res_all$model_average
+model_sd_all_CMIP6<-res_all$model_sd
+model_agreement_all_CMIP6<- res_all$model_agreement 
+
+# Define a layout function
+mean_plot_colour_values = c(-50,50)
+sd_plot_colour_values = c(0,50)
+model_agreement_plot_colour_values = c(50,100)
+
+# define title All
+maptitle_average = paste("Mean % change RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
+maptitle_sd = paste("Standard Deviation RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
+maptitle_agreement = paste("Agreement RCP 8.5, 1990s to 2090s CMIP6", sep=" ")
+
+# Plot the model average and standard deviation
+avarage_CMIP6_all<-plot_FISH_MIP(model_average_all_CMIP6, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
+sd_CMIP6_all<-plot_FISH_MIP(model_sd_all_CMIP6, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
+agreement_CMIP6_all<-plot_FISH_MIP(model_agreement_all_CMIP6, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)")
+
+```
+
+
+# Delta plot 
+
+Again - do we need this? I think we do... delta change for all variables.... 
+
+```{r}
+
+# get lat and long from random file 
+filename<-"ZooMSS/_tmp/gfdl-esm4/future/zoomss_gfdl-esm4_nobasd_ssp585_nat_default_tcb_global_annual_2015_2100.nc"
+directory <- "/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/"
+nc <- nc_open(paste(directory, filename, sep = ""))
+longitude <- ncvar_get(nc, "lon")
+latitude <- ncvar_get(nc, "lat")
+
+delta_average_limits = c(-100, 100)
+delta_sd_limits = c(0,100)
+
+# calcualtes delata as scatter plot of CMIP5 vs CMIP6
+
+delta_fun<-function(data5, data6, plot_limits = delta_limits, labels){
+  
+  # data5 = model_average_all_CMIP5
+  # data6 = model_average_all_CMIP6
+  
+  # transform in df with lat and long 
+  delta_CMIP5<-as.data.frame(data5) %>% 
+    `colnames<-`(latitude) %>% 
+    mutate(lon = longitude) %>% 
+    gather(lat, value_cmip5, -lon) 
+
+  delta_CMIP6<-as.data.frame(data6) %>% 
+    `colnames<-`(latitude) %>% 
+    mutate(lon = longitude) %>% 
+    gather(lat, value_cmip6, -lon) 
+
+  # combine 
+  delta<-delta_CMIP5 %>% 
+    full_join(delta_CMIP6) # %>% 
+
+  st<-summary(lm(delta$value_cmip6~delta$value_cmip5))
+  int = st$coefficients[1,1]
+  sl = st$coefficients[2,1]
+  rsqr = st$r.squared
+  
+  # plot 
+  delta_plot<-ggplot(delta, aes(x = value_cmip5, y = value_cmip6))+
+    geom_point(color = "grey70", alpha=0.5, shape = 16)+ # alpha=0.1
+    geom_abline()+
+    geom_vline(xintercept = 0, linetype = "dashed")+
+    geom_hline(yintercept = 0, linetype = "dashed")+
+    xlim(plot_limits)+
+    ylim(plot_limits)+
+    xlab(labels[1]) + 
+    ylab(labels[2]) + 
+    # geom_abline(intercept = int, slope = sl, color = "red")+ # this does not give exactly the same line... 
+    geom_smooth(method='lm', se = FALSE, formula= y~x)+
+    annotate("text", label = paste("r = ", rsqr), x = -75, y = 75)+
+    theme_bw()+
+    theme(text = element_text(size=18),
+          axis.title.y = element_text(vjust=0.4, size = 12),
+          axis.title.x = element_text(vjust=0.3, size = 12),
+          # axis.text.x = element_text(angle=90, hjust=0.5),
+          panel.grid.major = element_blank(), 
+          strip.background =element_rect(fill="white"),
+          legend.position = "none")
+  delta_plot
+  
+  return(delta_plot = delta_plot)
+}
+
+delta_average_all<-delta_fun(data_summaries_CMIP5$model_average, data_summaries_CMIP6$model_average, delta_average_limits,labels = c("Biomass mean % change RCP 8.5 CMIP5","Biomass mean % change RCP 8.5 CMIP6"))
+delta_sd_all<-delta_fun(data_summaries_CMIP5$model_sd, data_summaries_CMIP6$model_sd, delta_sd_limits, labels = c("Biomass SD IPSL RCP 8.5 CMIP5","Biomass SD IPSL RCP 8.5 CMIP6"))
+
+# delta map 
+# option 1 - subtract (julia) - OK
+delta_map_data_all<-data_summaries_CMIP6$model_average - data_summaries_CMIP5$model_average
+maptitle_detla<-"Delta (CMIP6 change - CMIP5 change)"
+delta_map_all_difference<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-50, 50), colour_scheme = c("#fdb863", "#f7f7f7","#b2abd2"), coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 5) 
+
+# could also do agreement - see output map code. 
+
+```
+
+
+# Put all maps together 
+
+```{r multipanel plot}
+
+library(patchwork)
+
+# FIG 1 ??? inputs 
+layout <- "
+AB
+CD
+"
+
+# see what's already there 
+# avarage_CMIP5_all<-avarage_CMIP5_all + ggtitle("A") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+# avarage_CMIP6_all<-avarage_CMIP6_all + ggtitle("B") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
+# delta_map_all<-delta_map_all + ggtitle("C") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+pt<-map_summaries_CMIP5$avarage_CMIP5_all + map_summaries_CMIP6$avarage_CMIP6_all + 
+  delta_map_all_difference + delta_map_all_agreement +
+  plot_layout(design = layout)
+
+pdf(paste0(save_loc,"Fig2.pdf"), height=10, width=15)
+pt 
+dev.off()
+
+# all models map of change IPSL spp585 CMIP5 vs CMIP6
+# can do with  GFDL too 
+
+layout <- "
+AB 
+CD
+EF
+GH
+IJ
+KL
+MN
+#O
+#P
+"
+pt<-map_ipsl585_CMIP5$DBPM + map_ipsl585_CMIP6$DBPM + # AB
+    map_ipsl585_CMIP5$MACROECOLOGICAL + map_ipsl585_CMIP6$MACROECOLOGICAL +# CD
+    map_ipsl585_CMIP5$DBEM + map_ipsl585_CMIP6$DBEM + # EF
+    map_ipsl585_CMIP5$APECOSM + map_ipsl585_CMIP6$APECOSM + # EF
+    map_ipsl585_CMIP5$EcoOcean + map_ipsl585_CMIP6$EcoOcean + # GH
+    map_ipsl585_CMIP5$BOATS+ map_ipsl585_CMIP6$BOATS + # IJ
+    map_ipsl585_CMIP5$ZooMSS + map_ipsl585_CMIP6$ZooMSS + # KL
+    map_ipsl585_CMIP6$FEISTY + # #M
+    map_ipsl585_CMIP6$EcoTroph + # #N
+  plot_layout(design = layout)
+    
+    
+pt<-pt + plot_annotation(
+  title = 'Change in tcb 1990s-2090s, IPSL RCP8.5 CMIP5 vs CMIP6
+  ',
+  theme = theme(plot.title = element_text(size = 20)))
+
+pdf(paste0(save_loc,"IPSL_models_map.pdf"), height=30, width=15)
+# tiff(paste0(save_loc,"20201104_IPSL_CMIP5vsCMIP5_summary.tiff"), height=30, width=20, units ='in', res=300)
+pt 
+dev.off()
+
+# All protocols models summaries (average, sd and agreement) 
+# can  be done with GFDL or IPSL too 
+# can be done with spp126 if 'diff_8p5' line 318 is changed too  
+
+layout <- "
+AB
+CD
+EF
+"
+
+pt<-avarage_CMIP5_all + avarage_CMIP6_all + # this is same as Fig2 first raw
+    sd_CMIP5_all + sd_CMIP6_all +  
+    agreement_CMIP5_all + agreement_CMIP6_all +  
+    plot_layout(design = layout)
+
+pt<-pt + plot_annotation(
+  title = 'Spatial patterns of projected biomass changes RCP8.5 CMIP5 vs CMIP6, 1990s to 2090s
+  ',
+  theme = theme(plot.title = element_text(size = 20)))
+
+pdf(paste0(save_loc,"ALL_models_average_map.pdf"), height=10, width=15)
+# tiff(paste0(save_loc,"20201104_IPSL_CMIP5vsCMIP5_mean.tiff"), height=10, width=20, units ='in', res=300)
+pt 
+dev.off()
+
+# Delta mean over all models and all earth inputs  
+layout <- "
+A
+B
+C
+"
+
+# delta_average_ipsl<-delta_average_ipsl + ggtitle("IPSL") + theme(plot.title = element_text(size = 12, face = "bold"))
+# delta_average_gfdl<-delta_average_gfdl + ggtitle("GFDL") + theme(plot.title = element_text(size = 12, face = "bold"))
+# delta_average_all<-delta_average_all + ggtitle("ALL") + theme(plot.title = element_text(size = 12, face = "bold"))
+
+pt<-delta_average_ipsl + delta_average_gfdl + delta_average_all +
+    plot_layout(design = layout)
+
+pt<-pt + plot_annotation(
+  title = 'Delta average RCP 8.5',
+  theme = theme(plot.title = element_text(size = 20)))
+
+# pdf(paste0(save_loc,"delta_scatterplot.pdf"), height=12, width=8)
+# # tiff(paste0(save_loc,"20201104_IPSL_CMIP5vsCMIP5_mean.tiff"), height=10, width=20, units ='in', res=300)
+# pt 
+# dev.off()
+
+# only all instead - can also be colored by lat?
+pdf(paste0(save_loc,"delta_scatterplot.pdf"), height=12, width=8)
+# tiff(paste0(save_loc,"20201104_IPSL_CMIP5vsCMIP5_mean.tiff"), height=10, width=20, units ='in', res=300)
+delta_average_all 
+dev.off()
+
+```
+
+
+
+
