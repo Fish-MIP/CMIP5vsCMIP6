@@ -605,31 +605,29 @@ averageEnvironmentalCDF <-
            time1,
            time2,
            average_whole_period = FALSE,
-           convert_to_kg_km = TRUE, hist = TRUE, ipsl = FALSE)
+           convert_to_kg_km = TRUE, hist = TRUE, ipsl = FALSE, cmip = 5)
   {
     
-    # directory = "/Users/camillan/fishmip_inputs/marine-fishery_global_ISIMIP3b/"
-    # filename= "ipsl-cm6a-lr_r1i1p1f1_historical_tos_onedeg_global_monthly_1850_2014.nc"
-    # variable = "tos"
+    # directory = "/Users/camillan/fishmip_inputs/marine-fishery_global_ISIMIP2b/GFDL_ESM2M/"
+    # filename = "spp_gfdl-esm2m_rcp26_zs_annual_200601-210012.nc4"
+    # variable = "TO_ZS"
     # time1 = as.yearmon("1990-01")
-    # time2 = as.yearmon("1999-12")
-    # average_whole_period = FALSE
-    # convert_to_kg_km = TRUE # I don't understand this .... 
+    # time2 = as.yearmon("1999-01")
+    # average_whole_period = TRUE
+    # convert_to_kg_km = FALSE # I don't understand this ....
     # hist = TRUE
-    # ipsl = TRUE
-      
+    # ipsl = FALSE
+    # cmip = 5
     
     
-    
-    
-    model_type <- get_model_type(filename) # I don't understand this as it's not an ecosystem model but an earth model ... 
+    # model_type <- get_model_type(filename) # I don't understand this as it's not an ecosystem model but an earth model ... 
     
     # Open the netcdf file
     nc <- nc_open(paste0(directory, filename))
     
     # Look at the attributes and dimensions
     # print(nc)
-    # nc$var
+    # names(nc$var)
     
     # Extract important information
     data_attributes <- ncatt_get(nc, variable)
@@ -637,67 +635,48 @@ averageEnvironmentalCDF <-
     main_title <- data_attributes$long_field_name
     data_units <- data_attributes$units
     
-    # maybe CMIP%? 
-    # if (!ipsl)
-    # {
-    #   lon <- ncvar_get(nc, "LONGITUDE")
-    #   lat <- ncvar_get(nc, "LATITUDE")
-    #   
-    #   time_vector <-  ncvar_get(nc, "TIME")
-    # } else
-    # {
-    #   lon <- ncvar_get(nc, "longitude")
-    #   lat <- ncvar_get(nc, "latitude")
-    #   
-    #   time_vector <-  ncvar_get(nc, "time")      
-    # }
-    
-    lon <- ncvar_get(nc, "lon")
-    lat <- ncvar_get(nc, "lat")
-    time_vector <- ncvar_get(nc, "time")
-
-    # maybe CMIP5? 
-    # if (hist)
-    # {
-    #   yearmonth = as.yearmon("1950-01") + time_vector[1] 
-    #   print(yearmonth)    
-    #   time_months = floor(as.numeric(as.yearmon(yearmonth + seq(0, (length(time_vector) - 1)))))
-    #   time_vector <- time_months
-    # } else
-    # {
-    #   yearmonth = as.yearmon("2006-01") + time_vector[1] 
-    #   print(yearmonth)    
-    #   time_months = floor(as.numeric(as.yearmon(yearmonth + seq(0, (length(time_vector) - 1)))))
-    #   time_vector <- time_months      
-    # }
-    
-    # CMIP6 - it starts in 2988.5
-    # months since 1601-1-1 00:00:00
-    # gregorian
-    
-    # dim(time_vector) # 1980 
-    # 1850_2014, 165 years *12 months = 1980 data points 
-    
-    # if hist 
-    if(hist == TRUE){
-      yearmonth = as.yearmon("1850-1-1") + 0.08333333 # is this 0.0833 necessary? should we just start extracting from Jan? 
+    if(cmip == 5){
+      if(!ipsl){
+        lon <- ncvar_get(nc, "LONGITUDE")
+        lat <- ncvar_get(nc, "LATITUDE")
+        time_vector <-  ncvar_get(nc, "TIME")
+      }else{
+        lon <- ncvar_get(nc, "longitude")
+        lat <- ncvar_get(nc, "latitude")
+        time_vector <-  ncvar_get(nc, "time")} 
     }else{
-      yearmonth = as.yearmon("2015-1-1") + 0.08333333
+      lon <- ncvar_get(nc, "lon")
+      lat <- ncvar_get(nc, "lat")
+      time_vector <- ncvar_get(nc, "time")}
+    
+
+    if(cmip == 5){
+      if (hist)
+      {
+        yearmonth = as.yearmon("1950-01")
+      } else
+      {
+        yearmonth = as.yearmon("2006-01")
+      }
+      time_months = floor(as.numeric(as.yearmon(yearmonth + seq(0, (length(time_vector) - 1)))))
+      time_vector <- time_months
+    }else{
+      if(hist == TRUE){
+        yearmonth = as.yearmon("1850-1-1") + 0.08333333 # is this 0.0833 necessary? should we just start extracting from Jan? 
+      }else{
+        yearmonth = as.yearmon("2015-1-1") + 0.08333333
+      }
+      time_months = as.yearmon(yearmonth + seq(0, (length(time_vector) - 1)) / 12)
+      time_vector <- time_months
     }
     
-    time_months = as.yearmon(yearmonth + seq(0, (length(time_vector) - 1)) / 12)
-    time_vector <- time_months
-    
     # Extract averages
-    if (!average_whole_period)
-    {
+    if (!average_whole_period){
       # Extract the correct time period
-      if ((class(time1) == "yearmon") && (class(time2) == "yearmon"))
-      {
+      if ((class(time1) == "yearmon") && (class(time2) == "yearmon")){
         # Check to make sure starts in January and ends in Dec. Doesn't do stupidity checks (e.g. end date before start date)
         if ((as.numeric(time1) == as.numeric(floor(time1))) && ((as.numeric(time2) - floor(as.numeric(time2))) > 0.9))
-        { ; } else
-        {
+        { ; }else{
           print("When taking yearly averages of monthly data, dates given should start in Jan and end in Dec")
         }
       }
@@ -712,16 +691,12 @@ averageEnvironmentalCDF <-
       new_var_mat = array(rep(0, num_years * length(lon) * length(lat)),
                           c(length(lon), length(lat), num_years))
       
-      dim(new_var_mat)
-      
       # Now get the variable of interest
       if (names(nc$dim)[length(nc$dim)] != "TIME")
         print("Warning: might be assuming wrong dimension for time from NetCDF file") # CN don't understand this!
-      ta1 <- 
-        ncvar_get(nc, variable)[, , ]
-      temp_array1 <-
-        ncvar_get(nc, variable)[, , tpte$start_point_to_extract:tpte$end_point_to_extract]
-
+      temp_array1 <- ncvar_get(nc, variable)[, , tpte$start_point_to_extract:tpte$end_point_to_extract]
+  
+      if(num_years>1){
       # Average data
       for (ii in 1:length(lon))
       {
@@ -747,11 +722,13 @@ averageEnvironmentalCDF <-
           new_var_mat[ii, jj, ] = year_values
         }
       }
+      } else {
+        new_var_mat = temp_array1
+        }
       
       years = floor(as.numeric(time1)):floor(as.numeric(time2))
       
-      
-    } else 
+    } else # CN average_whole_period == TRUE
     {
       # Create a new matrix to hold the results
       new_var_mat = array(rep(0, length(lon) * length(lat)), c(length(lon), length(lat)))
@@ -762,8 +739,9 @@ averageEnvironmentalCDF <-
       # Now get the variable of interest
       if (names(nc$dim)[length(nc$dim)] != "time")
         print("Warning: might be assuming wrong dimension for time from NetCDF file")
-      temp_array1 <-
-        ncvar_get(nc, variable)[, , tpte$start_point_to_extract:tpte$end_point_to_extract]
+      # temp_array1 <- ncvar_get(nc, variable)
+      # dim(temp_array1)
+      temp_array1 <- ncvar_get(nc, variable)[, , tpte$start_point_to_extract:tpte$end_point_to_extract]
 
       # Extract averages
       for (ii in 1:length(lon))

@@ -15,7 +15,8 @@ plot_FISH_MIP <- function(data_to_plot,
                           coltitle = "",
                           latlon_limits = NA, 
                           model_type = NA, 
-                          legend_ticks = 5){
+                          legend_ticks = 5,
+                          num_dp = 0){
   
   # # trial
   # data_ipsl_CMIP5[[1]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)"
@@ -77,8 +78,6 @@ plot_FISH_MIP <- function(data_to_plot,
   r.1.sf<-rasterToPolygons(r2) # convert Rasterlayer to spatial polygon dataframe 
   r.1.sf <- st_as_sf(r.1.sf) # convert dataframe to sf object 
   r.1.sf <- st_transform(r.1.sf, crs = st_crs(robCRS)) # convert sf object to Robinson Projection
-
-  num_dp = 0
   
   # then you can use ggplot2 to plot that object
   theme_opts <- list(theme(panel.grid.minor = element_blank(),

@@ -11,7 +11,7 @@ editor_options:
 
 correct biomass by grid area depending on latitude - OK
 
-work on DBPM -> check senescence + fix netcdf (OK but see discussion on re-run)
+work on DBPM -> check senescence + fix netcdf (OK but see discussion on re-run) - OK
 
 time series for CMIP6 where ssp585 does not start where historical ends, need to correct 
 
@@ -163,24 +163,6 @@ ggplot(df, aes(x=year, y = TcbChange))+
         legend.position = c(0.15, 0.25),
         legend.key = element_rect(fill = "transparent", colour = "transparent"),
         legend.key.size = unit(0.4, "cm"))
-
-
-# ARRIVATA QUI - try option 1 above - also see how change is calcualted inside get-timeSeries()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # add ZOOM GFDL ----
 

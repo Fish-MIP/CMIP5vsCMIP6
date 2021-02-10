@@ -54,8 +54,10 @@ delta_plot_colour_values = c(-50,50)
 model_agreement_plot_colour_values = c(50,100)
 
 # define a color scheme 
-colour_scheme1 <- c(low = 'white', mid = "skyblue1",  high = 'royalblue1')
-colour_scheme2 <- c(low = 'red', mid = "white",  high = 'royalBlue1')
+colour_scheme1 <- c(low = 'white', mid = "skyblue1",  high = 'royalblue1') # for statistics - e.g model mean, SD and agreement
+colour_scheme2 <- c(low = 'red', mid = "white",  high = 'royalBlue1') # for % changes - either increasing or decreasing 
+colour_scheme3 <- c("#fdb863", "#f7f7f7","#b2abd2") # for delta plots (between cmips change) # purple to green shades
+colour_scheme4 <- c(low = '#e0ecf4', mid = "#9ebcda",  high = '#8856a7') # for inputs values # shades of blue to purple?? 
 
 # Download and process world outline
 library(sf)
@@ -1206,7 +1208,7 @@ delta_sd_all<-delta_fun(data_summaries_CMIP5$model_sd, data_summaries_CMIP6$mode
 # option 1 - subtract (julia) - OK
 delta_map_data_all<-data_summaries_CMIP6$model_average - data_summaries_CMIP5$model_average
 maptitle_detla<-"Delta (CMIP6 change - CMIP5 change)"
-delta_map_all_difference<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-50, 50), colour_scheme = c("#fdb863", "#f7f7f7","#b2abd2"), coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 5) 
+delta_map_all_difference<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-50, 50), colour_scheme = coluor_scheme3, coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 5) 
 # if 1 - 5 = -4 # CMIP6 decreased 4 times
 # if 1 - (-5) = 6 # CMIP6 increased 6 times 
 # if -1 - 5 = -6 # CMIP6 decreased 6 times 
@@ -1253,7 +1255,7 @@ temp4<-temp/temp2
 trial_data<-ifelse(is.na(temp4), NA, ifelse(temp4>0.5, temp4*100, (1-temp4)*100))
 trial_data[which(trial_data ==100)]<-1
 trial_data[which(trial_data ==50)]<-0
-delta_map_all_agreement<-plot_FISH_MIP(trial_data, "CMIPs agreement on the direction of change", c(0,1) ,colour_scheme = c("#fdb863", "#f7f7f7","#b2abd2"), coltitle = "CMIPs \nagreement", legend_ticks = 2) 
+delta_map_all_agreement<-plot_FISH_MIP(trial_data, "CMIPs agreement on the direction of change", c(0,1) ,colour_scheme = colour_scheme3, coltitle = "CMIPs \nagreement", legend_ticks = 2) 
 
 # # model's discrepancy from average (withing the CMIP6) 
 # # can do with either IPSL or GFDL but not with ALL as you don't have a mean of the 2 for each model 
