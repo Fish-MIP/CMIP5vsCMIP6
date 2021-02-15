@@ -9,10 +9,6 @@ editor_options:
 
 # TO DO 
 
-weight agreement between CMIP5 and CMIP6 by change - line 1240 and diary 
-
-work on DBPM -> check senescence + fix netcdf (OK but see discussion on re-run)
-
 # TO CHECK 
 
 Models maps CMIP6 - why do i have to invert matrices?  
@@ -457,9 +453,9 @@ extensionB<-".nc"
 # DBPM ----
 h_yearsDB <- "1850_2014"
 f_yearsDB<- "2015_2100"
-earthDB<-"_ipsl_cm6a_lr_nobc_"
-outputDB<-"monthly" # Spelling error fixed in new netcdf and now manually fixed in files 
-extensionDB <-".nc4"
+earthDB<-"_ipsl-cm6a-lr_nobasd_"
+outputDB<-"monthly" 
+extensionDB <-".nc"
 
 # EcoOcean ----  
 # added below  
@@ -510,7 +506,7 @@ data_ipsl_CMIP6<-list()
 
 for (i in 1:length(mod_ipsl)){
 
-  #  i = 1
+  # i = 3
   # file<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/APECOSM/_tmp/ipsl-cm6a-lr/historical/apecosm_ipsl-esm4_nobc_historical_nat_default_tcb_global_monthly_1950_1989.nc"
   filename<-paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
   
@@ -900,11 +896,12 @@ data_ipsl_CMIP6$APECOSM$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP6$APECOSM$f
 data_ipsl_CMIP6$APECOSM$diff_2p6<- fliplr_matrix(data_ipsl_CMIP6$APECOSM$diff_2p6)
 data_ipsl_CMIP6$APECOSM$diff_8p5<- fliplr_matrix(data_ipsl_CMIP6$APECOSM$diff_8p5)
 
-data_ipsl_CMIP6$DBPM$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP6$DBPM$hist$fishvar)
-data_ipsl_CMIP6$DBPM$fut126$fishvar<- fliplr_matrix(data_ipsl_CMIP6$DBPM$fut126$fishvar)
-data_ipsl_CMIP6$DBPM$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP6$DBPM$fut585$fishvar)
-data_ipsl_CMIP6$DBPM$diff_2p6<- fliplr_matrix(data_ipsl_CMIP6$DBPM$diff_2p6)
-data_ipsl_CMIP6$DBPM$diff_8p5<- fliplr_matrix(data_ipsl_CMIP6$DBPM$diff_8p5)
+# not necessary anymore ...! why?! with the new runs
+# data_ipsl_CMIP6$DBPM$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP6$DBPM$hist$fishvar)
+# data_ipsl_CMIP6$DBPM$fut126$fishvar<- fliplr_matrix(data_ipsl_CMIP6$DBPM$fut126$fishvar)
+# data_ipsl_CMIP6$DBPM$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP6$DBPM$fut585$fishvar)
+# data_ipsl_CMIP6$DBPM$diff_2p6<- fliplr_matrix(data_ipsl_CMIP6$DBPM$diff_2p6)
+# data_ipsl_CMIP6$DBPM$diff_8p5<- fliplr_matrix(data_ipsl_CMIP6$DBPM$diff_8p5)
 
 data_ipsl_CMIP6$MACROECOLOGICAL$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$hist$fishvar)
 data_ipsl_CMIP6$MACROECOLOGICAL$fut126$fishvar<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$fut126$fishvar)
@@ -963,7 +960,7 @@ model_type_ipsl<-ifelse(names(data_ipsl_CMIP6) == "DBEM","DBEM", NA) # this is b
 
 for (i in 1:length(data_ipsl_CMIP6)){ 
   
-  # i = 1
+  # i = 3
   tit <- paste(names(data_ipsl_CMIP6)[i], "IPSL RCP8.5 no-fishing percentage change", variable_to_extract[1], data_ipsl_CMIP6[[i]]$hist$data_units, cmip[2], sep =" ")
   map_ipsl585_CMIP6[[i]]<-plot_FISH_MIP(data_ipsl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)", model_type = model_type_ipsl[i])
   names(map_ipsl585_CMIP6)[[i]]<-names(data_ipsl_CMIP6)[[i]]
@@ -973,7 +970,7 @@ for (i in 1:length(data_ipsl_CMIP6)){
 }
 
 names(map_ipsl585_CMIP6)
-# map_ipsl585_CMIP6$DBEM
+map_ipsl585_CMIP6$DBPM
 
 # plot GFDL ----
 
@@ -1120,10 +1117,60 @@ save(data_ipsl_CMIP6, data_gfdl_CMIP6, map_ipsl585_CMIP6, map_gfdl585_CMIP6, dat
 
 ```{r}
 
-# rm(list=ls())
+rm(list=ls())
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP5.RData")
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP6.RData")
+
+```
+
+# Load libraries for netcdf and define variables
+
+```{r load CMIP5}
+
+library(grid)
+library(zoo)
+library(viridis)
+library(tidyr)
+library(dplyr)
+
+source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
+source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
+
+# saving outputs location  
 save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/figs/"
+
+# variables 
+cmip<-c("CMIP5", "CMIP6")
+mod_ipsl <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL")
+mod_gfdl <- c("BOATS", "DBEM", "EcoOcean", "MACROECOLOGICAL")
+protocol <- c("picontrol","historical", "future")
+future<-c("SSP126", "SSP585")
+variable_to_extract <-c("tcb","tpb", "bp30cm", "bp30to90cm", "bp90cm")
+
+```
+
+# load libraries for plotting and define criteria 
+
+```{r}
+
+# Define color/legend limits 
+main_plot_colour_values = c(0,10000) # these need to change for each model? 
+delta_plot_colour_values = c(-50,50)
+model_agreement_plot_colour_values = c(50,100)
+
+# define a color scheme 
+colour_scheme1 <- c(low = 'white', mid = "skyblue1",  high = 'royalblue1') # for statistics - e.g model mean, SD and agreement
+colour_scheme2 <- c(low = 'red', mid = "white",  high = 'royalBlue1') # for % changes - either increasing or decreasing 
+colour_scheme3 <- c(low = "#fdb863", mid = "#f7f7f7", high = "#b2abd2") # for delta plots (between cmips change) # purple to green shades
+colour_scheme4 <- c(low = '#e0ecf4', mid = "#9ebcda",  high = '#8856a7') # for inputs values # shades of blue to purple?? 
+
+# Download and process world outline
+library(sf)
+library(rnaturalearth)
+library("rgeos")
+world <- ne_countries(scale = "medium", returnclass = "sf")
+robCRS <- CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+world_sf <- st_transform(world, crs = st_crs(robCRS)) # Convert to different CRS
 
 ```
 
@@ -1208,7 +1255,7 @@ delta_sd_all<-delta_fun(data_summaries_CMIP5$model_sd, data_summaries_CMIP6$mode
 # option 1 - subtract (julia) - OK
 delta_map_data_all<-data_summaries_CMIP6$model_average - data_summaries_CMIP5$model_average
 maptitle_detla<-"Delta (CMIP6 change - CMIP5 change)"
-delta_map_all_difference<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-50, 50), colour_scheme = coluor_scheme3, coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 5) 
+delta_map_all_difference<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-50, 50), colour_scheme = colour_scheme3, coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 5) 
 # if 1 - 5 = -4 # CMIP6 decreased 4 times
 # if 1 - (-5) = 6 # CMIP6 increased 6 times 
 # if -1 - 5 = -6 # CMIP6 decreased 6 times 
@@ -1239,11 +1286,7 @@ delta_map_all_difference<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-5
 
 # agreement on the direction of change between CMIPs see model_stat. this gives 100%  agreement if biomass in both cmips is decreasing/increasing and 50% is they disagree... (agreement on the direction of change....but  does not tell you which direction.)
 # create array with both matrices 
-# TO DO - weight according to degree of change or used delta as an alpha factor
-
-
-
-
+# TO DO - weight according to degree of change or used delta as an alpha factor - not particularly usefull... I decided not to do
 
 trial<-array(NA, dim=c(dim(data_summaries_CMIP5$model_average)[1],dim(data_summaries_CMIP5$model_average)[2],2))
 trial[,,1]<-data_summaries_CMIP5$model_average
@@ -1283,8 +1326,7 @@ library(patchwork)
 
 # FIG 2 model average CMIP5, model average CMIP6, delta CMIP5 vs CMIP6
 layout <- "
-AB
-CD
+ABC
 "
 
 # see what's already there 
@@ -1292,14 +1334,40 @@ CD
 # avarage_CMIP6_all<-avarage_CMIP6_all + ggtitle("B") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
 # delta_map_all<-delta_map_all + ggtitle("C") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
-pt<-map_summaries_CMIP5$avarage_CMIP5_all + map_summaries_CMIP6$avarage_CMIP6_all + 
-  delta_map_all_difference + delta_map_all_agreement +
+pt<-map_summaries_CMIP5$avarage_CMIP5_all + map_summaries_CMIP6$avarage_CMIP6_all + delta_map_all_difference +
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig2.pdf"), height=10, width=15)
+pdf(paste0(save_loc,"Fig2.pdf"), height=5, width=20)
 pt 
 dev.off()
 
+# FIG S2
+# All protocols models summaries (average, sd and agreement) 
+# can  be done with GFDL or IPSL too 
+# can be done with spp126 if 'diff_8p5' line 318 is changed too  
+
+layout <- "
+AB
+CD
+EF
+"
+
+pt<-avarage_CMIP5_all + avarage_CMIP6_all + # this is same as Fig2 first raw
+    sd_CMIP5_all + sd_CMIP6_all +  
+    agreement_CMIP5_all + agreement_CMIP6_all +  
+    plot_layout(design = layout)
+
+pt<-pt + plot_annotation(
+  title = 'Spatial patterns of projected biomass changes RCP8.5 CMIP5 vs CMIP6, 1990s to 2090s
+  ',
+  theme = theme(plot.title = element_text(size = 20)))
+
+pdf(paste0(save_loc,"FigS2.pdf"), height=10, width=15)
+# tiff(paste0(save_loc,"20201104_IPSL_CMIP5vsCMIP5_mean.tiff"), height=10, width=20, units ='in', res=300)
+pt 
+dev.off()
+
+# FIG S3
 # all models map of change IPSL spp585 CMIP5 vs CMIP6
 # can do with  GFDL too 
 
@@ -1327,37 +1395,12 @@ pt<-map_ipsl585_CMIP5$DBPM + map_ipsl585_CMIP6$DBPM + # AB
     
     
 pt<-pt + plot_annotation(
-  title = 'Change in tcb 1990s-2090s, IPSL RCP8.5 CMIP5 vs CMIP6
-  ',
+  title = 'Change in tcb 1990s-2090s, IPSL RCP8.5 CMIP5 vs CMIP6',
   theme = theme(plot.title = element_text(size = 20)))
 
-pdf(paste0(save_loc,"IPSL_models_map.pdf"), height=30, width=15)
+# try the smallest option possible.... 
+jpeg(paste0(save_loc,"FigS3.jpeg"), height=40, width=30, units ='in', res=300)
 # tiff(paste0(save_loc,"20201104_IPSL_CMIP5vsCMIP5_summary.tiff"), height=30, width=20, units ='in', res=300)
-pt 
-dev.off()
-
-# All protocols models summaries (average, sd and agreement) 
-# can  be done with GFDL or IPSL too 
-# can be done with spp126 if 'diff_8p5' line 318 is changed too  
-
-layout <- "
-AB
-CD
-EF
-"
-
-pt<-avarage_CMIP5_all + avarage_CMIP6_all + # this is same as Fig2 first raw
-    sd_CMIP5_all + sd_CMIP6_all +  
-    agreement_CMIP5_all + agreement_CMIP6_all +  
-    plot_layout(design = layout)
-
-pt<-pt + plot_annotation(
-  title = 'Spatial patterns of projected biomass changes RCP8.5 CMIP5 vs CMIP6, 1990s to 2090s
-  ',
-  theme = theme(plot.title = element_text(size = 20)))
-
-pdf(paste0(save_loc,"ALL_models_average_map.pdf"), height=10, width=15)
-# tiff(paste0(save_loc,"20201104_IPSL_CMIP5vsCMIP5_mean.tiff"), height=10, width=20, units ='in', res=300)
 pt 
 dev.off()
 
@@ -1384,11 +1427,11 @@ pt<-pt + plot_annotation(
 # pt 
 # dev.off()
 
-# only all instead - can also be colored by lat?
-pdf(paste0(save_loc,"delta_scatterplot.pdf"), height=12, width=8)
-# tiff(paste0(save_loc,"20201104_IPSL_CMIP5vsCMIP5_mean.tiff"), height=10, width=20, units ='in', res=300)
-delta_average_all 
-dev.off()
+# # only all instead - can also be colored by lat?
+# pdf(paste0(save_loc,"delta_scatterplot.pdf"), height=12, width=8)
+# # tiff(paste0(save_loc,"20201104_IPSL_CMIP5vsCMIP5_mean.tiff"), height=10, width=20, units ='in', res=300)
+# delta_average_all 
+# dev.off()
 
 ```
 

@@ -9,14 +9,6 @@ editor_options:
 
 # TO DO 
 
-correct biomass by grid area depending on latitude - OK
-
-work on DBPM -> check senescence + fix netcdf (OK but see discussion on re-run) - OK
-
-time series for CMIP6 where ssp585 does not start where historical ends, need to correct 
-
-both plots show 2005 as initial year of projection - to change 
-
 # Load libraries for netcdf and define variables
 
 ```{r load CMIP5}
@@ -279,9 +271,9 @@ extensionB<-".nc"
 # DBPM ----
 h_yearsDB <- "1850_2014"
 f_yearsDB<- "2015_2100"
-earthDB<-"_ipsl_cm6a_lr_nobc_"
-outputDB<-"monthly" # Spelling error fixed in new netcdf and now manually fixed in files
-extensionDB <-".nc4"
+earthDB<-"_ipsl-cm6a-lr_nobasd_"
+outputDB<-"monthly" 
+extensionDB <-".nc"
 
 # EcoOcean ----  
 # added below  
@@ -634,7 +626,31 @@ save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "/Users/camillan/fishmip_outputs/C
 rm(list=ls())
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP5.RData")
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP6.RData")
+
+```
+
+# Load libraries for netcdf and define variables
+
+```{r load CMIP5}
+
+library(grid)
+library(zoo)
+library(viridis)
+library(tidyr)
+library(dplyr)
+
+source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
+
+# saving outputs location  
 save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/figs/"
+
+# variables 
+cmip<-c("CMIP5", "CMIP6")
+mod_ipsl <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL")
+mod_gfdl <- c("BOATS", "DBEM", "EcoOcean", "MACROECOLOGICAL")
+protocol <- c("picontrol","historical", "future")
+future<-c("SSP126", "SSP585")
+variable_to_extract <-c("tcb","tpb", "bp30cm", "bp30to90cm", "bp90cm")
 
 ```
 
@@ -642,29 +658,16 @@ save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/figs/"
 
 ```{r}
 
-# remove
-
-# data_ipsl_CMIP5$DBEM<-NULL
-# data_gfdl_CMIP5$DBEM<-NULL
-
-# of keep - in which case DBEM values should be ok as you do the mean by year which should mean over month (if time resolution is in month) and deg cell (of either 1 or 0.5 resolution)
-
 # # as per Lotze model set
-# names(data_gfdl_CMIP5)
-# names(data_ipsl_CMIP5)
-# names(data_gfdl_CMIP5)
-data_ipsl_CMIP5$ZooMSS<-NULL
-data_gfdl_CMIP5$ZooMSS<-NULL
+# data_ipsl_CMIP5$ZooMSS<-NULL
+# data_gfdl_CMIP5$ZooMSS<-NULL
 # 
-# names(data_ipsl_CMIP6)
 # data_ipsl_CMIP6$ZooMSS<-NULL
 # data_gfdl_CMIP6$ZooMSS<-NULL
 # data_ipsl_CMIP6$FEISTY<-NULL
 # data_gfdl_CMIP6$FEISTY<-NULL
 # data_ipsl_CMIP6$EcoTroph<-NULL
 # data_gfdl_CMIP6$EcoTroph<-NULL
-
-# NOTE: I don't get the same declines even though the model set is exactly the same (n=10)... this is more clear at the single model level
 
 ```
 
@@ -696,12 +699,18 @@ data_ipsl_CMIP6_tcb<-data_ipsl_CMIP6_tcb %>%
          earth = "ipsl") %>% 
   `colnames<-`(c("year", "tcb", "tcbChange", "protocol", "model", "cmip", "earth"))
 
+# fix ecoOcean 
+data_ipsl_CMIP6_tcb<-data_ipsl_CMIP6_tcb [-which(data_ipsl_CMIP6_tcb$model == "EcoOcean" & data_ipsl_CMIP6_tcb$year> 2005 & data_ipsl_CMIP6_tcb$year<2015 & data_ipsl_CMIP6_tcb$protocol == "ssp585"), ]
+
 data_gfdl_CMIP6_tcb<-do.call(rbind, lapply(data_gfdl_CMIP6, as.data.frame)) 
 data_gfdl_CMIP6_tcb<-data_gfdl_CMIP6_tcb %>% 
   mutate(model = gsub("[^a-zA-Z]", "", rownames(data_gfdl_CMIP6_tcb)), 
          cmip = 6, 
          earth = "gfdl") %>% 
   `colnames<-`(c("year", "tcb", "tcbChange", "protocol", "model", "cmip", "earth"))
+
+# fix ecoOcean 
+data_gfdl_CMIP6_tcb<-data_gfdl_CMIP6_tcb [-which(data_gfdl_CMIP6_tcb$model == "EcoOcean" & data_gfdl_CMIP6_tcb$year> 2005 & data_gfdl_CMIP6_tcb$year<2015 & data_gfdl_CMIP6_tcb$protocol == "ssp585"), ]
 
 # add all together and  mean  it
 # how is this average? here is all together 
@@ -749,7 +758,7 @@ all<-all %>%
 
 ```
 
-# plot trends in tcb  
+# FIG 3: trends in tcb  
 
 ```{r}
 
@@ -800,6 +809,7 @@ b<-ggplot(filter(all, cmip==6), aes(group = protocol, x=year, y = mean))+
         strip.text.x = element_text(face = "bold"),
         legend.position = "none")
 b
+
 library(patchwork)
 
 # FIG 2 trends in tcb CMIP5 vs CMIP6
@@ -813,13 +823,13 @@ b<-b + ggtitle("B) CMIP6") + theme(plot.title = element_text(size = 16, face = "
 plot<-a + b + 
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig3_asLotze.pdf"), height=7, width=15)
+pdf(paste0(save_loc,"Fig3_new.pdf"), height=7, width=15)
 plot 
 dev.off()
 
 ```
 
-# plot trends in tcb by model 
+# FIG 3B: trends in tcb by model 
 
 ```{r}
 
@@ -859,7 +869,7 @@ a
 b<-ggplot(filter(all_models, cmip==6), aes(x=year, y = tcbChange,  color = model, linetype = earth))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
   geom_line(size=1) +
-  geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
+  geom_vline(xintercept = 2015, color = "grey60", size = 2)+
   geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
   geom_hline(yintercept = 0, color = "grey60", size = 1)+
   scale_y_continuous(limits = c(-40, 20), breaks = pretty(seq(20, -40), n = 10), name = "Change in biomass (%)") +
@@ -891,7 +901,7 @@ b<-b + ggtitle("B) CMIP6") + theme(plot.title = element_text(size = 12, face = "
 plot<-a + b + 
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig3B_asLotze.pdf"), height=7, width=15)
+pdf(paste0(save_loc,"Fig3B_new.pdf"), height=7, width=15)
 plot 
 dev.off()
 
