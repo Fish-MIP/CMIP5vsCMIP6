@@ -1,5 +1,5 @@
 ---
-title: "Plotting global models inputs"
+title: "Plotting global models' inputs"
 author: "Camilla Novaglio"
 date: "02/02/2021"
 output: html_document
@@ -9,11 +9,7 @@ editor_options:
 
 # TO DO 
 
-Derek: Is it worth doing the mean SST / NPP  etc for 2000-2010 and 2090-2100 rather than 2030? Done for 1990-2000 and 2090-2100 as per years used to calcualte changes between the 2 periods - 2000-2010 is trickier as 1/2 data is on hist file and the other 1/2 is on the fut file for CMIP5 - OK
-
-Cheryl: https://doi.org/10.5194/bg-17-3439-2020
-
-Ryan: When doing delta temperatures, don't do % change, do celsius change. When showing npp, phy or zoo, use g C as the weight (*12), and per day, not per second as the time unit for npp. - OK
+ref paper: https://doi.org/10.5194/bg-17-3439-2020
 
 # Load libraries for netcdf and define variables
 
@@ -93,7 +89,7 @@ data_ipsl_CMIP5<-list()
 for (i in 1:length(variable_to_extract)){
 
   # i = 2
-  # the variable is temperature,extract adn convert from K to C
+  # the variable is temperature,extract and convert from K to C
   if(variable_to_extract[[i]] == "to"){
     
     filename<-paste0(variable_to_extract[i], ".nc4.zs.rgrd.v3.historical1_19500101_20051231_1Y.nc4")
@@ -101,12 +97,6 @@ for (i in 1:length(variable_to_extract)){
     # from k to C
     hist$fishvar<-hist$fishvar - 273.15 # can be done later on if this is going to be merged with the loop below
     hist$data_units<-"C"
-    
-    # ####### HERE 
-    # hist_2010<-averageEnvironmentalCDF(directory, filename , variable_to_extract[i], as.yearmon("2000-01"), as.yearmon("2010-01"), average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = FALSE) # mean annual temp 2000-2010
-    # hist_2010<-hist_2010$fishvar[,]
-    # hist_2010<-hist_2010 - 273.15
-    # hist_2010$data_units<-"C"
   
     filename<-paste0(variable_to_extract[i],".nc4.zs.rgrd.v3.rcp261_20060101_21001231_1Y.nc4")
     fut126<-averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = FALSE)
@@ -117,14 +107,7 @@ for (i in 1:length(variable_to_extract)){
     fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = FALSE)
     fut585$fishvar<-fut585$fishvar - 273.15
     fut126$data_units<-"C"
-    
-    # ####### HERE 
-    # fut585_2100<-averageEnvironmentalCDF(directory, filename , variable_to_extract[i], as.yearmon("2090-01"), as.yearmon("2100-01"), average_whole_period = FALSE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = FALSE) # mean annual temp 2000-2010
-    # fut585_2100<-fut585_2100$fishvar[,]
-    # fut585_2100<-fut585_2100 - 273.15
-    # fut585_2100$data_units<-"C"
-    
-    ####### HERE 
+
     # do celsius change 
     diff_2p6 = fut126$fishvar - hist$fishvar # 20C - 15C = 5C (celsius increase)
     diff_8p5 = fut585$fishvar - hist$fishvar
@@ -139,7 +122,6 @@ for (i in 1:length(variable_to_extract)){
       hist<-histS
       hist$fishvar<-hist$fishvar+histL$fishvar 
       
-      # ####### HERE
       hist$fishvar<-hist$fishvar * 12 
       hist$data_units<-paste0(hist$data_units, " CN converted in g C")
  
@@ -150,7 +132,6 @@ for (i in 1:length(variable_to_extract)){
       fut126<-fut126S
       fut126$fishvar<-fut126$fishvar+fut126L$fishvar 
       
-      # ####### HERE
       fut126$fishvar<-fut126$fishvar * 12 
       fut126$data_units<-paste0(fut126$data_units, " CN converted in g C")
       
@@ -163,11 +144,9 @@ for (i in 1:length(variable_to_extract)){
       fut585<-fut585S
       fut585$fishvar<-fut585$fishvar+fut585L$fishvar 
       
-      # ####### HERE
       fut585$fishvar<-fut585$fishvar * 12 
       fut585$data_units<-paste0(fut585$data_units, " CN converted in g C")
       
-      # ####### HERE
       if(variable_to_extract[i] == "pp"){
         hist$fishvar<-hist$fishvar / 0.0000115741
         hist$data_units<-paste0(hist$data_units, " CN converted in d-1") 
@@ -226,13 +205,7 @@ for (i in 1:length(variable_to_extract)){
     fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract2[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE)
     fut585$fishvar<-fut585$fishvar - 273.15
     fut126$data_units<-"C"
-  
-    # fut585_2030<-averageEnvironmentalCDF(directory, filename , variable_to_extract2[i], as.yearmon("2030-01"), as.yearmon("2030-01"), average_whole_period = FALSE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE) # mean annual temp in 2030
-    # fut585_2030<-fut585_2030$fishvar[,]
-    # fut585_2030<-fut585_2030 - 273.15
-    # fut126$data_units<-"C"
     
-    ####### HERE 
     # do celsius change 
     diff_2p6 = fut126$fishvar - hist$fishvar # 20C - 15C = 5C (celsius increase)
     diff_8p5 = fut585$fishvar - hist$fishvar
@@ -246,7 +219,6 @@ for (i in 1:length(variable_to_extract)){
       hist<-histS
       hist$fishvar<-hist$fishvar+histL$fishvar 
       
-      # ####### HERE
       hist$fishvar<-hist$fishvar * 12 
       hist$data_units<-paste0(hist$data_units, " CN converted in g C")
  
@@ -257,7 +229,6 @@ for (i in 1:length(variable_to_extract)){
       fut126<-fut126S
       fut126$fishvar<-fut126$fishvar+fut126L$fishvar 
       
-      # ####### HERE
       fut126$fishvar<-fut126$fishvar * 12 
       fut126$data_units<-paste0(fut126$data_units, " CN converted in g C")
       
@@ -274,12 +245,10 @@ for (i in 1:length(variable_to_extract)){
       fut585$fishvar<-fut585$fishvar+fut585L$fishvar 
   
       # fut585_2030<-fut585_2030S + fut585_2030L
-      
-      # ####### HERE
+
       fut585$fishvar<-fut585$fishvar * 12 
       fut585$data_units<-paste0(fut585$data_units, " CN converted in g C")
       
-      # ####### HERE
       if(variable_to_extract[i] == "pp"){
         hist$fishvar<-hist$fishvar / 0.0000115741
         hist$data_units<-paste0(hist$data_units, " CN converted in d-1") 
@@ -288,10 +257,6 @@ for (i in 1:length(variable_to_extract)){
         fut585$fishvar<-fut585$fishvar / 0.0000115741
         fut585$data_units<-paste0(fut585$data_units, " CN converted in d-1") 
       }
-      
-      # (mean(hist$fishvar, na.rm = TRUE)/0.0000115741)*1000 # mg * day as per Ryan 
-      # (mean(hist$fishvar, na.rm = TRUE)/3.1709791983765e-8) # g per year as per cmip6 input paper 
-      # (mean(hist$fishvar, na.rm = TRUE)/0.0000115741) # g per days as here 
       
       diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100
       diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
@@ -375,35 +340,6 @@ data_ipsl_CMIP5$zoo$hist$data_units
 color<-list(main_plot_colour_values_tos, main_plot_colour_values_pp, main_plot_colour_values_phyto, main_plot_colour_values_zoo) 
 num_dp_variables<-c(0,1,0,0)
 
-# # we don't need maps for each earth model - otherwise update
-# map_ipsl585_CMIP5<-list()
-# 
-# ##### HERE
-# map_ipsl585_CMIP5_2000<-list()
-# map_ipsl585_CMIP5_2100<-list()
-# 
-# for (i in 1:length(data_ipsl_CMIP5)){ 
-#   
-#   tit <- paste("IPSL RCP8.5", titles[[i]], "change (1990s vs 2090s)",cmip[1],sep =" ")
-#   map_ipsl585_CMIP5[[i]]<-plot_FISH_MIP(data_ipsl_CMIP5[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "change \n (%)", model_type = NA)
-#   names(map_ipsl585_CMIP5)[[i]]<-variable_to_extract[[i]]
-#   
-#   ##### HERE
-#   tit <- paste("IPSL RCP8.5", titles[[i]], " mean 1990s", cmip[1], sep =" ")
-#   map_ipsl585_CMIP5_2000[[i]]<-plot_FISH_MIP(data_ipsl_CMIP5[[i]]$hist$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
-#   names(map_ipsl585_CMIP5_2000)[[i]]<-variable_to_extract[[i]]
-#   
-#   ##### HERE
-#   tit <- paste("IPSL RCP8.5", titles[[i]], " mean 2090s", cmip[1], sep =" ")
-#   map_ipsl585_CMIP5_2100[[i]]<-plot_FISH_MIP(data_ipsl_CMIP5[[i]]$fut585$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
-#   names(map_ipsl585_CMIP5_2100)[[i]]<-variable_to_extract[[i]]
-# 
-#   rm(tit)
-#   
-# }
-# 
-# names(map_ipsl585_CMIP5)
-
 ## plot GFDL ----
 
 names(data_gfdl_CMIP5)
@@ -444,36 +380,6 @@ data_gfdl_CMIP5$to$hist$data_units
 data_gfdl_CMIP5$pp$hist$data_units
 data_gfdl_CMIP5$phy$hist$data_units
 data_gfdl_CMIP5$zoo$hist$data_units
-
-# # we don't need maps for each earth model - otherwise update 
-# map_gfdl585_CMIP5<-list()
-# 
-# ##### HERE
-# map_gfdl585_CMIP5_2000<-list()
-# map_gfdl585_CMIP5_2100<-list()
-# 
-# for (i in 1:length(data_ipsl_CMIP5)){ 
-#   
-#   tit <- paste("GFDL RCP8.5", titles[[i]], "change (1990s vs 2090s)",cmip[1],sep =" ")
-#   map_gfdl585_CMIP5[[i]]<-plot_FISH_MIP(data_gfdl_CMIP5[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "change \n (%)", model_type = NA)
-#   names(map_gfdl585_CMIP5)[[i]]<-variable_to_extract[[i]]
-#   
-#   ##### HERE
-#   tit <- paste("GFDL RCP8.5", titles[[i]], " mean 1990s", cmip[1], sep =" ")
-#   map_gfdl585_CMIP5_2000[[i]]<-plot_FISH_MIP(data_gfdl_CMIP5[[i]]$hist$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
-#   names(map_gfdl585_CMIP5_2000)[[i]]<-variable_to_extract[[i]]
-#   
-#   ##### HERE
-#   tit <- paste("GFDL RCP8.5", titles[[i]], " mean 2090s", cmip[1], sep =" ")
-#   map_gfdl585_CMIP5_2100[[i]]<-plot_FISH_MIP(data_gfdl_CMIP5[[i]]$fut585$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
-#   names(map_gfdl585_CMIP5_2100)[[i]]<-variable_to_extract[[i]]
-# 
-#   rm(tit)
-#   
-# }
-# 
-# names(map_gfdl585_CMIP5)
-# map_gfdl585_CMIP5$to
 
 ```
 
@@ -528,26 +434,21 @@ for(i in 1:length(data_ipsl_CMIP5)){
 
 # plot earth models average for all input variables
 
-##### HERE
 delta_plot_colour_values_new<-list(c(0,4), delta_plot_colour_values, delta_plot_colour_values, delta_plot_colour_values)
 coltitles1<-list("Change \n(C)", "Change \n(%)", "Change \n(%)", "Change \n(%)")
 colour_scheme_vary<-list(c(low = "white", mid = '#fee5d9', high = "#de2d26"),colour_scheme2,colour_scheme2,colour_scheme2) # or mid = #fcbba1 for darker 
 
 map_average_change_CMIP5<-list()
-
-###### HERE
 map_average_value_2000_CMIP5<-list()
 map_average_value_2100_CMIP5<-list()
 
 for (i in 1:length(data_average_change_CMIP5)){ 
   
   # i = 1
-  ###### HERE 
   tit <- paste("Mean change in", titles[[i]], "RCP 8.5, 1990s to 2090s",cmip[1], sep =" ")
   map_average_change_CMIP5[[i]]<-plot_FISH_MIP(data_average_change_CMIP5[[i]], tit, delta_plot_colour_values_new[[i]], colour_scheme = colour_scheme_vary[[i]], coltitle = coltitles1[[i]], model_type = NA)
   names(map_average_change_CMIP5)[[i]]<-variable_to_extract[[i]]
 
-  ####### HERE
   tit <- paste("Mean", titles[[i]], "across IPSL and GFDL RCP 8.5, 1990s", cmip[1], sep =" ")
   map_average_value_2000_CMIP5[[i]]<-plot_FISH_MIP(data_average_value_2000_CMIP5[[i]], tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
   names(map_average_value_2000_CMIP5)[[i]]<-variable_to_extract[[i]]
@@ -621,17 +522,12 @@ for (i in 1:length(variable_to_extract3)){
   
   fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = FALSE, cmip = 6)
   
-  # fut585_2030<-averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], as.yearmon("2030-01"), as.yearmon("2030-12"), average_whole_period = FALSE, convert_to_kg_km = FALSE, hist = FALSE, cmip = 6) # mean annual temp in 2030
-  # fut585_2030<-fut585_2030$fishvar[,,1]
-  
-  ### HERE
   if (variable_to_extract3[[i]] == "tos"){
     # do celsius change 
     diff_2p6 = fut126$fishvar - hist$fishvar # 20C - 15C = 5C (celsius increase)
     diff_8p5 = fut585$fishvar - hist$fishvar
   }else {
     
-    # ####### HERE
     hist$fishvar<-hist$fishvar * 12 
     hist$data_units<-paste0(hist$data_units, " CN converted in g C")
     fut126$fishvar<-fut126$fishvar * 12 
@@ -639,7 +535,6 @@ for (i in 1:length(variable_to_extract3)){
     fut585$fishvar<-fut585$fishvar * 12 
     fut585$data_units<-paste0(fut585$data_units, " CN converted in g C")
       
-    # ####### HERE
     if(variable_to_extract3[[i]] == "intpp"){
       hist$fishvar<-hist$fishvar / 0.0000115741
       hist$data_units<-paste0(hist$data_units, " CN converted in d-1") 
@@ -680,17 +575,12 @@ for (i in 1:length(variable_to_extract3)){
   
   fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = FALSE, cmip = 6)
   
-  # fut585_2030<-averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], as.yearmon("2030-01"), as.yearmon("2030-12"), average_whole_period = FALSE, convert_to_kg_km = FALSE, hist = FALSE, cmip = 6) # mean annual temp in 2030
-  # fut585_2030<-fut585_2030$fishvar[,,1]
-  
-  ### HERE
   if (variable_to_extract3[[i]] == "tos"){
     # do celsius change 
     diff_2p6 = fut126$fishvar - hist$fishvar # 20C - 15C = 5C (celsius increase)
     diff_8p5 = fut585$fishvar - hist$fishvar
   }else {
     
-    # ####### HERE
     hist$fishvar<-hist$fishvar * 12 
     hist$data_units<-paste0(hist$data_units, " CN converted in g C")
     fut126$fishvar<-fut126$fishvar * 12 
@@ -698,7 +588,6 @@ for (i in 1:length(variable_to_extract3)){
     fut585$fishvar<-fut585$fishvar * 12 
     fut585$data_units<-paste0(fut585$data_units, " CN converted in g C")
       
-    # ####### HERE
     if(variable_to_extract3[[i]] == "intpp"){
       hist$fishvar<-hist$fishvar / 0.0000115741
       hist$data_units<-paste0(hist$data_units, " CN converted in d-1") 
@@ -739,34 +628,11 @@ data_ipsl_CMIP6$pp$hist$data_units
 data_ipsl_CMIP6$phy$hist$data_units
 data_ipsl_CMIP6$zoo$hist$data_units
 
-# # we don't need maps for each earth model - otherwise update 
-# map_ipsl585_CMIP6<-list()
-# map_ipsl585_CMIP6_2030<-list()
-# 
-# for (i in 1:length(data_ipsl_CMIP6)){ 
-#   
-#   tit <- paste("IPSL RCP8.5", titles[[i]], "change (1990s vs 2090s)",cmip[2],sep =" ")
-#   map_ipsl585_CMIP6[[i]]<-plot_FISH_MIP(data_ipsl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "change \n (%)", model_type = NA)
-#   names(map_ipsl585_CMIP6)[[i]]<-variable_to_extract[[i]]
-#   
-#   tit <- paste("IPSL RCP8.5", titles[[i]], "in 2030", cmip[2], sep =" ") # can change year....
-#   map_ipsl585_CMIP6_2030[[i]]<-plot_FISH_MIP(data_ipsl_CMIP6[[i]]$fut585_2030, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
-#   names(map_ipsl585_CMIP6_2030)[[i]]<-variable_to_extract[[i]]
-# 
-#   rm(tit)
-#   
-# }
-# 
-# names(map_ipsl585_CMIP6)
-# map_ipsl585_CMIP6$to 
-# map_ipsl585_CMIP6_2030$to
-
 ## plot GFDL ----
 
 # need to model hemisphere
 # checked: different data layout do not effect the calculation of model mean, SD and agreements because these are done after you flipped the matrix and/or change hemisphere. it does not effect the calculation of trends because you are first weighting biomass by grid cell according to explicit lat values and then you are averaging by lat and long anyway.
 
-#### HERE
 data_gfdl_CMIP6$to$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$to$diff_8p5)
 data_gfdl_CMIP6$to$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$to$fut585$fishvar)
 data_gfdl_CMIP6$to$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$to$hist$fishvar)
@@ -782,24 +648,6 @@ data_gfdl_CMIP6$phy$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$phy$hist$fishva
 data_gfdl_CMIP6$zoo$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$zoo$diff_8p5)
 data_gfdl_CMIP6$zoo$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$zoo$fut585$fishvar)
 data_gfdl_CMIP6$zoo$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$zoo$hist$fishvar)
-
-# # we don't need maps for each earth model - otherwise update 
-# map_gfdl585_CMIP6<-list()
-# map_gfdl585_CMIP6_2030<-list()
-# 
-# for (i in 1:length(data_gfdl_CMIP6)){ 
-#   
-#   tit <- paste("GFDL RCP8.5", titles[[i]], "change (1990s vs 2090s)",cmip[2],sep =" ")
-#   map_gfdl585_CMIP6[[i]]<-plot_FISH_MIP(data_gfdl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "change \n (%)", model_type = NA)
-#   names(map_gfdl585_CMIP6)[[i]]<-variable_to_extract[[i]]
-#   
-#   tit <- paste("GFDL RCP8.5", titles[[i]], "in 2030", cmip[2], sep =" ") # can change year....
-#   map_gfdl585_CMIP6_2030[[i]]<-plot_FISH_MIP(data_gfdl_CMIP6[[i]]$fut585_2030, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
-#   names(map_gfdl585_CMIP6_2030)[[i]]<-variable_to_extract[[i]]
-# 
-#   rm(tit)
-#   
-# }
 
 ```
 
@@ -831,20 +679,16 @@ for(i in 1:length(data_ipsl_CMIP6)){
 # plot earth models average for all input variables
 
 map_average_change_CMIP6<-list()
-
-###### HERE
 map_average_value_2000_CMIP6<-list()
 map_average_value_2100_CMIP6<-list()
 
 for (i in 1:length(data_average_change_CMIP6)){ 
   
   # i = 1
-  ###### HERE 
   tit <- paste("Mean change in", titles[[i]], "RCP 8.5, 1990s to 2090s",cmip[2], sep =" ")
   map_average_change_CMIP6[[i]]<-plot_FISH_MIP(data_average_change_CMIP6[[i]], tit, delta_plot_colour_values_new[[i]], colour_scheme = colour_scheme_vary[[i]], coltitle = coltitles1[[i]], model_type = NA)
   names(map_average_change_CMIP6)[[i]]<-variable_to_extract[[i]]
 
-  ####### HERE
   tit <- paste("Mean", titles[[i]], "across IPSL and GFDL RCP 8.5, 1990s", cmip[2], sep =" ")
   map_average_value_2000_CMIP6[[i]]<-plot_FISH_MIP(data_average_value_2000_CMIP6[[i]], tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
   names(map_average_value_2000_CMIP6)[[i]]<-variable_to_extract[[i]]
@@ -870,6 +714,23 @@ save(data_ipsl_CMIP6, data_gfdl_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6
 
 ```
 
+# load outputs 
+
+```{r}
+
+# rm(list=ls())
+variable_to_extract <-c("to", "pp", "phy", "zoo")
+titles<-c("Sea surface temperature", "Net primary production","Phytoplankton carbon","Zooplankton carbon")
+coltitles<-c("C", "g C m-2 d-1","g C m-2","g C m-2") #
+
+# run first 2 sections above 
+
+load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP6.RData")
+load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP5.RData")
+
+```
+
+
 # Delta plot 
 
 ```{r}
@@ -887,12 +748,7 @@ for(i in 1:length(data_summaries_CMIP6$data_average_change_CMIP6)){
   # NOTE it should be OK with temp too even if temp is in C change and the other are in % change
   # if positive -> t, pp, phy or zoo have increased between 1990s and 2090s more in CMIP6 than in CMIP5
   # if negative, inputs have increased more in CMIP5 than CMIP6
-  # THIS IS STRANGE!!! for temp results change if I consider % change or C change !!! why??? 
-  
-  
-  
-  
-  
+  # THIS IS STRANGE!!! for temp results are different if I consider % change or C change !!! why??? 
   
   delta_data[[i]]<-data_summaries_CMIP6$data_average_change_CMIP6[[i]] - data_summaries_CMIP5$data_average_change_CMIP5[[i]]
   names(delta_data)[[i]]<-variable_to_extract[[i]]
@@ -903,11 +759,7 @@ for(i in 1:length(data_summaries_CMIP6$data_average_change_CMIP6)){
   
 }
 
-names(delta_map)
-delta_map$zoo
-
 ```
-
 
 # Put all maps together 
 
@@ -919,19 +771,32 @@ library(patchwork)
 # change between 1990 and 2090s for CMIP5 and form CMIP6 and delta between CMIPs 
 
 layout <- "
+AB
+CD
+"
+
+pt<- map_summaries_CMIP6$map_average_change_CMIP6$to + delta_map$to +
+  map_summaries_CMIP6$map_average_change_CMIP6$pp + delta_map$pp +
+  plot_layout(design = layout)
+
+pdf(paste0(save_loc,"Fig1.pdf"), height=10, width=15)
+pt 
+dev.off()
+
+layout <- "
 ABC
 DEF
 GHK
 LMN
 "
 
-pt<-map_average_change_CMIP5$to + map_average_change_CMIP6$to + delta_map$to +
-  map_average_change_CMIP5$pp + map_average_change_CMIP6$pp + delta_map$pp +
-  map_average_change_CMIP5$phy + map_average_change_CMIP6$phy + delta_map$phy +
-  map_average_change_CMIP5$zoo + map_average_change_CMIP6$zoo + delta_map$zoo +
+pt<-map_summaries_CMIP5$map_average_change_CMIP5$to + map_summaries_CMIP6$map_average_change_CMIP6$to + delta_map$to +
+  map_summaries_CMIP5$map_average_change_CMIP5$pp + map_summaries_CMIP6$map_average_change_CMIP6$pp + delta_map$pp +
+  map_summaries_CMIP5$map_average_change_CMIP5$phy + map_summaries_CMIP6$map_average_change_CMIP6$phy + delta_map$phy +
+  map_summaries_CMIP5$map_average_change_CMIP5$zoo + map_summaries_CMIP6$map_average_change_CMIP6$zoo + delta_map$zoo +
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig1_revised.pdf"), height=15, width=20)
+pdf(paste0(save_loc,"Fig1_complete.pdf"), height=15, width=20)
 pt 
 dev.off()
 
@@ -943,10 +808,10 @@ EF
 GH
 "
 
-pt<-map_average_value_2000_CMIP5$to + map_average_value_2000_CMIP6$to +
-  map_average_value_2000_CMIP5$pp + map_average_value_2000_CMIP6$pp + 
-  map_average_value_2000_CMIP5$phy + map_average_value_2000_CMIP6$phy + 
-  map_average_value_2000_CMIP5$zoo + map_average_value_2000_CMIP6$zoo + 
+pt<-map_summaries_CMIP5$map_average_value_2000_CMIP5$to + map_summaries_CMIP6$map_average_value_2000_CMIP6$to +
+  map_summaries_CMIP5$map_average_value_2000_CMIP5$pp + map_summaries_CMIP6$map_average_value_2000_CMIP6$pp + 
+  map_summaries_CMIP5$map_average_value_2000_CMIP5$phy + map_summaries_CMIP6$map_average_value_2000_CMIP6$phy + 
+  map_summaries_CMIP5$map_average_value_2000_CMIP5$zoo + map_summaries_CMIP6$map_average_value_2000_CMIP6$zoo + 
   plot_layout(design = layout)
 
 pdf(paste0(save_loc,"Fig1B_1990.pdf"), height=15, width=15)
@@ -961,17 +826,15 @@ EF
 GH
 "
 
-pt<-map_average_value_2100_CMIP5$to + map_average_value_2100_CMIP6$to +
-  map_average_value_2100_CMIP5$pp + map_average_value_2100_CMIP6$pp + 
-  map_average_value_2100_CMIP5$phy + map_average_value_2100_CMIP6$phy + 
-  map_average_value_2100_CMIP5$zoo + map_average_value_2100_CMIP6$zoo + 
+pt<-map_summaries_CMIP5$map_average_value_2100_CMIP5$to + map_summaries_CMIP6$map_average_value_2100_CMIP6$to +
+  map_summaries_CMIP5$map_average_value_2100_CMIP5$pp + map_summaries_CMIP6$map_average_value_2100_CMIP6$pp + 
+  map_summaries_CMIP5$map_average_value_2100_CMIP5$phy + map_summaries_CMIP6$map_average_value_2100_CMIP6$phy + 
+  map_summaries_CMIP5$map_average_value_2100_CMIP5$zoo + map_summaries_CMIP6$map_average_value_2100_CMIP6$zoo + 
   plot_layout(design = layout)
 
 pdf(paste0(save_loc,"Fig1B_2090.pdf"), height=15, width=15)
 pt 
 dev.off()
-
-
 
 ```
 
