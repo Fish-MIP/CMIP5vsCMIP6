@@ -1,5 +1,5 @@
 ---
-title: "Plotting global models outputs"
+title: "Plotting global models' time series outputs"
 author: "Camilla Novaglio"
 date: "04/11/2020"
 output: html_document
@@ -117,7 +117,7 @@ for (i in 1:length(mod_ipsl)){
   # apply function to extract time series
   # modified - weight for cos(lat)
   
-  all<-get_timeSeries(hist, fut126, fut585)
+  all<-get_timeSeries(hist, fut126, fut585, output = output[i])
 
   data_ipsl_CMIP5[[i]]<-list(all = all)
   names(data_ipsl_CMIP5)[[i]]<-mod_ipsl[[i]]
@@ -171,7 +171,7 @@ fut126<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmo
 filename<-"zoomss_ipsl-cm5a-lr_nobc_rcp85_nosoc_co2_tcb_global_annual_2006_2100.nc4"
 fut585<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = FALSE)
 
-all<-get_timeSeries(hist, fut126, fut585)
+all<-get_timeSeries(hist, fut126, fut585, output = "yearly")
 
 data_ipsl_CMIP5$ZooMSS<-list(all = all)
 rm(hist, fut126, fut585, all)
@@ -202,7 +202,7 @@ for (i in 1:length(mod_gfdl)){
   fut585<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE)
   
   # apply function to extract time series
-  all<-get_timeSeries(hist, fut126, fut585)
+  all<-get_timeSeries(hist, fut126, fut585, output = output[i])
   
   data_gfdl_CMIP5[[i]]<-list(all = all)
   names(data_gfdl_CMIP5)[[i]]<-mod_gfdl[[i]]
@@ -226,7 +226,7 @@ fut126<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmo
 filename<-"zoomss_gfdl-esm2m_nobc_rcp85_nosoc_co2_tcb_global_annual_2006_2100.nc4"
 fut585<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = FALSE)
 
-all<-get_timeSeries(hist, fut126, fut585)
+all<-get_timeSeries(hist, fut126, fut585, output = "yearly")
 
 data_gfdl_CMIP5$ZooMSS<-list(all = all)
 rm(hist, fut126, fut585, all)
@@ -333,7 +333,7 @@ for (i in 1:length(mod_ipsl)){
   fut585<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE,CMIP = 6)
   
   # apply function to extract time series
-  all<-get_timeSeries(hist, fut126, fut585)
+  all<-get_timeSeries(hist, fut126, fut585, output = output[i])
 
   data_ipsl_CMIP6[[i]]<-list(all = all)
   names(data_ipsl_CMIP6)[[i]]<-mod_ipsl[[i]]
@@ -368,7 +368,7 @@ fut585$fishvar <- fut585$fishvar[, , start_point_to_extract:end_point_to_extract
 fut585$years <- fut585$years[start_point_to_extract:end_point_to_extract]
 
 output[i]<-outputE # different if annual or monthly data
-all<-get_timeSeries(hist, fut126, fut585)
+all<-get_timeSeries(hist, fut126, fut585, output = "yearly")
 data_ipsl_CMIP6$EcoTroph<-list(all = all)
 
 
@@ -432,7 +432,7 @@ file<-readRDS("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/Ec
 fut585<-extractFishCDF_EcoOcean(file, type= "fut")
 
 output[i]<-"monthly" 
-all<-get_timeSeries(hist, fut126, fut585)
+all<-get_timeSeries(hist, fut126, fut585, output = "monthly")
 data_ipsl_CMIP6$EcoOcean<-list(all = all) # NOTE! fut585 might begin in 2006 and overlap with historical if they perfectly ovelap, consiedr this time historical, if they don't consider this time projections. 
 
 # add DBEM IPSL ----
@@ -510,7 +510,7 @@ file<-sppfnlmap
 fut585<-extractFishCDF_DBEM(file, type = "fut")
 
 output[i]<-"annual" 
-all<-get_timeSeries(hist, fut126, fut585)
+all<-get_timeSeries(hist, fut126, fut585, output = "yearly") # TO CHECK if the outputs are yearly or monthly
 data_ipsl_CMIP6$DBEM<-list(all = all) 
 
 # extract data GFDL ---- 
@@ -541,7 +541,7 @@ for (i in 1:length(mod_gfdl)){
   fut585<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE,CMIP = 6)
   
   # apply function to extract time series
-  all<-get_timeSeries(hist, fut126, fut585)
+  all<-get_timeSeries(hist, fut126, fut585, output = output[i])
 
   data_gfdl_CMIP6[[i]]<-list(all = all)
   names(data_gfdl_CMIP6)[[i]]<-mod_gfdl[[i]]
@@ -574,7 +574,7 @@ fut585$fishvar <- fut585$fishvar[, , start_point_to_extract:end_point_to_extract
 fut585$years <- fut585$years[start_point_to_extract:end_point_to_extract]
 
 output[i]<-outputE # different if annual or monthly data
-all<-get_timeSeries(hist, fut126, fut585)
+all<-get_timeSeries(hist, fut126, fut585, output = "yearly")
 data_gfdl_CMIP6$EcoTroph<-list(all = all)
 
 # add EcoOcean GFDL ----
@@ -591,7 +591,7 @@ file<-readRDS("/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/Ec
 fut585<-extractFishCDF_EcoOcean(file, type= "fut")
 
 output[i]<-"monthly" 
-all<-get_timeSeries(hist, fut126, fut585)
+all<-get_timeSeries(hist, fut126, fut585, output = "monthly")
 data_gfdl_CMIP6$EcoOcean<-list(all = all) # NOTE! fut585 might begin in 2006 and overlap with historical if they perfectly ovelap, consiedr this time historical, if they don't consider this time projections. 
 
 # add DBEM GFDL ----
@@ -606,7 +606,7 @@ file<-sppfnlmap
 fut585<-extractFishCDF_DBEM(file, type = "fut")
 
 output[i]<-"annual" 
-all<-get_timeSeries(hist, fut126, fut585)
+all<-get_timeSeries(hist, fut126, fut585, output = "yearly") # TO CHECK if outputs = yearly 
 data_gfdl_CMIP6$DBEM<-list(all = all) 
 
 ```
