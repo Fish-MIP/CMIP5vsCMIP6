@@ -507,14 +507,14 @@ extractFishCDF <- function(directory,
 
 # get_timeSeries ---- 
 
-get_timeSeries<-function(hist, fut126, fut585){
+get_timeSeries<-function(hist, fut126, fut585, output = "yearly"){
   
   # hist$fishvar
   # output[i] == "annula"
   
   dimnames(hist$fishvar)<-list(hist$lon, hist$lat, hist$years)
   dim(hist$fishvar)
-  if(output[i] == "monthly"){
+  if(output == "monthly"){
     hist$fishvar<-hist$fishvar[,,which(hist$years >= "Jan 1971")] # consider only what's needed 
     }else{
     hist$fishvar<-hist$fishvar[,,which(hist$years >= "1971")] 
@@ -536,7 +536,7 @@ get_timeSeries<-function(hist, fut126, fut585){
   
   # ssp126
   dimnames(fut126$fishvar)<-list(fut126$lon, fut126$lat, fut126$years)
-  if(output[i] == "monthly"){
+  if(output == "monthly"){
     fut126$fishvar<-fut126$fishvar[,,which(fut126$years <= "Jan 2099")]
   }else{
     fut126$fishvar<-fut126$fishvar[,,which(fut126$years <= "2099")]
@@ -565,7 +565,7 @@ get_timeSeries<-function(hist, fut126, fut585){
   
   # ssp585
   dimnames(fut585$fishvar)<-list(fut585$lon, fut585$lat, fut585$years)
-  if(output[i] == "monthly"){
+  if(output == "monthly"){
     fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "Jan 2099")]
   }else{
     fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "2099")]
@@ -589,8 +589,89 @@ get_timeSeries<-function(hist, fut126, fut585){
   
 }
 
+# get_timeSeries temperature ---- 
 
-
+get_timeSeries_temperature<-function(hist, fut126, fut585, output = "yearly"){
+  
+  # hist$fishvar
+  # output == "annula"
+  
+  dimnames(hist$fishvar)<-list(hist$lon, hist$lat, hist$years)
+  dim(hist$fishvar)
+  if(output == "monthly"){
+    hist$fishvar<-hist$fishvar[,,which(hist$years >= "Jan 1971")] # consider only what's needed 
+  }else{
+    hist$fishvar<-hist$fishvar[,,which(hist$years >= "1971")] 
+  }
+  hist_2<-as.data.frame.table(hist$fishvar) %>%
+    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+    # weight by grid area (smaller at higher lats)
+    # mutate(lat = as.numeric(as.character(lat))) %>% 
+    # mutate(lat2 = cos(abs(lat) * (pi/180))) %>% # transom lat in radiant and calculate cosine. These values are not 0-1 because lats are not 0-90 but 0.5-89.5 (midpoint of the grid cell)
+    # mutate(tcb = tcb * lat2) %>% 
+    mutate(year = round(as.numeric(as.character(year1)))) %>%
+    group_by(year) %>% 
+    dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
+  
+  # ref decade
+  refDecade <- hist_2 %>% 
+    filter(year >= 1990, year <=2000) %>% 
+    dplyr::summarize(value = mean(tcb, na.rm = TRUE))
+  
+  # ssp126
+  dimnames(fut126$fishvar)<-list(fut126$lon, fut126$lat, fut126$years)
+  if(output == "monthly"){
+    fut126$fishvar<-fut126$fishvar[,,which(fut126$years <= "Jan 2099")]
+  }else{
+    fut126$fishvar<-fut126$fishvar[,,which(fut126$years <= "2099")]
+  }
+  fut126_2<-as.data.frame.table(fut126$fishvar) %>% 
+    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+    # mutate(lat = as.numeric(as.character(lat))) %>% 
+    # mutate(lat2 = cos(abs(lat) * (pi/180))) %>% 
+    # mutate(tcb = tcb * lat2) %>% 
+    mutate(year = round(as.numeric(as.character(year1)))) %>%
+    group_by(year) %>% 
+    dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
+  
+  # projections start at different times for the 2 cmips 
+  if(cmip == 5){
+    all126<-hist_2 %>% 
+      full_join(fut126_2) %>% 
+      mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>% 
+      mutate(color = ifelse(year <= 2005, "hist", "ssp126"))
+  }else{
+    all126<-hist_2 %>% 
+      full_join(fut126_2) %>% 
+      mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>% 
+      mutate(color = ifelse(year <= 2015, "hist", "ssp126"))
+  }
+  
+  # ssp585
+  dimnames(fut585$fishvar)<-list(fut585$lon, fut585$lat, fut585$years)
+  if(output == "monthly"){
+    fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "Jan 2099")]
+  }else{
+    fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "2099")]
+  }
+  fut585_2<-as.data.frame.table(fut585$fishvar) %>%
+    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+    # mutate(lat = as.numeric(as.character(lat))) %>% 
+    # mutate(lat2 = cos(abs(lat) * (pi/180))) %>% 
+    # mutate(tcb = tcb * lat2) %>% 
+    mutate(year = round(as.numeric(as.character(year1)))) %>%
+    group_by(year) %>% 
+    dplyr::summarise(tcb = mean(tcb, na.rm=TRUE)) %>% 
+    mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>%
+    mutate(color = "ssp585")
+  
+  all<-all126 %>%
+    full_join(fut585_2)
+  
+  rm(hist_2, refDecade, fut126_2, all126, fut585_2)
+  return(all)
+  
+}
 
 # averageEnvironmentalCDF ----
 
@@ -608,17 +689,17 @@ averageEnvironmentalCDF <-
            convert_to_kg_km = TRUE, hist = TRUE, ipsl = FALSE, cmip = 5)
   {
     
-    # directory = "/Users/camillan/fishmip_inputs/marine-fishery_global_ISIMIP2b/GFDL_ESM2M/"
-    # filename = "spp_gfdl-esm2m_rcp26_zs_annual_200601-210012.nc4"
-    # variable = "TO_ZS"
-    # time1 = as.yearmon("1990-01")
-    # time2 = as.yearmon("1999-01")
-    # average_whole_period = TRUE
+    # directory = "/Users/camillan/fishmip_inputs/marine-fishery_global_ISIMIP3b/"
+    # filename = "ipsl-cm6a-lr_r1i1p1f1_ssp126_tos_onedeg_global_monthly_2015_2100.nc"
+    # variable = "tos"
+    # time1 = as.yearmon("2015-01")
+    # time2 = as.yearmon("2099-12")
+    # average_whole_period = FALSE
     # convert_to_kg_km = FALSE # I don't understand this ....
-    # hist = TRUE
-    # ipsl = FALSE
-    # cmip = 5
-    
+    # hist = FALSE
+    # ipsl = TRUE
+    # cmip = 6
+    # output = "monthly"
     
     # model_type <- get_model_type(filename) # I don't understand this as it's not an ecosystem model but an earth model ... 
     
@@ -662,9 +743,9 @@ averageEnvironmentalCDF <-
       time_vector <- time_months
     }else{
       if(hist == TRUE){
-        yearmonth = as.yearmon("1850-1-1") + 0.08333333 # is this 0.0833 necessary? should we just start extracting from Jan? 
+        yearmonth = as.yearmon("1850-1-1") # + 0.08333333 # is this 0.0833 necessary? should we just start extracting from Jan? 
       }else{
-        yearmonth = as.yearmon("2015-1-1") + 0.08333333
+        yearmonth = as.yearmon("2015-1-1") # + 0.08333333
       }
       time_months = as.yearmon(yearmonth + seq(0, (length(time_vector) - 1)) / 12)
       time_vector <- time_months
@@ -691,12 +772,16 @@ averageEnvironmentalCDF <-
       new_var_mat = array(rep(0, num_years * length(lon) * length(lat)),
                           c(length(lon), length(lat), num_years))
       
+      # dim(new_var_mat)
+      
       # Now get the variable of interest
       if (names(nc$dim)[length(nc$dim)] != "TIME")
         print("Warning: might be assuming wrong dimension for time from NetCDF file") # CN don't understand this!
       temp_array1 <- ncvar_get(nc, variable)[, , tpte$start_point_to_extract:tpte$end_point_to_extract]
-  
-      if(num_years>1){
+    
+      dim(temp_array1)
+      
+      if(num_years>1 & output == "monthly"){ # CN: added monthly here as if outputs are yearly there is no need to average them ... 
       # Average data
       for (ii in 1:length(lon))
       {
@@ -727,6 +812,8 @@ averageEnvironmentalCDF <-
         }
       
       years = floor(as.numeric(time1)):floor(as.numeric(time2))
+      # dim(new_var_mat)
+      
       
     } else # CN average_whole_period == TRUE
     {
@@ -755,6 +842,7 @@ averageEnvironmentalCDF <-
       
       years = paste(as.character(time1), "to", as.character(time2), sep=" ")
     }
+    
     
     # CN don't understand this - maybe for phy, zoo and PP?
     # if(can_model_units_be_standardized(data_units, convert_to_kg_km))
