@@ -28,7 +28,7 @@ source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
 source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
 
 # saving outputs location  
-save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/figs/"
+save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/"
 
 # variables 
 cmip<-c("CMIP5", "CMIP6")
@@ -1137,7 +1137,7 @@ source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
 source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
 
 # saving outputs location  
-save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/figs/"
+save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/"
 
 # variables 
 cmip<-c("CMIP5", "CMIP6")
@@ -1188,7 +1188,7 @@ latitude <- ncvar_get(nc, "lat")
 delta_average_limits = c(-100, 100)
 delta_sd_limits = c(0,100)
 
-# calcualtes delata as scatter plot of CMIP5 vs CMIP6
+# calculate delta as scatter plot of CMIP5 vs CMIP6
 
 delta_fun<-function(data5, data6, plot_limits = delta_limits, labels){
   
@@ -1256,10 +1256,10 @@ delta_sd_all<-delta_fun(data_summaries_CMIP5$model_sd, data_summaries_CMIP6$mode
 delta_map_data_all<-data_summaries_CMIP6$model_average - data_summaries_CMIP5$model_average
 maptitle_detla<-"Delta (CMIP6 change - CMIP5 change)"
 delta_map_all_difference<-plot_FISH_MIP(delta_map_data_all, maptitle_detla, c(-50, 50), colour_scheme = colour_scheme3, coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 5) 
-# if 1 - 5 = -4 # CMIP6 decreased 4 times
-# if 1 - (-5) = 6 # CMIP6 increased 6 times 
-# if -1 - 5 = -6 # CMIP6 decreased 6 times 
-# if -1 - (-5) = 4 # CMIP6 increased 4 times 
+# if (+1) - (+5) = -4 # CMIP6 decreased 4 times
+# if (+1) - (-5) = 6 # CMIP6 increased 6 times 
+# if (-1) - (+5) = -6 # CMIP6 decreased 6 times 
+# if (-1) - (-5) = 4 # CMIP6 increased 4 times 
 # e.g. 
 # model_average_all_CMIP5 = -5 (tcb 5% decrease between 1990 and 2090) # where model_average_all_CMIP5 is the mean of diff_8p5 (diff in tcb between the 2 decades) across all models
 # model_average_all_CMIP6 = -3 (tcb 3% decrease between 1990 and 2090)
@@ -1318,6 +1318,74 @@ delta_map_all_agreement<-plot_FISH_MIP(trial_data, "CMIPs agreement on the direc
 
 ```
 
+# flip sign plot 
+
+Similar but more sophisticated than agreement
+
+```{r}
+
+# find cells where the sign is opposite
+temp<-data_summaries_CMIP5$model_average
+temp1<-data_summaries_CMIP6$model_average
+temp2<-temp*temp1 
+temp2<-ifelse(temp2<0, 1, 0) # if negative, sign flipped
+
+# consider only flipped sign in CMIP5 and CMIP6 matrices
+temp<-temp*temp2
+temp<-ifelse(temp==0, NA, temp)
+temp1<-temp1*temp2
+temp1<-ifelse(temp1==0, NA, temp1)
+# check
+# temp[1:10,1:10]
+# temp1[1:10,1:10]
+
+# from + to -
+# consider only cells that flipped from + (in cmip5) to - (in cmip6)
+temp_neg<-temp
+temp1_neg<-temp1
+temp_neg<-ifelse(temp_neg<0, NA, temp_neg) # SHOULD THESE BE >= 0 ??? 0 to positive or 0 to negative does not qualify as changing sign I think
+temp1_neg<-ifelse(temp1_neg>0, NA, temp1_neg)
+
+# by how much? # calcualte delta as above 
+data_negative<-temp1_neg - temp_neg # CMIP6 -CMIP5
+# if (-1) - (+5) = -6 # CMIP6 decreased 6 times 
+# if (-5) - (+1) = -6 # CMIP6 decreased 6 times 
+# check 
+# temp[1,153] # positive 
+# temp1[1,153] # negative
+# trial[1,153]
+
+# plot values 
+# need to be consistent with delta plot (colour_scheme3)
+colour_scheme4 <- c(low = "#fc9617", mid = "#fecf95",  high = "#fef4e7")
+maptitle_sign_negative<-"Delta for cells that changed from an increase in CMIP5 to a decrease in CMIP6"
+map_sign_negative<-plot_FISH_MIP(data_negative, maptitle_sign_negative, c(-50, 0), colour_scheme = colour_scheme4, coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 3) 
+
+# from - to +
+# consider only cells that flipped from + (in cmip5) to - (in cmip6)
+temp_pos<-temp
+temp1_pos<-temp1
+temp_pos<-ifelse(temp_pos>0, NA, temp_pos)
+temp1_pos<-ifelse(temp1_pos<0, NA, temp1_pos)
+
+# by how much? # calcualte delta as above 
+data_positive<-temp1_pos - temp_pos # CMIP6 -CMIP5
+# if (-1) - (+5) = -6 # CMIP6 decreased 6 times 
+# if (-5) - (+1) = -6 # CMIP6 decreased 6 times 
+# check 
+# temp[1,153] # positive 
+# temp1[1,153] # negative
+# trial[1,153]
+
+# plot values 
+# need to be consistent with delta plot (colour_scheme3)
+colour_scheme4 <- c(low = "#f4f3f9", mid = "#bab4d7",  high = "#8479b7") # google the high color to get all the gammas 
+# colour_scheme4 <- c(low = "white", mid = "#d0cce4",  high = "#8479b7")
+maptitle_sign_positive<-"Delta for cells that changed from a decrease in CMIP5 to an increase in CMIP6"
+map_sign_positive<-plot_FISH_MIP(data_positive, maptitle_sign_positive, c(0, 50), colour_scheme = colour_scheme4, coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 3)
+
+```
+
 # Put all maps together 
 
 ```{r multipanel plot}
@@ -1326,7 +1394,9 @@ library(patchwork)
 
 # FIG 2 model average CMIP5, model average CMIP6, delta CMIP5 vs CMIP6
 layout <- "
-ABC
+AB
+C#
+DE
 "
 
 # see what's already there 
@@ -1334,10 +1404,11 @@ ABC
 # avarage_CMIP6_all<-avarage_CMIP6_all + ggtitle("B") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
 # delta_map_all<-delta_map_all + ggtitle("C") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
-pt<-map_summaries_CMIP5$avarage_CMIP5_all + map_summaries_CMIP6$avarage_CMIP6_all + delta_map_all_difference +
-  plot_layout(design = layout)
+pt<-map_summaries_CMIP5$avarage_CMIP5_all + map_summaries_CMIP6$avarage_CMIP6_all + delta_map_all_difference + map_sign_positive +
+  map_sign_negative + plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig2.pdf"), height=5, width=20)
+# pdf(paste0(save_loc,"Fig2_new.pdf"), height=5, width=20) # when 3 maps only 
+pdf(paste0(save_loc,"Fig2_new.pdf"), height=10, width=15) # when 3 maps only 
 pt 
 dev.off()
 
