@@ -136,29 +136,28 @@ convert_model_dates_CMIP6 <- function(netcdf_file, model_type)
   # model_type = model_type
   
   time_months <- ncvar_get(netcdf_file, "time")
-  
-  # CMIP 6.....
   print(netcdf_file$dim$time$units)
   
   # Convert time to a sensible set of values (for our purposes)
   if (model_type$BOATS){
-    yearmonth = as.yearmon("1950-01") + time_months[1] / 12
+    # this means that the time dimension starts at 1 which is jan 1950 for hist 
+    # and at 781 which are months between 1950 and 2015 for future 
+    # we alse extract 1 months to tart from Jan instead of feb
+    yearmonth = as.yearmon("1950-01") + time_months[1] / 12 - 0.08333333
     print(yearmonth)
-  } else if (model_type$APECOSM) # to fix  when data available 
+  } else if (model_type$APECOSM)  
   {
-    yearmonth = as.yearmon("1601-01") + time_months[1] / 12
+    # this means that the time dimension starts at 4188 which is 4188 between 
+    # jan 1601 (the convention) and jan 1850 (when the model actually starts) 
+    # the number of months are different for the future protocols and that's 
+    # given by time_months[1]
+    yearmonth = as.yearmon("1601-01") + time_months[1] / 12 
     print(yearmonth) 
   } else if (model_type$DBPM)
   {
-    # time is not properly given in this netcdf (it starts from 1)
-    # but all good if you do the below
-    if(model_type$future == FALSE){
-      yearmonth = as.yearmon("1850-01") + 0.08333333
-      print(yearmonth) 
-    }else {
-      yearmonth = as.yearmon("2015-01") + 0.08333333
-      print(yearmonth) 
-    }
+    # see APECOSM
+    yearmonth = as.yearmon("1601-01") + time_months[1] / 12 
+    print(yearmonth) 
   } else if (model_type$DBEM) # to fix when data available 
   {
     yearmonth = as.yearmon("1951-01") + time_months[1]
@@ -167,27 +166,27 @@ convert_model_dates_CMIP6 <- function(netcdf_file, model_type)
   {
     if (model_type$future == FALSE)
     {
-      yearmonth = as.yearmon("1950-01") + 1
+      yearmonth = as.yearmon("1950-01")
     } else
     {
-      yearmonth = as.yearmon("2015-01") + 1
+      yearmonth = as.yearmon("2015-01")
     }
     print(yearmonth)
-  } else if (model_type$ZOOMSS) # need to fix..... 
+  } else if (model_type$ZOOMSS) 
   {
     if (model_type$future == FALSE)
     {
-      yearmonth = as.yearmon("1950-01") + 1
+      yearmonth = as.yearmon("1950-01") 
     } else
     {
-      yearmonth = as.yearmon("2015-01") + 1
+      yearmonth = as.yearmon("2015-01")
     }
     print(yearmonth)
   } else if (model_type$SSDBEM) # not needed 
   {
     yearmonth = as.yearmon("1950-01") + time_months[1]
     print(yearmonth) 
-  }else if (model_type$ECOTROPH) # 
+  }else if (model_type$ECOTROPH)  
   {
     yearmonth = as.yearmon("1950-01")
     print(yearmonth) 
@@ -289,9 +288,9 @@ averageFishCDF <- function(directory,
   {
     
   
-    # # trial
+    # trial
     # variable = variable_to_extract[1]
-    # average_whole_period = FALSE
+    # average_whole_period = FALSE # CODE DOES NOT MAKE SENSE IF THIS SI FALSE AND MODELS ARE ANNUAL 
     # time1 = yearmonth1[i]
     # time2 = yearmonth2[i]
     # convert_to_kg_km = TRUE # THIS NEEDS TO BE CHECKED FOR CMIP6!!!!!
@@ -313,6 +312,7 @@ averageFishCDF <- function(directory,
     
     lon <- ncvar_get(nc, "lon")
     lat <- ncvar_get(nc, "lat")
+    # time <- ncvar_get(nc, "time")
     
     # NEED IF STATEMENT HERE - CMIP5 or 6 
     if (CMIP==5){
@@ -352,7 +352,8 @@ averageFishCDF <- function(directory,
       # Now get the variable of interest
       if (names(nc$dim)[length(nc$dim)] != "time")
         print("Warning: might be assuming wrong dimension for time from NetCDF file")
-      ta1 <- ncvar_get(nc, variable)[, , ]
+      # ta1 <- ncvar_get(nc, variable)[, , ]
+      # dim(ta1)
       temp_array1 <- ncvar_get(nc, variable)[, , tpte$start_point_to_extract:tpte$end_point_to_extract]
        
         # Average data
@@ -451,7 +452,7 @@ extractFishCDF <- function(directory,
   
   # # trial
   # variable = "Band1"
-  # average_whole_period = FALSE
+  # average_whole_period = FALSE # ARGUMENT NOT USED n this function!
   # time1 = yearmonth1[2]
   # time2 = yearmonth2[2]
   # convert_to_kg_km = TRUE
