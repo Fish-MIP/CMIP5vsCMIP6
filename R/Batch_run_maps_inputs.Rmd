@@ -21,6 +21,7 @@ library(zoo)
 library(viridis)
 library(tidyr)
 library(dplyr)
+library(patchwork)
 
 source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
 source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
@@ -172,9 +173,6 @@ for (i in 1:length(variable_to_extract)){
   
 }
 
-names(data_ipsl_CMIP5)
-
-
 # extract data GFDL ---- 
 
 directory = "/Users/camillan/fishmip_inputs/marine-fishery_global_ISIMIP2b/GFDL_ESM2M/"
@@ -234,18 +232,11 @@ for (i in 1:length(variable_to_extract)){
       
       filename<-paste0("s",variable_to_extract[i],"_gfdl-esm2m_rcp85_zint_annual_200601-210012.nc4")
       fut585S<-averageEnvironmentalCDF(directory, filename , paste0("S", variable_to_extract2[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE)
-      # fut585_2030S<-averageEnvironmentalCDF(directory, filename , paste0("S", variable_to_extract2[i]), as.yearmon("2030-01"), as.yearmon("2030-01"), average_whole_period = FALSE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE)
-      # fut585_2030S<-fut585_2030S$fishvar[,]
       filename<-paste0("l",variable_to_extract[i],"_gfdl-esm2m_rcp85_zint_annual_200601-210012.nc4")
       fut585L<-averageEnvironmentalCDF(directory, filename , paste0("L", variable_to_extract2[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE)
-      # fut585_2030L<-averageEnvironmentalCDF(directory, filename , paste0("L", variable_to_extract2[i]), as.yearmon("2030-01"), as.yearmon("2030-01"), average_whole_period = FALSE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE)
-      # fut585_2030L<-fut585_2030L$fishvar[,]
   
       fut585<-fut585S
       fut585$fishvar<-fut585$fishvar+fut585L$fishvar 
-  
-      # fut585_2030<-fut585_2030S + fut585_2030L
-
       fut585$fishvar<-fut585$fishvar * 12 
       fut585$data_units<-paste0(fut585$data_units, " CN converted in g C")
       
@@ -298,12 +289,9 @@ move_hemispheres<- function(data_to_flip){
 
 ## plot IPSL ----
 
-names(data_ipsl_CMIP5)
-
 data_ipsl_CMIP5$to$diff_8p5<- fliplr_matrix(data_ipsl_CMIP5$to$diff_8p5)
 data_ipsl_CMIP5$to$diff_8p5<- move_hemispheres(data_ipsl_CMIP5$to$diff_8p5)
 
-#### HERE
 data_ipsl_CMIP5$to$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP5$to$fut585$fishvar)
 data_ipsl_CMIP5$to$fut585$fishvar<- move_hemispheres(data_ipsl_CMIP5$to$fut585$fishvar)
 data_ipsl_CMIP5$to$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP5$to$hist$fishvar)
@@ -347,7 +335,6 @@ names(data_gfdl_CMIP5)
 data_gfdl_CMIP5$to$diff_8p5<- fliplr_matrix(data_gfdl_CMIP5$to$diff_8p5)
 data_gfdl_CMIP5$to$diff_8p5<- move_hemispheres(data_gfdl_CMIP5$to$diff_8p5)
 
-### HERE
 data_gfdl_CMIP5$to$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP5$to$fut585$fishvar)
 data_gfdl_CMIP5$to$fut585$fishvar<- move_hemispheres(data_gfdl_CMIP5$to$fut585$fishvar)
 data_gfdl_CMIP5$to$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP5$to$hist$fishvar)
@@ -410,8 +397,6 @@ model_stat<-function(data, variable){
 }
 
 data_average_change_CMIP5<-list()
-
-#### HERE
 data_average_value_2000_CMIP5<-list()
 data_average_value_2100_CMIP5<-list()
 
@@ -423,7 +408,6 @@ for(i in 1:length(data_ipsl_CMIP5)){
   data_average_change_CMIP5[[i]]<-model_stat(list(data_ipsl_CMIP5[[i]], data_gfdl_CMIP5[[i]]), variable = 'diff_8p5')$model_average
   names(data_average_change_CMIP5)[[i]]<-variable_to_extract[[i]]
   
-  #### HERE 
   data_average_value_2000_CMIP5[[i]]<-model_stat(list(data_ipsl_CMIP5[[i]], data_gfdl_CMIP5[[i]]), variable = 'hist')$model_average
   names(data_average_value_2000_CMIP5)[[i]]<-variable_to_extract[[i]]
   
@@ -481,7 +465,6 @@ mean(data_average_value_2000_CMIP5$zoo, na.rm = TRUE)
 
 ```{r}
 
-##### HERE 
 data_summaries_CMIP5<-list(data_average_change_CMIP5 = data_average_change_CMIP5, data_average_value_2000_CMIP5 = data_average_value_2000_CMIP5, data_average_value_2100_CMIP5 = data_average_value_2100_CMIP5)
 map_summaries_CMIP5<-list(map_average_change_CMIP5 = map_average_change_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5)
 save(data_ipsl_CMIP5, data_gfdl_CMIP5, data_summaries_CMIP5, map_summaries_CMIP5, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP5.RData")
@@ -656,8 +639,6 @@ data_gfdl_CMIP6$zoo$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$zoo$hist$fishva
 ```{r}
 
 data_average_change_CMIP6<-list()
-
-#### HERE
 data_average_value_2000_CMIP6<-list()
 data_average_value_2100_CMIP6<-list()
 
@@ -667,7 +648,6 @@ for(i in 1:length(data_ipsl_CMIP6)){
   data_average_change_CMIP6[[i]]<-model_stat(list(data_ipsl_CMIP6[[i]], data_gfdl_CMIP6[[i]]), variable = 'diff_8p5')$model_average
   names(data_average_change_CMIP6)[[i]]<-variable_to_extract[[i]]
   
-  #### HERE 
   data_average_value_2000_CMIP6[[i]]<-model_stat(list(data_ipsl_CMIP6[[i]], data_gfdl_CMIP6[[i]]), variable = 'hist')$model_average
   names(data_average_value_2000_CMIP6)[[i]]<-variable_to_extract[[i]]
   
@@ -724,12 +704,10 @@ titles<-c("Sea surface temperature", "Net primary production","Phytoplankton car
 coltitles<-c("C", "g C m-2 d-1","g C m-2","g C m-2") #
 
 # run first 2 sections above 
-
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP6.RData")
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP5.RData")
 
 ```
-
 
 # Delta plot 
 
@@ -837,6 +815,143 @@ pt
 dev.off()
 
 ```
+
+# maps of inputs by ESM 
+
+```{r}
+
+# Fig 1 and 1B split by earth system models 
+
+delta_plot_colour_values_new<-list(c(0,4), delta_plot_colour_values, delta_plot_colour_values, delta_plot_colour_values)
+coltitles1<-list("Change \n(C)", "Change \n(%)", "Change \n(%)", "Change \n(%)")
+colour_scheme_vary<-list(c(low = "white", mid = '#fee5d9', high = "#de2d26"),colour_scheme2,colour_scheme2,colour_scheme2) # or mid = #fcbba1 for darker 
+color<-list(main_plot_colour_values_tos, main_plot_colour_values_pp, main_plot_colour_values_phyto, main_plot_colour_values_zoo) 
+num_dp_variables<-c(0,1,0,0)
+
+map_ipsl_change_CMIP5<-list()
+map_ipsl_value_2000_CMIP5<-list()
+map_ipsl_value_2100_CMIP5<-list()
+
+for (i in 1:length(data_ipsl_CMIP5)){
+    
+  # i = 1
+  tit <- paste("Change in", titles[[i]], "IPSL RCP 8.5, 1990s to 2090s",cmip[1], sep =" ")
+  map_ipsl_change_CMIP5[[i]]<-plot_FISH_MIP(data_ipsl_CMIP5[[i]]$diff_8p5, tit, delta_plot_colour_values_new[[i]], colour_scheme = colour_scheme_vary[[i]], coltitle = coltitles1[[i]], model_type = NA)
+  names(map_ipsl_change_CMIP5)[[i]]<-variable_to_extract[[i]]
+
+  tit <- paste(titles[[i]], "IPSL RCP 8.5, 1990s", cmip[1], sep =" ")
+  map_ipsl_value_2000_CMIP5[[i]]<-plot_FISH_MIP(data_ipsl_CMIP5[[i]]$hist$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
+  names(map_ipsl_value_2000_CMIP5)[[i]]<-variable_to_extract[[i]]
+  
+  tit <- paste(titles[[i]], "IPSL RCP 8.5, 2090s", cmip[1], sep =" ")
+  map_ipsl_value_2100_CMIP5[[i]]<-plot_FISH_MIP(data_ipsl_CMIP5[[i]]$fut585$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
+  names(map_ipsl_value_2100_CMIP5)[[i]]<-variable_to_extract[[i]]
+  
+  rm(tit)
+  
+}
+
+map_gfdl_change_CMIP5<-list()
+map_gfdl_value_2000_CMIP5<-list()
+map_gfdl_value_2100_CMIP5<-list()
+
+for (i in 1:length(data_gfdl_CMIP5)){
+    
+  # i = 1
+  tit <- paste("Change in", titles[[i]], "GFDL RCP 8.5, 1990s to 2090s",cmip[1], sep =" ")
+  map_gfdl_change_CMIP5[[i]]<-plot_FISH_MIP(data_gfdl_CMIP5[[i]]$diff_8p5, tit, delta_plot_colour_values_new[[i]], colour_scheme = colour_scheme_vary[[i]], coltitle = coltitles1[[i]], model_type = NA)
+  names(map_gfdl_change_CMIP5)[[i]]<-variable_to_extract[[i]]
+
+  tit <- paste(titles[[i]], "GFDL RCP 8.5, 1990s", cmip[1], sep =" ")
+  map_gfdl_value_2000_CMIP5[[i]]<-plot_FISH_MIP(data_gfdl_CMIP5[[i]]$hist$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
+  names(map_gfdl_value_2000_CMIP5)[[i]]<-variable_to_extract[[i]]
+  
+  tit <- paste(titles[[i]], "GFDL RCP 8.5, 2090s", cmip[1], sep =" ")
+  map_gfdl_value_2100_CMIP5[[i]]<-plot_FISH_MIP(data_gfdl_CMIP5[[i]]$fut585$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
+  names(map_gfdl_value_2100_CMIP5)[[i]]<-variable_to_extract[[i]]
+  
+  rm(tit)
+  
+}
+
+map_ipsl_change_CMIP6<-list()
+map_ipsl_value_2000_CMIP6<-list()
+map_ipsl_value_2100_CMIP6<-list()
+
+for (i in 1:length(data_ipsl_CMIP6)){
+    
+  # i = 1
+  tit <- paste("Change in", titles[[i]], "IPSL RCP 8.5, 1990s to 2090s",cmip[2], sep =" ")
+  map_ipsl_change_CMIP6[[i]]<-plot_FISH_MIP(data_ipsl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values_new[[i]], colour_scheme = colour_scheme_vary[[i]], coltitle = coltitles1[[i]], model_type = NA)
+  names(map_ipsl_change_CMIP6)[[i]]<-variable_to_extract[[i]]
+
+  tit <- paste(titles[[i]], "IPSL RCP 8.5, 1990s", cmip[2], sep =" ")
+  map_ipsl_value_2000_CMIP6[[i]]<-plot_FISH_MIP(data_ipsl_CMIP6[[i]]$hist$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
+  names(map_ipsl_value_2000_CMIP6)[[i]]<-variable_to_extract[[i]]
+  
+  tit <- paste(titles[[i]], "IPSL RCP 8.5, 2090s", cmip[2], sep =" ")
+  map_ipsl_value_2100_CMIP6[[i]]<-plot_FISH_MIP(data_ipsl_CMIP6[[i]]$fut585$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
+  names(map_ipsl_value_2100_CMIP6)[[i]]<-variable_to_extract[[i]]
+  
+  rm(tit)
+  
+}
+
+map_gfdl_change_CMIP6<-list()
+map_gfdl_value_2000_CMIP6<-list()
+map_gfdl_value_2100_CMIP6<-list()
+
+for (i in 1:length(data_gfdl_CMIP6)){
+    
+  # i = 1
+  tit <- paste("Change in", titles[[i]], "GFDL RCP 8.5, 1990s to 2090s",cmip[2], sep =" ")
+  map_gfdl_change_CMIP6[[i]]<-plot_FISH_MIP(data_gfdl_CMIP6[[i]]$diff_8p5, tit, delta_plot_colour_values_new[[i]], colour_scheme = colour_scheme_vary[[i]], coltitle = coltitles1[[i]], model_type = NA)
+  names(map_gfdl_change_CMIP6)[[i]]<-variable_to_extract[[i]]
+
+  tit <- paste(titles[[i]], "GFDL RCP 8.5, 1990s", cmip[2], sep =" ")
+  map_gfdl_value_2000_CMIP6[[i]]<-plot_FISH_MIP(data_gfdl_CMIP6[[i]]$hist$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
+  names(map_gfdl_value_2000_CMIP6)[[i]]<-variable_to_extract[[i]]
+  
+  tit <- paste(titles[[i]], "GFDL RCP 8.5, 2090s", cmip[2], sep =" ")
+  map_gfdl_value_2100_CMIP6[[i]]<-plot_FISH_MIP(data_gfdl_CMIP6[[i]]$fut585$fishvar, tit, color[[i]], colour_scheme = colour_scheme4, coltitle = coltitles[[i]], model_type = NA, num_dp = num_dp_variables[[i]])
+  names(map_gfdl_value_2100_CMIP6)[[i]]<-variable_to_extract[[i]]
+  
+  rm(tit)
+  
+}
+
+# FIG 1B IPSL and GFDL - can do with map_ipsl_value_2100_CMIP5 and map_ipsl_change_CMIP5 for FIG 1 (although you need to calculate delta too... ) and FIG 1B 2100
+layout <- "
+AB
+CD
+EF
+GH
+"
+
+pt<-map_ipsl_value_2000_CMIP5$to + map_ipsl_value_2000_CMIP6$to +
+  map_ipsl_value_2000_CMIP5$pp + map_ipsl_value_2000_CMIP6$pp + 
+  map_ipsl_value_2000_CMIP5$phy + map_ipsl_value_2000_CMIP6$phy + 
+  map_ipsl_value_2000_CMIP5$zoo + map_ipsl_value_2000_CMIP6$zoo + 
+  plot_layout(design = layout)
+
+pdf(paste0(save_loc,"Fig1B_1990_IPSL.pdf"), height=15, width=15)
+pt 
+dev.off()
+
+pt<-map_gfdl_value_2000_CMIP5$to + map_gfdl_value_2000_CMIP6$to +
+  map_gfdl_value_2000_CMIP5$pp + map_gfdl_value_2000_CMIP6$pp + 
+  map_gfdl_value_2000_CMIP5$phy + map_gfdl_value_2000_CMIP6$phy + 
+  map_gfdl_value_2000_CMIP5$zoo + map_gfdl_value_2000_CMIP6$zoo + 
+  plot_layout(design = layout)
+
+pdf(paste0(save_loc,"Fig1B_1990_GFDL.pdf"), height=15, width=15)
+pt 
+dev.off()
+
+
+```
+
+
 
 
 
