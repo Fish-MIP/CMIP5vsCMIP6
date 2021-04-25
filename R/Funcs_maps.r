@@ -19,13 +19,13 @@ plot_FISH_MIP <- function(data_to_plot,
                           num_dp = 0){
   
   # # trial
-  # data_ipsl_CMIP5[[1]]$diff_8p5, tit, delta_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n Change \n (%)"
-  # data_to_plot = data_ipsl_CMIP6$BOATS$diff_8p5
-  # data_title = "A"
-  # colour_scheme = colour_scheme2
+  # data_to_plot = data_ipsl_CMIP6$to$hist$fishvar
+  # data_title = "a"
+  # plot_limits = delta_plot_colour_values_new[1]
+  # colour_scheme = colour_scheme_vary[1]
   # coltitle = ""
-  # latlon_limits = NA 
-  # model_type = NA 
+  # latlon_limits = NA
+  # model_type = NA
   # legend_ticks = 5
 
   # overwrite limits  
@@ -55,9 +55,6 @@ plot_FISH_MIP <- function(data_to_plot,
   }
   r2[] <- t(data_to_plot)
   
-  dim(data_to_plot)
-  dim(r2)
-  
   # Set up projections   
   robCRS <- CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
   robCRS_no <- 54030
@@ -86,27 +83,18 @@ plot_FISH_MIP <- function(data_to_plot,
                            plot.background = element_rect(fill="white"),
                            panel.border = element_blank(),
                            legend.key.height = unit(0.8, "cm"),
-                           # axis.line = element_blank(),
-                           # axis.text.x = element_blank(),
-                           # axis.text.y = element_blank(),
-                           # axis.ticks = element_blank(),
-                           # axis.title.x = element_blank(),
-                           # axis.title.y = element_blank(),
                            plot.title = element_text(size=12, hjust = 0.5)))
 
   r1_gg <- ggplot() + 
     geom_sf(data = r.1.sf, aes(fill = layer), colour = NA)+
     geom_sf(data = world_sf, size = 0.05, fill = "grey20")+
-    # geom_tile(data = r.1.df, aes(x=x, y=y, fill = Sp)) + # this is if you plot the dataframe but not looking good
     scale_fill_gradient2(low = colour_scheme[1], 
                          mid = colour_scheme[2],  
-                         high = colour_scheme[3], 
-                         # na.value = "yellow",
+                         high = colour_scheme[3],
                          limits = c(plot_limits[1], plot_limits[2]),
                          midpoint = ((plot_limits[2]-plot_limits[1])/2 + plot_limits[1]),
                          oob = scales::squish, 
                          guide = guide_colorbar(label.position = "right", 
-                                                # title.hjust = 0.5, 
                                                 title = coltitle),
                          space = "Lab",
                          name = "", 
