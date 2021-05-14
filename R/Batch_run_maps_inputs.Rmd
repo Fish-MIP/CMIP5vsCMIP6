@@ -27,7 +27,7 @@ source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
 source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
 
 # saving outputs location  
-save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/"
+save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/20210510/"
 
 # variables - TO CHANGE 
 cmip<-c("CMIP5", "CMIP6")
@@ -419,7 +419,7 @@ for(i in 1:length(data_ipsl_CMIP5)){
 # plot earth models average for all input variables
 
 delta_plot_colour_values_new<-list(c(0,4), delta_plot_colour_values, delta_plot_colour_values, delta_plot_colour_values)
-coltitles1<-list("Change \n(C)", "Change \n(%)", "Change \n(%)", "Change \n(%)")
+coltitles1<-list("Change \n(°C)", "Change \n(%)", "Change \n(%)", "Change \n(%)")
 colour_scheme_vary<-list(c(low = "white", mid = '#fee5d9', high = "#de2d26"),colour_scheme2,colour_scheme2,colour_scheme2) # or mid = #fcbba1 for darker 
 
 map_average_change_CMIP5<-list()
@@ -445,19 +445,51 @@ for (i in 1:length(data_average_change_CMIP5)){
   
 }
 
-map_average_value_2000_CMIP5$phy
-map_average_value_2000_CMIP5$zoo
-map_average_value_2100_CMIP5$pp
+# map_average_value_2000_CMIP5$phy
+# map_average_value_2000_CMIP5$zoo
+# map_average_value_2100_CMIP5$pp
+# 
+# max(data_average_value_2000_CMIP5$pp, na.rm = TRUE) # 2 ### CHANGE to 1
+# min(data_average_value_2000_CMIP5$pp, na.rm = TRUE) # 0.05 # change to 0
+# mean(data_average_value_2000_CMIP5$pp, na.rm = TRUE)
+# max(data_average_value_2000_CMIP5$phy, na.rm = TRUE) # 6 ### CHANGE to  4
+# min(data_average_value_2000_CMIP5$phy, na.rm = TRUE) # 0
+# mean(data_average_value_2000_CMIP5$phy, na.rm = TRUE)
+# max(data_average_value_2000_CMIP5$zoo, na.rm = TRUE) # 6 ### CHANGE to 4
+# min(data_average_value_2000_CMIP5$zoo, na.rm = TRUE) # 0
+# mean(data_average_value_2000_CMIP5$zoo, na.rm = TRUE)
 
-max(data_average_value_2000_CMIP5$pp, na.rm = TRUE) # 2 ### CHANGE to 1
-min(data_average_value_2000_CMIP5$pp, na.rm = TRUE) # 0.05 # change to 0
-mean(data_average_value_2000_CMIP5$pp, na.rm = TRUE)
-max(data_average_value_2000_CMIP5$phy, na.rm = TRUE) # 6 ### CHANGE to  4
-min(data_average_value_2000_CMIP5$phy, na.rm = TRUE) # 0
-mean(data_average_value_2000_CMIP5$phy, na.rm = TRUE)
-max(data_average_value_2000_CMIP5$zoo, na.rm = TRUE) # 6 ### CHANGE to 4
-min(data_average_value_2000_CMIP5$zoo, na.rm = TRUE) # 0
-mean(data_average_value_2000_CMIP5$zoo, na.rm = TRUE)
+# do same maps for single ESMs - DONE BELOW... 
+
+# map_average_change_CMIP5_ipsl<-list()
+# 
+# for (i in 1:length(data_ipsl_CMIP5)){ 
+#   
+#   # i = 1
+#   tit <- paste("Mean change in", titles[[i]], "IPSL RCP 8.5, 1990s to 2090s",cmip[1], sep =" ")
+#   map_average_change_CMIP5_ipsl[[i]]<-plot_FISH_MIP(data_ipsl_CMIP5[[i]]$diff_8p5, tit, delta_plot_colour_values_new[[i]], colour_scheme = colour_scheme_vary[[i]], coltitle = coltitles1[[i]], model_type = NA)
+#   names(map_average_change_CMIP5_ipsl)[[i]]<-variable_to_extract[[i]]
+#   
+#   rm(tit)
+#   
+# }
+# 
+# map_average_change_CMIP5_gfdl<-list()
+# 
+# for (i in 1:length(data_gfdl_CMIP5)){ 
+#   
+#   # i = 1
+#   tit <- paste("Mean change in", titles[[i]], "GFDL RCP 8.5, 1990s to 2090s",cmip[1], sep =" ")
+#   map_average_change_CMIP5_gfdl[[i]]<-plot_FISH_MIP(data_gfdl_CMIP5[[i]]$diff_8p5, tit, delta_plot_colour_values_new[[i]], colour_scheme = colour_scheme_vary[[i]], coltitle = coltitles1[[i]], model_type = NA)
+#   names(map_average_change_CMIP5_gfdl)[[i]]<-variable_to_extract[[i]]
+#   
+#   rm(tit)
+#   
+# }
+# 
+# # map_average_change_CMIP5_ipsl$to
+# # map_average_change_CMIP5_gfdl$to
+# # map_average_change_CMIP5$to
 
 ```
 
@@ -466,7 +498,7 @@ mean(data_average_value_2000_CMIP5$zoo, na.rm = TRUE)
 ```{r}
 
 data_summaries_CMIP5<-list(data_average_change_CMIP5 = data_average_change_CMIP5, data_average_value_2000_CMIP5 = data_average_value_2000_CMIP5, data_average_value_2100_CMIP5 = data_average_value_2100_CMIP5)
-map_summaries_CMIP5<-list(map_average_change_CMIP5 = map_average_change_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5)
+map_summaries_CMIP5<-list(map_average_change_CMIP5 = map_average_change_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5, map_average_change_CMIP5_ipsl = map_average_change_CMIP5_ipsl, map_average_change_CMIP5_gfdl = map_average_change_CMIP5_gfdl)
 save(data_ipsl_CMIP5, data_gfdl_CMIP5, data_summaries_CMIP5, map_summaries_CMIP5, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP5.RData")
 
 ```
@@ -698,7 +730,7 @@ save(data_ipsl_CMIP6, data_gfdl_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6
 
 ```{r}
 
-# rm(list=ls())
+rm(list=ls())
 variable_to_extract <-c("to", "pp", "phy", "zoo")
 titles<-c("Sea surface temperature", "Net primary production","Phytoplankton carbon","Zooplankton carbon")
 coltitles<-c("C", "g C m-2 d-1","g C m-2","g C m-2") #
@@ -706,6 +738,64 @@ coltitles<-c("C", "g C m-2 d-1","g C m-2","g C m-2") #
 # run first 2 sections above 
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP6.RData")
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP5.RData")
+
+```
+
+# Load libraries for netcdf and define variables
+
+```{r load CMIP5}
+
+#rm(list=ls())
+library(grid)
+library(zoo)
+library(viridis)
+library(tidyr)
+library(dplyr)
+library(patchwork)
+
+source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
+source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
+
+# saving outputs location  
+save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/20210510/"
+
+# variables - TO CHANGE 
+cmip<-c("CMIP5", "CMIP6")
+protocol <- c("picontrol","historical", "future")
+future<-c("SSP126", "SSP585")
+
+```
+
+# load libraries for plotting and define criteria 
+
+```{r}
+
+# Define color/legend limits 
+main_plot_colour_values_tos = c(0,30) # C and following Ryan paper  
+
+# for CMIP6.... units checked by checking max and min in 2030 for each variable # MAX are too high for all 
+# main_plot_colour_values_pp = c(1e-09,5e-07) # mol m-2 s-1 # ryan paper is in mg C m-2 d-1
+# main_plot_colour_values_phyto = c(0, 0.3) # mol m-2 # ryan paper is in mg C m-2
+# main_plot_colour_values_zoo = c(0,0.5) # mol m-2 # ryan paper is in mg C m-2
+main_plot_colour_values_pp = c(0,1) # g C m-2 d-1 
+main_plot_colour_values_phyto = c(0, 4) # g C m-2 
+main_plot_colour_values_zoo = c(0, 4) # g C m-2 
+delta_plot_colour_values = c(-50,50)
+
+# define a color scheme 
+colour_scheme1 <- c(low = 'white', mid = "skyblue1",  high = 'royalblue1') # for statistics - e.g model mean, SD and agreement
+colour_scheme2 <- c(low = 'red', mid = "white",  high = 'royalBlue1') # for % changes - either increasing or decreasing 
+colour_scheme3 <- c("#fdb863", "#f7f7f7","#b2abd2") # for delta plots (% change between cmips) # purple to yellow shades
+colour_scheme4 <- c(low = '#e0ecf4', mid = "#9ebcda",  high = '#8856a7') # for inputs values # shades of blue to purple?? 
+colour_scheme4 <- c(low = 'white', mid = "#9ebcda",  high = '#8856a7') # for inputs values # shades of blue to purple?? 
+
+# Download and process world outline
+library(sf)
+library(rnaturalearth)
+library("rgeos")
+world <- ne_countries(scale = "medium", returnclass = "sf")
+robCRS <- CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+world_sf <- st_transform(world, crs = st_crs(robCRS)) # Convert to different CRS
 
 ```
 
@@ -745,7 +835,6 @@ for(i in 1:length(data_summaries_CMIP6$data_average_change_CMIP6)){
 
 library(patchwork)
 
-# FIG 1
 # change between 1990 and 2090s for CMIP5 and form CMIP6 and delta between CMIPs 
 
 layout <- "
@@ -753,13 +842,20 @@ AB
 CD
 "
 
-pt<- map_summaries_CMIP6$map_average_change_CMIP6$to + delta_map$to +
-  map_summaries_CMIP6$map_average_change_CMIP6$pp + delta_map$pp +
+a<-map_summaries_CMIP6$map_average_change_CMIP6$to +  ggtitle("C) SST CMIP6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+b<-delta_map$to +  ggtitle("D) SST change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+c<-map_summaries_CMIP6$map_average_change_CMIP6$pp + ggtitle("E) NPP CMIP6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+d<-delta_map$pp + ggtitle("F) NPP change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+pt<- a + b +
+  c + d +
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig1.pdf"), height=10, width=15)
+pdf(paste0(save_loc,"Fig2.pdf"), height=10, width=15)
 pt 
 dev.off()
+
+# as above but with info on all variables 
 
 layout <- "
 ABC
@@ -768,51 +864,67 @@ GHK
 LMN
 "
 
-pt<-map_summaries_CMIP5$map_average_change_CMIP5$to + map_summaries_CMIP6$map_average_change_CMIP6$to + delta_map$to +
-  map_summaries_CMIP5$map_average_change_CMIP5$pp + map_summaries_CMIP6$map_average_change_CMIP6$pp + delta_map$pp +
-  map_summaries_CMIP5$map_average_change_CMIP5$phy + map_summaries_CMIP6$map_average_change_CMIP6$phy + delta_map$phy +
-  map_summaries_CMIP5$map_average_change_CMIP5$zoo + map_summaries_CMIP6$map_average_change_CMIP6$zoo + delta_map$zoo +
+a1<-map_summaries_CMIP5$map_average_change_CMIP5$to +  ggtitle("A) SST CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+a<-map_summaries_CMIP6$map_average_change_CMIP6$to +  ggtitle("B) SST CMIP6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+b<-delta_map$to +  ggtitle("C) SST change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+c1<-map_summaries_CMIP5$map_average_change_CMIP5$pp + ggtitle("D) NPP CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+c<-map_summaries_CMIP6$map_average_change_CMIP6$pp + ggtitle("E) NPP CMIP6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+d<-delta_map$pp + ggtitle("F) NPP change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+e<-map_summaries_CMIP5$map_average_change_CMIP5$phy +  ggtitle("G) Phytoplankton carbon CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+f<-map_summaries_CMIP6$map_average_change_CMIP6$phy + ggtitle("H) Phytoplankton carbon CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+g<-delta_map$phy + ggtitle("I) Phytoplankton carbon change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+h<-map_summaries_CMIP5$map_average_change_CMIP5$zoo +  ggtitle("J) Zooplankton carbon CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+i<-map_summaries_CMIP6$map_average_change_CMIP6$zoo + ggtitle("K) Zooplankton carbon CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+l<-delta_map$zoo+ ggtitle("L) Zooplankton carbon change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+pt<-a1 + a + b +
+  c1 + c + d +
+  e + f + g +
+  h+ i + l +
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig1_complete.pdf"), height=15, width=20)
+pdf(paste0(save_loc,"FigS3.pdf"), height=15, width=20)
 pt 
 dev.off()
 
-# FIG 1B or S1?? 
-layout <- "
-AB
-CD
-EF
-GH
-"
-
-pt<-map_summaries_CMIP5$map_average_value_2000_CMIP5$to + map_summaries_CMIP6$map_average_value_2000_CMIP6$to +
-  map_summaries_CMIP5$map_average_value_2000_CMIP5$pp + map_summaries_CMIP6$map_average_value_2000_CMIP6$pp + 
-  map_summaries_CMIP5$map_average_value_2000_CMIP5$phy + map_summaries_CMIP6$map_average_value_2000_CMIP6$phy + 
-  map_summaries_CMIP5$map_average_value_2000_CMIP5$zoo + map_summaries_CMIP6$map_average_value_2000_CMIP6$zoo + 
-  plot_layout(design = layout)
-
-pdf(paste0(save_loc,"Fig1B_1990.pdf"), height=15, width=15)
-pt 
-dev.off()
-
-# FIG 1B or S1?? 
-layout <- "
-AB
-CD
-EF
-GH
-"
-
-pt<-map_summaries_CMIP5$map_average_value_2100_CMIP5$to + map_summaries_CMIP6$map_average_value_2100_CMIP6$to +
-  map_summaries_CMIP5$map_average_value_2100_CMIP5$pp + map_summaries_CMIP6$map_average_value_2100_CMIP6$pp + 
-  map_summaries_CMIP5$map_average_value_2100_CMIP5$phy + map_summaries_CMIP6$map_average_value_2100_CMIP6$phy + 
-  map_summaries_CMIP5$map_average_value_2100_CMIP5$zoo + map_summaries_CMIP6$map_average_value_2100_CMIP6$zoo + 
-  plot_layout(design = layout)
-
-pdf(paste0(save_loc,"Fig1B_2090.pdf"), height=15, width=15)
-pt 
-dev.off()
+# plot of values can skyp 
+# layout <- "
+# AB
+# CD
+# EF
+# GH
+# "
+# 
+# pt<-map_summaries_CMIP5$map_average_value_2000_CMIP5$to + map_summaries_CMIP6$map_average_value_2000_CMIP6$to +
+#   map_summaries_CMIP5$map_average_value_2000_CMIP5$pp + map_summaries_CMIP6$map_average_value_2000_CMIP6$pp + 
+#   map_summaries_CMIP5$map_average_value_2000_CMIP5$phy + map_summaries_CMIP6$map_average_value_2000_CMIP6$phy + 
+#   map_summaries_CMIP5$map_average_value_2000_CMIP5$zoo + map_summaries_CMIP6$map_average_value_2000_CMIP6$zoo + 
+#   plot_layout(design = layout)
+# 
+# pdf(paste0(save_loc,"Fig1B_1990.pdf"), height=15, width=15)
+# pt 
+# dev.off()
+# 
+# # FIG 1B or S1?? 
+# layout <- "
+# AB
+# CD
+# EF
+# GH
+# "
+# 
+# pt<-map_summaries_CMIP5$map_average_value_2100_CMIP5$to + map_summaries_CMIP6$map_average_value_2100_CMIP6$to +
+#   map_summaries_CMIP5$map_average_value_2100_CMIP5$pp + map_summaries_CMIP6$map_average_value_2100_CMIP6$pp + 
+#   map_summaries_CMIP5$map_average_value_2100_CMIP5$phy + map_summaries_CMIP6$map_average_value_2100_CMIP6$phy + 
+#   map_summaries_CMIP5$map_average_value_2100_CMIP5$zoo + map_summaries_CMIP6$map_average_value_2100_CMIP6$zoo + 
+#   plot_layout(design = layout)
+# 
+# pdf(paste0(save_loc,"Fig1B_2090.pdf"), height=15, width=15)
+# pt 
+# dev.off()
 
 ```
 
@@ -823,7 +935,7 @@ dev.off()
 # Fig 1 and 1B split by earth system models 
 
 delta_plot_colour_values_new<-list(c(0,4), delta_plot_colour_values, delta_plot_colour_values, delta_plot_colour_values)
-coltitles1<-list("Change \n(C)", "Change \n(%)", "Change \n(%)", "Change \n(%)")
+coltitles1<-list("Change \n(°C)", "Change \n(%)", "Change \n(%)", "Change \n(%)")
 colour_scheme_vary<-list(c(low = "white", mid = '#fee5d9', high = "#de2d26"),colour_scheme2,colour_scheme2,colour_scheme2) # or mid = #fcbba1 for darker 
 color<-list(main_plot_colour_values_tos, main_plot_colour_values_pp, main_plot_colour_values_phyto, main_plot_colour_values_zoo) 
 num_dp_variables<-c(0,1,0,0)
@@ -920,33 +1032,99 @@ for (i in 1:length(data_gfdl_CMIP6)){
   
 }
 
-# FIG 1B IPSL and GFDL - can do with map_ipsl_value_2100_CMIP5 and map_ipsl_change_CMIP5 for FIG 1 (although you need to calculate delta too... ) and FIG 1B 2100
+
+# changes between 90s and 2090s for CMIP5 by ESM
+
 layout <- "
-AB
-CD
-EF
-GH
+ABC
+DEF
+GHK
+LMN
 "
 
-pt<-map_ipsl_value_2000_CMIP5$to + map_ipsl_value_2000_CMIP6$to +
-  map_ipsl_value_2000_CMIP5$pp + map_ipsl_value_2000_CMIP6$pp + 
-  map_ipsl_value_2000_CMIP5$phy + map_ipsl_value_2000_CMIP6$phy + 
-  map_ipsl_value_2000_CMIP5$zoo + map_ipsl_value_2000_CMIP6$zoo + 
+# right column (first raw for all section) is the left colummn of S3... 
+
+a1<-map_summaries_CMIP5$map_average_change_CMIP5$to +  ggtitle("C) SST CMIP5 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+a<-map_ipsl_change_CMIP5$to +  ggtitle("A) SST CMIP5 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+b<-map_gfdl_change_CMIP5$to +  ggtitle("B) SST CMIP5 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+c1<-map_summaries_CMIP5$map_average_change_CMIP5$pp + ggtitle("D) NPP CMIP5 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+c<-map_ipsl_change_CMIP5$pp + ggtitle("E) NPP CMIP5 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+d<-map_gfdl_change_CMIP5$pp + ggtitle("F) NPP CMIP5 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+e<-map_summaries_CMIP5$map_average_change_CMIP5$phy +  ggtitle("G) Phytoplankton carbon CMIP5 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+f<-map_ipsl_change_CMIP5$phy + ggtitle("H) Phytoplankton carbon CMIP5 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+g<-map_gfdl_change_CMIP5$phy + ggtitle("I) Phytoplankton carbon CMIP5 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+h<-map_summaries_CMIP5$map_average_change_CMIP5$zoo +  ggtitle("J) Zooplankton carbon CMIP5 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+i<- map_ipsl_change_CMIP5$zoo + ggtitle("K) Zooplankton carbon CMIP5 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+l<-map_gfdl_change_CMIP5$zoo+ ggtitle("L) Zooplankton carbon CMIP5 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+pt<-a + b + a1 +
+  c + d + c1 +
+  f + g + e +
+  i + l + h +
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig1B_1990_IPSL.pdf"), height=15, width=15)
+pdf(paste0(save_loc,"FigS1.pdf"), height=15, width=20)
 pt 
 dev.off()
 
-pt<-map_gfdl_value_2000_CMIP5$to + map_gfdl_value_2000_CMIP6$to +
-  map_gfdl_value_2000_CMIP5$pp + map_gfdl_value_2000_CMIP6$pp + 
-  map_gfdl_value_2000_CMIP5$phy + map_gfdl_value_2000_CMIP6$phy + 
-  map_gfdl_value_2000_CMIP5$zoo + map_gfdl_value_2000_CMIP6$zoo + 
+# right column (first raw for all section) is the middle colummn of S3... 
+
+a1<-map_summaries_CMIP6$map_average_change_CMIP6$to +  ggtitle("C) SST CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+a<-map_ipsl_change_CMIP6$to +  ggtitle("A) SST CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+b<-map_gfdl_change_CMIP6$to +  ggtitle("B) SST CMIP6 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+c1<-map_summaries_CMIP6$map_average_change_CMIP6$pp + ggtitle("D) NPP CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+c<-map_ipsl_change_CMIP6$pp + ggtitle("E) NPP CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+d<-map_gfdl_change_CMIP6$pp + ggtitle("F) NPP CMIP6 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+e<-map_summaries_CMIP6$map_average_change_CMIP6$phy +  ggtitle("G) Phytoplankton carbon CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+f<-map_ipsl_change_CMIP6$phy + ggtitle("H) Phytoplankton carbon CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+g<-map_gfdl_change_CMIP6$phy + ggtitle("I) Phytoplankton carbon CMIP6 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+h<-map_summaries_CMIP6$map_average_change_CMIP6$zoo +  ggtitle("J) Zooplankton carbon CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+i<- map_ipsl_change_CMIP6$zoo + ggtitle("K) Zooplankton carbon CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+l<-map_gfdl_change_CMIP6$zoo+ ggtitle("L) Zooplankton carbon CMIP6 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+
+pt<-a + b + a1 +
+  c + d + c1 +
+  f + g + e +
+  i + l + h +
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig1B_1990_GFDL.pdf"), height=15, width=15)
+pdf(paste0(save_loc,"FigS2.pdf"), height=15, width=20)
 pt 
 dev.off()
+
+# # values by IPSL and GFDL 
+# layout <- "
+# AB
+# CD
+# EF
+# GH
+# "
+# 
+# pt<-map_ipsl_value_2000_CMIP5$to + map_ipsl_value_2000_CMIP6$to +
+#   map_ipsl_value_2000_CMIP5$pp + map_ipsl_value_2000_CMIP6$pp + 
+#   map_ipsl_value_2000_CMIP5$phy + map_ipsl_value_2000_CMIP6$phy + 
+#   map_ipsl_value_2000_CMIP5$zoo + map_ipsl_value_2000_CMIP6$zoo + 
+#   plot_layout(design = layout)
+# 
+# pdf(paste0(save_loc,"Fig1B_1990_IPSL.pdf"), height=15, width=15)
+# pt 
+# dev.off()
+# 
+# pt<-map_gfdl_value_2000_CMIP5$to + map_gfdl_value_2000_CMIP6$to +
+#   map_gfdl_value_2000_CMIP5$pp + map_gfdl_value_2000_CMIP6$pp + 
+#   map_gfdl_value_2000_CMIP5$phy + map_gfdl_value_2000_CMIP6$phy + 
+#   map_gfdl_value_2000_CMIP5$zoo + map_gfdl_value_2000_CMIP6$zoo + 
+#   plot_layout(design = layout)
+# 
+# pdf(paste0(save_loc,"Fig1B_1990_GFDL.pdf"), height=15, width=15)
+# pt 
+# dev.off()
 
 
 ```

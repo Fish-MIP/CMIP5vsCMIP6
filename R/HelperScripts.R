@@ -151,7 +151,10 @@ convert_model_dates_CMIP6 <- function(netcdf_file, model_type)
     # jan 1601 (the convention) and jan 1850 (when the model actually starts) 
     # the number of months are different for the future protocols and that's 
     # given by time_months[1]
-    yearmonth = as.yearmon("1601-01") + time_months[1] / 12 
+    # yearmonth = as.yearmon("1601-01") + time_months[1] / 12 
+    
+    # new version - NICOLAS
+    yearmonth = as.yearmon("1850-01") 
     print(yearmonth) 
   } else if (model_type$DBPM)
   {
@@ -246,16 +249,22 @@ can_model_units_be_standardized <- function(data_units, convert_to_kg_km)
   
   print(data_units)
   can_be_converted = FALSE
-  
+
   if (length(data_units) > 0)
   {
     if (convert_to_kg_km)
     {
       if ((data_units == "gC m-2") ||
-          (data_units == "g m-2 month-1") || (data_units == "g C m-2") ||
-          (data_units == "gC.m-2") || (data_units == "g C / m^2")
-          # # CN Added for CMIP6 - EcoThrop is the one in C - need to check  
-          || (data_units == "g m-2") || (data_units == "g/m^2") || (data_units == "g m^-2") || (data_units == "grams wet weight m-2") || (data_units == "gC/m^2"))  
+          (data_units == "g m-2 month-1") || 
+          (data_units == "g C m-2") ||
+          (data_units == "gC.m-2") || 
+          (data_units == "g C / m^2")
+          # # CN Added for CMIP6 
+          || (data_units == "g m-2") || 
+          (data_units == "g/m^2") || 
+          (data_units == "g m^-2") || 
+          (data_units == "grams wet weight m-2") || 
+          (data_units == "gC/m^2")) # EcoThrop is the one in C - need to check    
       {
         can_be_converted = TRUE
       } else
@@ -451,23 +460,29 @@ extractFishCDF <- function(directory,
   
   
   # # trial
-  # variable = "Band1"
-  # average_whole_period = FALSE # ARGUMENT NOT USED n this function!
-  # time1 = yearmonth1[2]
-  # time2 = yearmonth2[2]
-  # convert_to_kg_km = TRUE
-  # CMIP = 6
-  
+  variable = variable_to_extract[1]
+  average_whole_period = FALSE # ARGUMENT NOT USED n this function!
+  time1 = yearmonth1[i]
+  time2 = yearmonth2[i]
+  convert_to_kg_km = FALSE
+  CMIP = 6
+
   model_type <- get_model_type(filename)
   
   # Open the netcdf file
   nc <- nc_open(paste(directory, filename, sep = ""))
+  # print(nc)
   
   # Extract important information
   data_attributes <- ncatt_get(nc, variable)
   
   main_title <- data_attributes$long_field_name
   data_units <- data_attributes$units
+  
+  # data units for APECOSM is NULL - need to check with Nicolas 
+  if(model_type$APECOSM == TRUE){
+    data_units = "g m-2"
+  }
   
   lon <- ncvar_get(nc, "lon")
   lat <- ncvar_get(nc, "lat")
@@ -480,6 +495,8 @@ extractFishCDF <- function(directory,
   
   # extract all 
   new_var_mat <- ncvar_get(nc, variable)
+  #dim(new_var_mat)
+  
   years = time_vector
   
   if(can_model_units_be_standardized(data_units, convert_to_kg_km))
@@ -639,12 +656,14 @@ get_timeSeries_temperature<-function(hist, fut126, fut585, output = "yearly"){
   if(cmip == 5){
     all126<-hist_2 %>% 
       full_join(fut126_2) %>% 
-      mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>% 
+      # mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>% # percentage 
+      mutate(TcbChange = tcb - refDecade$value) %>% # celsius change as per map: diff_2p6 = fut126$fishvar - hist$fishvar # 20C - 15C = 5C (celsius increase)
       mutate(color = ifelse(year <= 2005, "hist", "ssp126"))
   }else{
     all126<-hist_2 %>% 
       full_join(fut126_2) %>% 
-      mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>% 
+      # mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>% 
+      mutate(TcbChange = tcb - refDecade$value) %>% # celsius change
       mutate(color = ifelse(year <= 2015, "hist", "ssp126"))
   }
   
@@ -663,7 +682,8 @@ get_timeSeries_temperature<-function(hist, fut126, fut585, output = "yearly"){
     mutate(year = round(as.numeric(as.character(year1)))) %>%
     group_by(year) %>% 
     dplyr::summarise(tcb = mean(tcb, na.rm=TRUE)) %>% 
-    mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>%
+    # mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>%
+    mutate(TcbChange = tcb - refDecade$value) %>% # celsius change
     mutate(color = "ssp585")
   
   all<-all126 %>%
@@ -864,7 +884,6 @@ averageEnvironmentalCDF <-
   }
 
 # get_mean_change ----
-
 get_mean_change<-function(var2000s, var1970s)
 {
   # Get average change by ocean
@@ -903,3 +922,46 @@ get_mean_change<-function(var2000s, var1970s)
   }
   return(differencevals)
 }
+
+# model average ----
+# 3 options here: ipsl, gfdl, or combined depending on data_ipsl_CMIP5
+# also other options would  be to consider spp126 ('diff_2p6')
+
+# old version in Derek's code and here vectorised 
+
+model_stat<-function(data){
+  
+  #data = c(data_ipsl_CMIP6,data_gfdl_CMIP6)
+  
+  X <- lapply(data, `[[`, 'diff_8p5')
+  X <- lapply(X, function(x) replace(x, !is.finite(x), NA))
+  Y <- do.call(cbind, X)
+  Y <- array(Y, dim=c(dim(X[[1]]), length(X)))
+  model_average_new<-apply(Y, c(1, 2), mean, na.rm = TRUE)
+  # model_average_new[!is.finite(model_average_new)]<-NA # just to make sure that all NaN and Inf resulting from mean() are treated as NA 
+  model_sd_new<-apply(Y, c(1, 2), sd, na.rm = TRUE)
+  # model_sd_new[!is.finite(model_sd_new)]<-NA
+  
+  X <- lapply(data, `[[`, 'diff_8p5')
+  Y <- do.call(cbind, X)
+  Y <- array(Y, dim=c(dim(X[[1]]), length(X)))
+  
+  #  this takes into account agreement on both positive or negative changes. - i.e. if most models show positive change agreement will be high and vice versa. 
+  temp<-apply(Y, c(1,2), function(x) length(x[which(x>=0)])) # sum the number of values that are > = 0 (increase or stable) 
+  temp2<-apply(Y, c(1,2), function(x) length(x[which(!is.na(x))])) # sum the number of values that are different from na and nan - including inf
+  
+  temp4<-temp/temp2
+  model_agreement_new<-ifelse(is.na(temp4), NA, ifelse(temp4>0.5, temp4*100, (1-temp4)*100)) 
+  # if 0/7 = 0 -> 100 # [1,88]
+  # if 1/7 = 0.14 it means that 1 over 7 models show increases hence model strongly agree on the decrease -> (1-temp4)*100) = 86%
+  # if 2/7 = 0.28 -> 72% on decreases
+  # if 3/7 = 0.42 -> 57% on decreases 
+  # if 4/7 = 0.57 -> 0.57*100 = 57% on increases 
+  # if 5/7 = 0.71 -> 71% in increases 
+  # if 6/7 = 0.85 -> 85% on increases 
+  # if 7/7 = 100% on increases 
+  # model_agreement_new[!is.finite(model_agreement_new)]<-NA
+  
+  return(list(model_average = model_average_new, model_sd = model_sd_new, model_agreement = model_agreement_new))
+}
+

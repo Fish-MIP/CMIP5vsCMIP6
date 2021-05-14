@@ -16,17 +16,19 @@ plot_FISH_MIP <- function(data_to_plot,
                           latlon_limits = NA, 
                           model_type = NA, 
                           legend_ticks = 5,
-                          num_dp = 0){
+                          num_dp = 0,
+                          contour = FALSE){
   
   # # trial
-  # data_to_plot = data_ipsl_CMIP6$to$hist$fishvar
+  # data_to_plot = model_average_all_CMIP5
   # data_title = "a"
-  # plot_limits = delta_plot_colour_values_new[1]
-  # colour_scheme = colour_scheme_vary[1]
+  # plot_limits = mean_plot_colour_values
+  # colour_scheme = colour_scheme2
   # coltitle = ""
   # latlon_limits = NA
   # model_type = NA
   # legend_ticks = 5
+  # num_dp = 1
 
   # overwrite limits  
   # plot_limits = c(-50, 50)
@@ -57,25 +59,14 @@ plot_FISH_MIP <- function(data_to_plot,
   
   # Set up projections   
   robCRS <- CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-  robCRS_no <- 54030
+  # robCRS_no <- 54030
   
-  lonlatCRS <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
-  lonlatCRS_no <- 4326
-  
+  # IS THIS NEEDED? it does ont look like it is ....
+  # lonlatCRS <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+  # lonlatCRS_no <- 4326
   # specify projections for input data (latlong)
-  projection(r2) <- lonlatCRS
-  
-  # option 1: convert RasterLayer to a data.frame. this gives strange maps
-  # cc_rob <-projectRaster(r2, crs = robCRS, over = T) # Convert RasterLayer object to Robinson Projection
-  # r.1 <- rasterToPoints(cc_rob) # convert RasterLayer to SpatialPixelsDataFrame 
-  # r.1.df <- as.data.frame(r.1) # convert SpatialPixelsDataFrame to dataframe
-  # colnames(r.1.df) <-c("x","y","Sp")
-  
-  # alternative: convert r2 (rasterLayer) to geom_sf object. This gives better maps 
-  r.1.sf<-rasterToPolygons(r2) # convert Rasterlayer to spatial polygon dataframe 
-  r.1.sf <- st_as_sf(r.1.sf) # convert dataframe to sf object 
-  r.1.sf <- st_transform(r.1.sf, crs = st_crs(robCRS)) # convert sf object to Robinson Projection
-  
+  # projection(r2) <- lonlatCRS  
+
   # then you can use ggplot2 to plot that object
   theme_opts <- list(theme(panel.grid.minor = element_blank(),
                            panel.grid.major = element_blank(),
@@ -84,7 +75,16 @@ plot_FISH_MIP <- function(data_to_plot,
                            panel.border = element_blank(),
                            legend.key.height = unit(0.8, "cm"),
                            plot.title = element_text(size=12, hjust = 0.5)))
-
+  
+  
+  if (contour == FALSE){
+    
+  # do as usual...   
+  # alternative (option2): convert r2 (rasterLayer) to geom_sf object. This gives better maps 
+  r.1.sf <- rasterToPolygons(r2) # convert Rasterlayer to spatial polygon dataframe 
+  r.1.sf <- st_as_sf(r.1.sf) # convert dataframe to sf object 
+  r.1.sf <- st_transform(r.1.sf, crs = st_crs(robCRS)) # convert sf object to Robinson Projection  
+    
   r1_gg <- ggplot() + 
     geom_sf(data = r.1.sf, aes(fill = layer), colour = NA)+
     geom_sf(data = world_sf, size = 0.05, fill = "grey20")+
@@ -105,6 +105,66 @@ plot_FISH_MIP <- function(data_to_plot,
     scale_y_continuous(expand = c(0, 0)) +
     labs(title = data_title) +
     theme_opts 
+  
+  }else{
+    
+    # option 1: convert RasterLayer to a data.frame. this gives strange maps
+    cc_rob <-projectRaster(r2, crs = robCRS, over = T) # Convert RasterLayer object to Robinson Projection
+    r.1 <- rasterToPoints(cc_rob) # convert RasterLayer to SpatialPixelsDataFrame
+    r.1.df <- as.data.frame(r.1) # convert SpatialPixelsDataFrame to dataframe
+    colnames(r.1.df) <-c("x","y","Sp")
+    # r.1.df$Sp <- (r.1.df$Sp-1)*100
+
+    # plot(r.1.df)
+    
+    ggplot() +
+      geom_contour_filled(data = r.1.df, aes(x = x, y = y, z = Sp), bins = 3)
+    
+    # cannot get the global look - try getting the dataset from sf object
+    # not working
+    coord<-as.data.frame(st_coordinates(r.1.sf))
+    trial<-r.1.sf$layer
+    new.df<- data.frame(x = coord$X, y = coord$Y, z = trial)
+    new.df$z<-ifelse(new.df$z>50, 50, new.df$z)
+    new.df$z<-ifelse(new.df$z <- 50, -50, new.df$z)
+    max(new.df$z)
+    min(new.df$z)
+    # plot(new.df)
+    # head(new.df)
+    # class(new.df)
+    # str(new.df)
+    # new.df %>% filter(round(x) == -9050504)
+    # r.1.df %>% filter(round(x) == -9050504)
+    
+    # this seems to be the right one but I cannot plot it!!!!!! 
+    # library(metR) # for geom_contour_fill() ... 
+    ggplot() +
+      # geom_contour_fill(data = new.df, aes(x = x, y = y, z = z))
+      geom_contour_filled(data = new.df, aes(x = x, y = y, z = z), bins = 3, na.rm = TRUE)
+    
+    r1_gg <- ggplot() + 
+      geom_contour_filled(data = r.1.df, aes(x = x, y = y, z = Sp), bins = 3)
+      # geom_sf(data = world_sf, size = 0.05, fill = "grey20")
+      
+      scale_fill_gradient2(low = colour_scheme[1], 
+                           mid = colour_scheme[2],  
+                           high = colour_scheme[3],
+                           limits = c(plot_limits[1], plot_limits[2]),
+                           midpoint = ((plot_limits[2]-plot_limits[1])/2 + plot_limits[1]),
+                           oob = scales::squish, 
+                           guide = guide_colorbar(label.position = "right", 
+                                                  title = coltitle),
+                           space = "Lab",
+                           name = "", 
+                           na.value='lightgrey',
+                           breaks = seq(plot_limits[1],plot_limits[2],length.out = legend_ticks),
+                           labels = format(round(seq(plot_limits[1],plot_limits[2],length.out = legend_ticks), digits = num_dp), nsmall = num_dp)) +
+      scale_x_continuous(expand = c(0, 0)) +
+      scale_y_continuous(expand = c(0, 0)) +
+      labs(title = data_title) +
+      theme_opts 
+    
+  }
   
   rm(r.1.sf)
   return(r1_gg)
@@ -131,6 +191,15 @@ plot_FISH_MIP_halfdeg <- function(data_to_plot,
   # show_coast = TRUE 
   # coltitle = ""
   # plot_limits =c(-50,50)
+  data_to_plot = model_average_all_CMIP5
+  data_title = "a"
+  plot_limits = mean_plot_colour_values
+  colour_scheme = colour_scheme2
+  coltitle = ""
+  latlon_limits = NA
+  model_type = NA
+  legend_ticks = 5
+  num_dp = 1
   
   # TO DELETE 
   # colRam <- colorRampPalette(c("blue","yellow","red"))

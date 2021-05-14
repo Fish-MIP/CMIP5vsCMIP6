@@ -9,10 +9,6 @@ editor_options:
 
 # TO DO 
 
-you added a new argument to get_timeSeries(), output = ..., you need to re-run batch_run_timeSeries.Rmd to check that it is running ok, also for some of the models outside the loop (e.g. zoomss cmip5) output[i] was unspecified before so not sure how the code handled that 
-
-I will call the protocols ‘RCP’ for CMIP5 and ‘SSP’ for CMIP6 in all figs
-
 # Load libraries for netcdf and define variables
 
 ```{r load CMIP5}
@@ -366,6 +362,11 @@ save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "/Users/camillan/fishmip_outputs/C
 
 ```
 
+
+
+# from here if data is OK 
+
+
 # load data
 
 ```{r}
@@ -385,13 +386,14 @@ library(zoo)
 library(viridis)
 library(tidyr)
 library(dplyr)
+library(patchwork)
 
 source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
 
 variable_to_extract <-c("to", "pp")
 
 # saving outputs location  
-save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/"
+save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/20210510/"
 
 ```
 
@@ -475,183 +477,189 @@ all$pp<-all$pp %>%
 
 ```
 
-# FIG 3: trends in tcb  
+# FIG ?: trends in temp and PP *skyp*  
 
 ```{r}
 
-# transform in functions and move to Funcs_plot.r ... this is lasiness.... 
-library("ggplot2")
-
-a_to<-ggplot(filter(all$to, cmip==5), aes(group = protocol, x=year, y = mean, ymin = sd_min, ymax = sd_max))+
-  annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_ribbon(aes(fill = protocol), alpha=0.2)+
-  geom_line(aes(color = protocol)) +
-  geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
-  geom_hline(yintercept = 0, color = "grey60", size = 1)+
-  scale_y_continuous(limits = c(-5, 37), breaks = pretty(seq(37, -5), n = 10), name = "Change in temperature (%)") +
-  scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$to$year, n = 10), name = "Year")+
-  scale_color_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  scale_fill_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  theme_bw()+
-  theme(text = element_text(size=20),
-        axis.title.y = element_text(vjust=0.4, size = 22),
-        axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5),
-        panel.grid.minor = element_blank(),
-        legend.background=element_blank(),
-        panel.border = element_rect(colour = "black"),
-        strip.text.x = element_text(face = "bold"),
-        legend.position = c(0.15, 0.8))
-
-b_to<-ggplot(filter(all$to, cmip==6), aes(group = protocol, x=year, y = mean))+
-  annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_ribbon(aes(ymin = sd_min, ymax = sd_max, fill = protocol), alpha=0.2)+
-  geom_line(aes(color = protocol)) +
-  geom_point(aes(y = A, color = protocol), size = 0.8)+
-  geom_vline(xintercept = 2015, color = "grey60", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
-  geom_hline(yintercept = 0, color = "grey60", size = 1)+
-  scale_y_continuous(limits = c(-5, 37), breaks = pretty(seq(37, -5), n = 10), name = "Change in temperature (%)") +
-  scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$to$year, n = 10), name = "Year")+
-  scale_color_manual(values = c("black","blue" ,"red"), name = "", labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  scale_fill_manual(values = c("black","blue" ,"red"), name = "", labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  theme_bw()+
-  theme(text = element_text(size=20),
-        axis.title.y = element_text(vjust=0.4, size = 22),
-        axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5),
-        panel.grid.minor = element_blank(),
-        panel.border = element_rect(colour = "black"),
-        strip.text.x = element_text(face = "bold"),
-        legend.position = "none")
-
-a_pp<-ggplot(filter(all$pp, cmip==5), aes(group = protocol, x=year,y = mean, ymin = sd_min, ymax = sd_max))+
-  annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_ribbon(aes(fill = protocol), alpha=0.2)+
-  geom_line(aes(color = protocol)) +
-  geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
-  geom_hline(yintercept = 0, color = "grey60", size = 1)+
-  scale_y_continuous(limits = c(-15, 15), breaks = pretty(seq(-15, 15), n = 10), name = "Change in net primary production (%)") +
-  scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$pp$year, n = 10), name = "Year")+
-  scale_color_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  scale_fill_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  theme_bw()+
-  theme(text = element_text(size=20),
-        axis.title.y = element_text(vjust=0.4, size = 22),
-        axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5),
-        panel.grid.minor = element_blank(),
-        legend.background=element_blank(),
-        panel.border = element_rect(colour = "black"),
-        strip.text.x = element_text(face = "bold"),
-        legend.position = "none")
-
-b_pp<-ggplot(filter(all$pp, cmip==6), aes(group = protocol, x=year, y = mean))+
-  annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_ribbon(aes(ymin = sd_min, ymax = sd_max, fill = protocol), alpha=0.2)+
-  geom_line(aes(color = protocol)) +
-  geom_point(aes(y = A, color = protocol), size = 0.8)+
-  geom_vline(xintercept = 2015, color = "grey60", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
-  geom_hline(yintercept = 0, color = "grey60", size = 1)+
-  scale_y_continuous(limits = c(-15, 15), breaks = pretty(seq(15, -15), n = 10), name = "Change in net primary production (%)") +
-  scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$pp$year, n = 10), name = "Year")+
-  scale_color_manual(values = c("black","blue" ,"red"), name = "", labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  scale_fill_manual(values = c("black","blue" ,"red"), name = "", labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  theme_bw()+
-  theme(text = element_text(size=20),
-        axis.title.y = element_text(vjust=0.4, size = 22),
-        axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5),
-        panel.grid.minor = element_blank(),
-        panel.border = element_rect(colour = "black"),
-        strip.text.x = element_text(face = "bold"),
-        legend.position = "none")
+# # transform in functions and move to Funcs_plot.r ... this is lasiness.... 
+# library("ggplot2")
+# 
+# a_to<-ggplot(filter(all$to, cmip==5), aes(group = protocol, x=year, y = mean, ymin = sd_min, ymax = sd_max))+
+#   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
+#   geom_ribbon(aes(fill = protocol), alpha=0.2)+
+#   geom_line(aes(color = protocol)) +
+#   geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
+#   geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+#   geom_hline(yintercept = 0, color = "grey60", size = 1)+
+#   scale_y_continuous(limits = c(-5, 37), breaks = pretty(seq(37, -5), n = 10), name = "Change in temperature (%)") +
+#   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$to$year, n = 10), name = "Year")+
+#   scale_color_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
+#   scale_fill_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
+#   theme_bw()+
+#   theme(text = element_text(size=20),
+#         axis.title.y = element_text(vjust=0.4, size = 22),
+#         axis.title.x = element_text(vjust=0.3, size = 22),
+#         axis.text.x = element_text(angle=90, hjust=0.5),
+#         panel.grid.minor = element_blank(),
+#         legend.background=element_blank(),
+#         panel.border = element_rect(colour = "black"),
+#         strip.text.x = element_text(face = "bold"),
+#         legend.position = c(0.15, 0.8))
+# 
+# b_to<-ggplot(filter(all$to, cmip==6), aes(group = protocol, x=year, y = mean))+
+#   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
+#   geom_ribbon(aes(ymin = sd_min, ymax = sd_max, fill = protocol), alpha=0.2)+
+#   geom_line(aes(color = protocol)) +
+#   geom_point(aes(y = A, color = protocol), size = 0.8)+
+#   geom_vline(xintercept = 2015, color = "grey60", size = 2)+
+#   geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+#   geom_hline(yintercept = 0, color = "grey60", size = 1)+
+#   scale_y_continuous(limits = c(-5, 37), breaks = pretty(seq(37, -5), n = 10), name = "Change in temperature (%)") +
+#   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$to$year, n = 10), name = "Year")+
+#   scale_color_manual(values = c("black","blue" ,"red"), name = "", labels = c("Historical", "RCP2.6", "RCP8.6"))+
+#   scale_fill_manual(values = c("black","blue" ,"red"), name = "", labels = c("Historical", "RCP2.6", "RCP8.6"))+
+#   theme_bw()+
+#   theme(text = element_text(size=20),
+#         axis.title.y = element_text(vjust=0.4, size = 22),
+#         axis.title.x = element_text(vjust=0.3, size = 22),
+#         axis.text.x = element_text(angle=90, hjust=0.5),
+#         panel.grid.minor = element_blank(),
+#         panel.border = element_rect(colour = "black"),
+#         strip.text.x = element_text(face = "bold"),
+#         legend.position = "none")
+# 
+# a_pp<-ggplot(filter(all$pp, cmip==5), aes(group = protocol, x=year,y = mean, ymin = sd_min, ymax = sd_max))+
+#   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
+#   geom_ribbon(aes(fill = protocol), alpha=0.2)+
+#   geom_line(aes(color = protocol)) +
+#   geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
+#   geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+#   geom_hline(yintercept = 0, color = "grey60", size = 1)+
+#   scale_y_continuous(limits = c(-15, 15), breaks = pretty(seq(-15, 15), n = 10), name = "Change in net primary production (%)") +
+#   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$pp$year, n = 10), name = "Year")+
+#   scale_color_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
+#   scale_fill_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
+#   theme_bw()+
+#   theme(text = element_text(size=20),
+#         axis.title.y = element_text(vjust=0.4, size = 22),
+#         axis.title.x = element_text(vjust=0.3, size = 22),
+#         axis.text.x = element_text(angle=90, hjust=0.5),
+#         panel.grid.minor = element_blank(),
+#         legend.background=element_blank(),
+#         panel.border = element_rect(colour = "black"),
+#         strip.text.x = element_text(face = "bold"),
+#         legend.position = "none")
+# 
+# b_pp<-ggplot(filter(all$pp, cmip==6), aes(group = protocol, x=year, y = mean))+
+#   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
+#   geom_ribbon(aes(ymin = sd_min, ymax = sd_max, fill = protocol), alpha=0.2)+
+#   geom_line(aes(color = protocol)) +
+#   geom_point(aes(y = A, color = protocol), size = 0.8)+
+#   geom_vline(xintercept = 2015, color = "grey60", size = 2)+
+#   geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+#   geom_hline(yintercept = 0, color = "grey60", size = 1)+
+#   scale_y_continuous(limits = c(-15, 15), breaks = pretty(seq(15, -15), n = 10), name = "Change in net primary production (%)") +
+#   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$pp$year, n = 10), name = "Year")+
+#   scale_color_manual(values = c("black","blue" ,"red"), name = "", labels = c("Historical", "RCP2.6", "RCP8.6"))+
+#   scale_fill_manual(values = c("black","blue" ,"red"), name = "", labels = c("Historical", "RCP2.6", "RCP8.6"))+
+#   theme_bw()+
+#   theme(text = element_text(size=20),
+#         axis.title.y = element_text(vjust=0.4, size = 22),
+#         axis.title.x = element_text(vjust=0.3, size = 22),
+#         axis.text.x = element_text(angle=90, hjust=0.5),
+#         panel.grid.minor = element_blank(),
+#         panel.border = element_rect(colour = "black"),
+#         strip.text.x = element_text(face = "bold"),
+#         legend.position = "none")
+# 
+# 
+# layout <- "
+# AB
+# CD
+# "
+# 
+# a_to<-a_to + ggtitle("A) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+# b_to<-b_to + ggtitle("B) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
+# 
+# a_pp<-a_pp + ggtitle(" ") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+# b_pp<-b_pp + ggtitle(" ") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
+# 
+# 
+# plot<- a_to + b_to + 
+#   a_pp + b_pp + 
+#   plot_layout(design = layout)
+# 
+# pdf(paste0(save_loc,"Fig4.pdf"), height=12, width=15)
+# plot 
+# dev.off()
 
 ```
 
-# FIG 4 
+# FIG 1: trends in temperature and pp by earth system model and protocol
 
 ```{r}
 
-library(patchwork)
 
-# FIG 2 trends in tcb CMIP5 vs CMIP6
-layout <- "
-AB
-CD
-"
-
-a_to<-a_to + ggtitle("A) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-b_to<-b_to + ggtitle("B) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
-
-a_pp<-a_pp + ggtitle(" ") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-b_pp<-b_pp + ggtitle(" ") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
-
-
-plot<- a_to + b_to + 
-  a_pp + b_pp + 
-  plot_layout(design = layout)
-
-pdf(paste0(save_loc,"Fig4.pdf"), height=12, width=15)
-plot 
-dev.off()
-
-```
-
-# FIG 4B: trends in temperature and pp by earth system model and protocol
-
-```{r}
+# CMIP5 esm: IPSL-CM5A-LR and GFDL-ESM2M 
+# CMIP6 esm: IPSL-CM6A-LR and GFDL-ESM4
+# 
+# CMIP5 scenario: RCP2.6 AND RCP8.5 
+# CMIP6 scenario: SSP1-2.6 and SSP5-8.5
 
 to_cmip5<-ggplot(filter(all_notMean$to, cmip==5), aes(x=year, y = tcbChange,  color = protocol, linetype = earth))+ 
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_line(size=0.7) +
+  geom_line(size=1) +
   geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
   geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
   geom_hline(yintercept = 0, color = "grey60", size = 1)+
-  scale_y_continuous(limits = c(-5, 37), breaks = pretty(seq(37, -5), n = 10), name = "Change in temperature (%)") +
+  scale_y_continuous(limits = c(-1, 5), breaks = pretty(seq(5, -1), n = 5), name = "Increase in temperature (°C)") +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$to$year, n = 10), name = "Year")+
-  scale_color_manual(values = c("black","blue" ,"red"), name = "Protocols", labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  scale_fill_manual(values = c("black","blue" ,"red"), name = "Protocols", labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  scale_linetype_manual(values = c("solid","dotdash"),name = "Earth models", labels =c("GFDL-ESM2M","IPSL-CM5A-LR"))+
+  scale_color_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "RCP2.6", "RCP8.6"))+
+  scale_fill_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "RCP2.6", "RCP8.6"))+
+  scale_linetype_manual(values = c("solid","dotdash"),name = "Earth System Models", labels =c("GFDL-ESM2M","IPSL-CM5A-LR"))+
   theme_bw()+
-  theme(text = element_text(size=20),
+  theme(text = element_text(size=14),
         axis.title.y = element_text(vjust=0.4, size = 22),
         axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5),
-        panel.grid.minor = element_blank(),
-        legend.background=element_blank(),
+        axis.text.x = element_text(angle=90, size=16),
+        axis.text.y = element_text(angle=0, size=16),
         panel.border = element_rect(colour = "black"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
         strip.text.x = element_text(face = "bold"),
-        legend.position = c(0.2, 0.7))
+        # legend.background=element_blank(),
+        legend.position = c(0.17, 0.7),
+        legend.key.size = unit(0.6, "cm"))
 
 to_cmip6<-ggplot(filter(all_notMean$to, cmip==6), aes(x=year, y = tcbChange,  color = protocol, linetype = earth))+ 
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_line(size=0.7) +
+  geom_line(size=1) +
   geom_vline(xintercept = 2015, color = "grey60", size = 2)+
   geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
   geom_hline(yintercept = 0, color = "grey60", size = 1)+
-  scale_y_continuous(limits = c(-5, 37), breaks = pretty(seq(37, -5), n = 10), name = "Change in temperature (%)") +
+  scale_y_continuous(limits = c(-1, 5), breaks = pretty(seq(5, -1), n = 5), name = "Increase in temperature (°C)") +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$to$year, n = 10), name = "Year")+
-  scale_color_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  scale_fill_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  scale_linetype_manual(values = c("solid","dotdash"),name = "Earth models", labels =c("GFDL-ESM2M","IPSL-CM5A-LR"))+
+  scale_color_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "SSP1-2.6", "SSP5-8.5"))+
+  scale_fill_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "SSP1-2.6", "SSP5-8.5"))+
+  scale_linetype_manual(values = c("solid","dotdash"),name = "Earth System Models", labels =c("GFDL-ESM4","IPSL-CM6A-LR"))+
   theme_bw()+
-  theme(text = element_text(size=20),
+  theme(text = element_text(size=14),
         axis.title.y = element_text(vjust=0.4, size = 22),
         axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5),
-        panel.grid.minor = element_blank(),
-        legend.background=element_blank(),
+        axis.text.x = element_text(angle=90, size=16),
+        axis.text.y = element_text(angle=0, size=16),
         panel.border = element_rect(colour = "black"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
         strip.text.x = element_text(face = "bold"),
-        legend.position = "none")
+        # legend.background=element_blank(),
+        # legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid'), # IF NEED legend contour
+        legend.position = c(0.17, 0.7),
+        legend.key.size = unit(0.6, "cm"))
 
 pp_cmip5<-ggplot(filter(all_notMean$pp, cmip==5), aes(x=year, y = tcbChange,  color = protocol, linetype = earth))+ 
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_line(size=0.7) +
+  geom_line(size=1) +
   geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
   geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
   geom_hline(yintercept = 0, color = "grey60", size = 1)+
@@ -659,15 +667,16 @@ pp_cmip5<-ggplot(filter(all_notMean$pp, cmip==5), aes(x=year, y = tcbChange,  co
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$to$year, n = 10), name = "Year")+
   scale_color_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
   scale_fill_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  scale_linetype_manual(values = c("solid","dotdash"),name = "Earth models", labels =c("GFDL-ESM2M","IPSL-CM5A-LR"))+
+  scale_linetype_manual(values = c("solid","dotdash"),name = "Earth System Models", labels =c("GFDL-ESM2M","IPSL-CM5A-LR"))+
   theme_bw()+
-  theme(text = element_text(size=20),
+  theme(text = element_text(size=14),
         axis.title.y = element_text(vjust=0.4, size = 22),
         axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5),
-        panel.grid.minor = element_blank(),
-        legend.background=element_blank(),
+        axis.text.x = element_text(angle=90, size=16),
+        axis.text.y = element_text(angle=0, size=16),
         panel.border = element_rect(colour = "black"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
         strip.text.x = element_text(face = "bold"),
         legend.position = "none")
 
@@ -679,17 +688,18 @@ pp_cmip6<-ggplot(filter(all_notMean$pp, cmip==6), aes(x=year, y = tcbChange,  co
   geom_hline(yintercept = 0, color = "grey60", size = 1)+
   scale_y_continuous(limits = c(-15, 15), breaks = pretty(seq(15, -15), n = 10), name = "Change in net primary production (%)") +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$to$year, n = 10), name = "Year")+
-  scale_color_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  scale_fill_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "RCP2.6", "RCP8.6"))+
-  scale_linetype_manual(values = c("solid","dotdash"),name = "Earth models", labels =c("GFDL-ESM2M","IPSL-CM5A-LR"))+
+  scale_color_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "SSP1-2.6", "SSP5-8.5"))+
+  scale_fill_manual(values = c("black","blue" ,"red"), name = NULL, labels = c("Historical", "SSP1-2.6", "SSP5-8.5"))+
+  scale_linetype_manual(values = c("solid","dotdash"),name = "Earth System Models", labels =c("GFDL-ESM4","IPSL-CM6A-LR"))+
   theme_bw()+
-  theme(text = element_text(size=20),
+  theme(text = element_text(size=14),
         axis.title.y = element_text(vjust=0.4, size = 22),
         axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5),
-        panel.grid.minor = element_blank(),
-        legend.background=element_blank(),
+        axis.text.x = element_text(angle=90, size=16),
+        axis.text.y = element_text(angle=0, size=16),
         panel.border = element_rect(colour = "black"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
         strip.text.x = element_text(face = "bold"),
         legend.position = "none")
 
@@ -699,16 +709,15 @@ AB
 CD
 "
 
-to_cmip5<-to_cmip5 + ggtitle("A) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-to_cmip6<-to_cmip6 + ggtitle("B) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
-
-pp_cmip5<-pp_cmip5 + ggtitle(" ") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-pp_cmip6<-pp_cmip6 + ggtitle(" ") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
+to_cmip5<-to_cmip5 + ggtitle("A) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0), axis.title.x = element_blank())
+to_cmip6<-to_cmip6 + ggtitle("B) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
+pp_cmip5<-pp_cmip5 + ggtitle("C) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+pp_cmip6<-pp_cmip6 + ggtitle("D) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.y = element_blank()) # legend.position = "none"
 
 plot<-to_cmip5 + to_cmip6 + pp_cmip5 + pp_cmip6 +
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig4B.pdf"), height=12, width=15)
+pdf(paste0(save_loc,"Fig1.pdf"), height=12, width=15)
 plot 
 dev.off()
 
