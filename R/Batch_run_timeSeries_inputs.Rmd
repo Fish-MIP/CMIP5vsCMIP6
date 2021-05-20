@@ -709,10 +709,10 @@ AB
 CD
 "
 
-to_cmip5<-to_cmip5 + ggtitle("A) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0), axis.title.x = element_blank())
-to_cmip6<-to_cmip6 + ggtitle("B) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
-pp_cmip5<-pp_cmip5 + ggtitle("C) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-pp_cmip6<-pp_cmip6 + ggtitle("D) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.y = element_blank()) # legend.position = "none"
+to_cmip5<-to_cmip5 + ggtitle("a) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0), axis.title.x = element_blank())
+to_cmip6<-to_cmip6 + ggtitle("b) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
+pp_cmip5<-pp_cmip5 + ggtitle("c) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+pp_cmip6<-pp_cmip6 + ggtitle("d) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.y = element_blank()) # legend.position = "none"
 
 plot<-to_cmip5 + to_cmip6 + pp_cmip5 + pp_cmip6 +
   plot_layout(design = layout)

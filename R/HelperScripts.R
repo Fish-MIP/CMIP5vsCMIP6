@@ -154,7 +154,11 @@ convert_model_dates_CMIP6 <- function(netcdf_file, model_type)
     # yearmonth = as.yearmon("1601-01") + time_months[1] / 12 
     
     # new version - NICOLAS
-    yearmonth = as.yearmon("1850-01") 
+    if (model_type$future == FALSE){
+      yearmonth = as.yearmon("1850-01") 
+    }else{
+      yearmonth = as.yearmon("2015-01") 
+    }
     print(yearmonth) 
   } else if (model_type$DBPM)
   {
@@ -296,10 +300,9 @@ averageFishCDF <- function(directory,
            CMIP = 5)
   {
     
-  
     # trial
     # variable = variable_to_extract[1]
-    # average_whole_period = FALSE # CODE DOES NOT MAKE SENSE IF THIS SI FALSE AND MODELS ARE ANNUAL 
+    # average_whole_period = FALSE # CODE DOES NOT MAKE SENSE IF THIS SI FALSE AND MODELS ARE ANNUAL
     # time1 = yearmonth1[i]
     # time2 = yearmonth2[i]
     # convert_to_kg_km = TRUE # THIS NEEDS TO BE CHECKED FOR CMIP6!!!!!
@@ -318,6 +321,10 @@ averageFishCDF <- function(directory,
     
     main_title <- data_attributes$long_field_name
     data_units <- data_attributes$units
+    
+    if(CMIP == 6 & model_type$APECOSM == TRUE){
+      data_units = "g m-2"
+    }
     
     lon <- ncvar_get(nc, "lon")
     lat <- ncvar_get(nc, "lat")
@@ -459,13 +466,13 @@ extractFishCDF <- function(directory,
 {
   
   
-  # # trial
-  variable = variable_to_extract[1]
-  average_whole_period = FALSE # ARGUMENT NOT USED n this function!
-  time1 = yearmonth1[i]
-  time2 = yearmonth2[i]
-  convert_to_kg_km = FALSE
-  CMIP = 6
+  # # # trial
+  # variable = variable_to_extract[1]
+  # average_whole_period = FALSE # ARGUMENT NOT USED n this function!
+  # time1 = yearmonth1[i]
+  # time2 = yearmonth2[i]
+  # convert_to_kg_km = FALSE
+  # CMIP = 6
 
   model_type <- get_model_type(filename)
   
@@ -480,7 +487,7 @@ extractFishCDF <- function(directory,
   data_units <- data_attributes$units
   
   # data units for APECOSM is NULL - need to check with Nicolas 
-  if(model_type$APECOSM == TRUE){
+  if(CMIP == 6 & model_type$APECOSM == TRUE){
     data_units = "g m-2"
   }
   
@@ -929,20 +936,29 @@ get_mean_change<-function(var2000s, var1970s)
 
 # old version in Derek's code and here vectorised 
 
-model_stat<-function(data){
+model_stat<-function(data, esm){
+  
+  # data = data_ipsl_CMIP5
+  # esm = 'diff_2p6'
   
   #data = c(data_ipsl_CMIP6,data_gfdl_CMIP6)
   
-  X <- lapply(data, `[[`, 'diff_8p5')
+  X <- lapply(data, `[[`, esm)
+  
+  # X[[1]][1:5, 1:5]
+  
   X <- lapply(X, function(x) replace(x, !is.finite(x), NA))
   Y <- do.call(cbind, X)
   Y <- array(Y, dim=c(dim(X[[1]]), length(X)))
   model_average_new<-apply(Y, c(1, 2), mean, na.rm = TRUE)
+  
+  # model_average_new[1:5, 1:5]
+  
   # model_average_new[!is.finite(model_average_new)]<-NA # just to make sure that all NaN and Inf resulting from mean() are treated as NA 
   model_sd_new<-apply(Y, c(1, 2), sd, na.rm = TRUE)
   # model_sd_new[!is.finite(model_sd_new)]<-NA
   
-  X <- lapply(data, `[[`, 'diff_8p5')
+  X <- lapply(data, `[[`, esm)
   Y <- do.call(cbind, X)
   Y <- array(Y, dim=c(dim(X[[1]]), length(X)))
   

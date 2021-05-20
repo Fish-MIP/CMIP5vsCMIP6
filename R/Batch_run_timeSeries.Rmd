@@ -614,14 +614,14 @@ output[i]<-"annual"
 all<-get_timeSeries(hist, fut126, fut585, output = "yearly") # TO CHECK if outputs = yearly 
 data_gfdl_CMIP6$DBEM<-list(all = all) 
 
+
 ```
 
 # save outputs ISIMIP3b temp 
 
 ```{r}
 
-save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP6_noApecosm.RData")
-# no_Apecosm version for this script should include: updated Feisty, DBPM for GFDL and updated Zoom (when all available). You are removing apecosm below and you will add it back when you'll get the corrected runs
+save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP6.RData")
 
 ```
 
@@ -635,7 +635,7 @@ save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "/Users/camillan/fishmip_outputs/C
 
 rm(list=ls())
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP5.RData")
-load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP6_noApecosm.RData")
+load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP6.RData")
 
 ```
 
@@ -677,27 +677,18 @@ variable_to_extract <-c("tcb","tpb", "bp30cm", "bp30to90cm", "bp90cm")
 
 ```{r}
 
-# exclude these (FIG S4 + S9)
-
 # exclude DBPM CMIP6 anyways - need to update when white parallel lines problem is solved 
 data_gfdl_CMIP6$DBPM<-NULL 
-# exclude APECOSM in any case as it's not ready now 
-data_ipsl_CMIP6$APECOSM<-NULL
-data_gfdl_CMIP6$APECOSM<-NULL
 
-## otherwise as per Lotze model set + zoom (FIG 3 + 4)
-## data_ipsl_CMIP5$ZooMSS<-NULL
-## data_gfdl_CMIP5$ZooMSS<-NULL
-## data_ipsl_CMIP6$ZooMSS<-NULL
-## data_gfdl_CMIP6$ZooMSS<-NULL
-data_ipsl_CMIP6$FEISTY<-NULL
-data_gfdl_CMIP6$FEISTY<-NULL
-data_ipsl_CMIP6$EcoTroph<-NULL
-data_gfdl_CMIP6$EcoTroph<-NULL
-
-# if still missing from CMIP6... remove from Lotze model set, otherwise include...  
-data_ipsl_CMIP5$APECOSM<-NULL
-data_gfdl_CMIP5$APECOSM<-NULL
+# ## otherwise as per Lotze model set + zoom (FIG 3 + 4)
+# ## data_ipsl_CMIP5$ZooMSS<-NULL
+# ## data_gfdl_CMIP5$ZooMSS<-NULL
+# ## data_ipsl_CMIP6$ZooMSS<-NULL
+# ## data_gfdl_CMIP6$ZooMSS<-NULL
+# data_ipsl_CMIP6$FEISTY<-NULL
+# data_gfdl_CMIP6$FEISTY<-NULL
+# data_ipsl_CMIP6$EcoTroph<-NULL
+# data_gfdl_CMIP6$EcoTroph<-NULL
 
 ```
 
@@ -805,7 +796,7 @@ a<-ggplot(filter(all, cmip==5), aes(group = protocol, x=year,y = mean, ymin = sd
   geom_ribbon(aes(fill = protocol), alpha=0.2)+
   geom_line(aes(color = protocol)) +
   geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+  # geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
   geom_hline(yintercept = 0, color = "grey60", size = 1)+
   scale_y_continuous(limits = c(-30, 6), breaks = pretty(seq(15, -30), n = 10), name = "Change in biomass (%)") +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
@@ -818,11 +809,15 @@ a<-ggplot(filter(all, cmip==5), aes(group = protocol, x=year,y = mean, ymin = sd
         axis.text.x = element_text(angle=90, hjust=0.5),
         panel.grid.minor = element_blank(),
         # legend.background=element_blank(),
-        panel.grid.major = element_blank(),
         panel.border = element_rect(colour = "black"),
+        # OR: 
+        # axis.line = element_line(colour = "black"),
+        # panel.border = element_blank(),
+        panel.grid.major = element_blank(),
         strip.text.x = element_text(face = "bold"),
         legend.position = c(0.13, 0.3))
-# a
+
+
 
 b<-ggplot(filter(all, cmip==6), aes(group = protocol, x=year, y = mean))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
@@ -830,7 +825,7 @@ b<-ggplot(filter(all, cmip==6), aes(group = protocol, x=year, y = mean))+
   geom_line(aes(color = protocol)) +
   geom_point(aes(y = A, color = protocol), size = 0.8)+
   geom_vline(xintercept = 2015, color = "grey60", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+  # geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
   geom_hline(yintercept = 0, color = "grey60", size = 1)+
   scale_y_continuous(limits = c(-30, 6), breaks = pretty(seq(15, -30), n = 10), name = NULL) +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
@@ -854,20 +849,20 @@ layout <- "
 AB
 "
 
-a<-a + ggtitle("A) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-b<-b + ggtitle("B) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
+a<-a + ggtitle("a) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+b<-b + ggtitle("b) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
 
 plot<-a + b + 
   plot_layout(design = layout)
 
-# # pdf(paste0(save_loc,"Fig3_noApecosm.pdf"), height=6.5, width=15) # older name
-# pdf(paste0(save_loc,"FigS4_noApecosm.pdf"), height=6.5, width=15) # CONSIDER ALL MODELS
-# plot
-# dev.off()
-
-pdf(paste0(save_loc,"Fig3_noApecosm.pdf"), height=6.5, width=15) # CONSIDER LOTZE model set
+# pdf(paste0(save_loc,"Fig3_noApecosm.pdf"), height=6.5, width=15) # older name
+pdf(paste0(save_loc,"FigS4.pdf"), height=6.5, width=15) # CONSIDER ALL MODELS
 plot
 dev.off()
+
+# pdf(paste0(save_loc,"Fig3.pdf"), height=6.5, width=15) # CONSIDER LOTZE model set
+# plot
+# dev.off()
 
 # last values caclualted considering LOTZE models SET
 lastDecade<-filter(all, year >= 2090, year <= 2099) %>% 
@@ -875,89 +870,7 @@ lastDecade<-filter(all, year >= 2090, year <= 2099) %>%
   summarise(mean2 = mean(mean), 
             sd2 = mean(sd))
 
-```
-
-# FIG 4 or S9: trends in tcb by model *obsolete skip*
-
-```{r}
-
-# # add all together and  mean  it
-# all_models<-data_ipsl_CMIP5_tcb %>% 
-#   full_join(data_gfdl_CMIP5_tcb) %>% 
-#   full_join(data_ipsl_CMIP6_tcb) %>% 
-#   full_join(data_gfdl_CMIP6_tcb) %>% 
-#   filter(protocol %in% c("hist", "ssp585"))
-# 
-# # again if not considering zoom 
-# a<-ggplot(filter(all_models, cmip==5), aes(x=year, y = tcbChange,  color = model, linetype = earth))+
-#   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-#   geom_line(size=1) +
-#   geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
-#   geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
-#   geom_hline(yintercept = 0, color = "grey60", size = 1)+
-#   scale_y_continuous(limits = c(-35, 6), breaks = pretty(seq(20, -40), n = 10), name = "Change in biomass (%)") + 
-#   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
-#   scale_color_manual(values = c("red","blue", "lightblue","black", "pink","green", "orange"), name = "Models") +
-#   scale_linetype_manual(values = c("solid","dotdash"),name = "Earth models", labels =c("GFDL-ESM2M","IPSL-CM5A-LR"))+
-#   theme_bw()+
-#   theme(text = element_text(size=12),
-#         axis.title.y = element_text(vjust=0.4, size = 22),
-#         axis.title.x = element_text(vjust=0.3, size = 22),
-#         axis.text.x = element_text(angle=90, hjust=0.5, size=16),
-#         axis.text.y = element_text(angle=0, size=16),
-#         panel.border = element_rect(colour = "black"),
-#         panel.grid.minor = element_blank(),
-#         strip.text.x = element_text(face = "bold"),
-#         legend.background=element_blank(),
-#         legend.position = c(0.15, 0.4),
-#         legend.key.size = unit(0.6, "cm"))
-# a
-# 
-# 
-# b<-ggplot(filter(all_models, cmip==6), aes(x=year, y = tcbChange,  color = model, linetype = earth))+
-#   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-#   geom_line(size=1) +
-#   geom_vline(xintercept = 2015, color = "grey60", size = 2)+
-#   geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
-#   geom_hline(yintercept = 0, color = "grey60", size = 1)+
-#   scale_y_continuous(limits = c(-35, 6), breaks = pretty(seq(20, -40), n = 10), name = "Change in biomass (%)") +
-#   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year-1, n = 10), name = "Year")+
-#   scale_color_manual(values = c("blue", "lightblue","black", "pink","purple","brown","green","orange"), name = "Models")+ # no apecosm 
-#   scale_linetype_manual(values = c("solid","dotdash"),name = "Earth models", labels =c("GFDL-ESM4","IPSL-CM6A-LR"))+
-#   theme_bw()+
-#   theme(text = element_text(size=12),
-#         axis.title.y = element_text(vjust=0.4, size = 22),
-#         axis.title.x = element_text(vjust=0.3, size = 22),
-#         axis.text.x = element_text(angle=90, hjust=0.5, size=16),
-#         axis.text.y = element_text(angle=0, size=16),
-#         panel.border = element_rect(colour = "black"),
-#         panel.grid.minor = element_blank(),
-#         strip.text.x = element_text(face = "bold"),
-#         legend.background=element_blank(),
-#         legend.position = c(0.15, 0.4),
-#         legend.key.size = unit(0.6, "cm"))
-# b
-# 
-# # FIG 2B trends in tcb CMIP5 vs CMIP6
-# layout <- "
-# AB
-# "
-# 
-# a<-a + ggtitle("A) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-# b<-b + ggtitle("B) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
-# 
-# plot<-a + b + 
-#   plot_layout(design = layout)
-# 
-# # pdf(paste0(save_loc,"Fig3B_noApecosm.pdf"), height=6.5, width=15) # old name 
-# pdf(paste0(save_loc,"FigS9_noApecosm.pdf"), height=6.5, width=15) # CONSIDER ALL MODELS 
-# plot 
-# dev.off()
-# 
-# # pdf(paste0(save_loc,"Fig4_noApecosm.pdf"), height=6.5, width=15) # CONSIDER LOTZE MODEL SET 
-# # plot 
-# # dev.off()
-
+lastYear<-filter(all, year == 2099) 
 
 ```
 
@@ -977,8 +890,14 @@ lots of copy-paste but code is all the same... need to clean!
 all_models<-data_ipsl_CMIP5_tcb %>%
   full_join(data_gfdl_CMIP5_tcb) %>%
   full_join(data_ipsl_CMIP6_tcb) %>%
-  full_join(data_gfdl_CMIP6_tcb) %>%
+  full_join(data_gfdl_CMIP6_tcb)
+
+all_models_85<-all_models %>% 
   filter(protocol %in% c("hist", "ssp585")) %>% 
+  droplevels()
+
+all_models_26<-all_models %>% 
+  filter(protocol %in% c("hist", "ssp126")) %>% 
   droplevels()
 
 # color code 
@@ -989,11 +908,13 @@ df_cmip5gfdl<-df %>% filter(model %in% unique(filter(all_models, cmip==5, earth 
 df_cmip6ipsl<-df %>% filter(model %in% unique(filter(all_models, cmip==6, earth =="ipsl")$model))
 df_cmip6gfdl<-df %>% filter(model %in% unique(filter(all_models, cmip==6, earth =="gfdl")$model))
 
+plot_trends<-function(all_models){
+  
 a1<-ggplot(filter(all_models, cmip==5, earth =="ipsl"), aes(x=year, y = tcbChange,  color = model))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
   geom_line(size=1) +
   geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+  # geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
   geom_hline(yintercept = 0, color = "grey60", size = 1)+
   scale_y_continuous(limits = c(-35, 6), breaks = pretty(seq(20, -40), n = 10), name = "Change in biomass (%)") + 
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
@@ -1012,14 +933,13 @@ a1<-ggplot(filter(all_models, cmip==5, earth =="ipsl"), aes(x=year, y = tcbChang
         # legend.background=element_blank(),
         legend.position = c(0.17, 0.4),
         legend.key.size = unit(0.6, "cm"))
-a1
 
 
 b1<-ggplot(filter(all_models, cmip==6, earth =="ipsl"), aes(x=year, y = tcbChange,  color = model))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
   geom_line(size=1) +
   geom_vline(xintercept = 2015, color = "grey60", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+  # geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
   geom_hline(yintercept = 0, color = "grey60", size = 1)+
   scale_y_continuous(limits = c(-35, 6), breaks = pretty(seq(20, -40), n = 10), name = "Change in biomass (%)") +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year-1, n = 10), name = "Year")+
@@ -1037,14 +957,13 @@ b1<-ggplot(filter(all_models, cmip==6, earth =="ipsl"), aes(x=year, y = tcbChang
         # legend.background=element_blank(),
         legend.position = c(0.17, 0.4),
         legend.key.size = unit(0.6, "cm"))
-b1
 
 
 a2<-ggplot(filter(all_models, cmip==5, earth =="gfdl"), aes(x=year, y = tcbChange,  color = model))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
   geom_line(size=1) +
   geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+  # geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
   geom_hline(yintercept = 0, color = "grey60", size = 1)+
   scale_y_continuous(limits = c(-35, 6), breaks = pretty(seq(20, -40), n = 10), name = "Change in biomass (%)") + 
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
@@ -1062,14 +981,13 @@ a2<-ggplot(filter(all_models, cmip==5, earth =="gfdl"), aes(x=year, y = tcbChang
         # legend.background=element_blank(),
         legend.position = c(0.17, 0.4),
         legend.key.size = unit(0.6, "cm"))
-a2
 
 
 b2<-ggplot(filter(all_models, cmip==6, earth =="gfdl"), aes(x=year, y = tcbChange,  color = model))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
   geom_line(size=1) +
   geom_vline(xintercept = 2015, color = "grey60", size = 2)+
-  geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
+  # geom_vline(xintercept = 2030, linetype = "dashed", color = "grey60", size = 1)+
   geom_hline(yintercept = 0, color = "grey60", size = 1)+
   scale_y_continuous(limits = c(-35, 6), breaks = pretty(seq(20, -40), n = 10), name = "Change in biomass (%)") +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year-1, n = 10), name = "Year")+
@@ -1087,30 +1005,66 @@ b2<-ggplot(filter(all_models, cmip==6, earth =="gfdl"), aes(x=year, y = tcbChang
         # legend.background=element_blank(),
         legend.position = c(0.17, 0.4),
         legend.key.size = unit(0.6, "cm"))
-b2
 
+return(list(a1 =a1 , b1 =b1, a2 = a2, b2 = b2))
+}
+
+res<-plot_trends(all_models_85)
+a1 = res$a1
+b1 = res$b1
+a2 = res$a2
+b2 = res$b2
 
 layout <- "
 AB
 CD
 "
 
-a1<-a1 + ggtitle("A) CMIP5 IPSL-CM5A-LR") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0), axis.title.x = element_blank())
-b1<-b1 + ggtitle("B) CMIP6 IPSL-CM6A-LR") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
-a2<-a2 + ggtitle("A) CMIP5 GFDL-ESM2M") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-b2<-b2 + ggtitle("B) CMIP6 GFDL-ESM4") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.y = element_blank()) # legend.position = "none"
+a1<-a1 + ggtitle("a) CMIP5 IPSL-CM5A-LR") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0), axis.title.x = element_blank())
+b1<-b1 + ggtitle("b) CMIP6 IPSL-CM6A-LR") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
+a2<-a2 + ggtitle("c) CMIP5 GFDL-ESM2M") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+b2<-b2 + ggtitle("d) CMIP6 GFDL-ESM4") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.y = element_blank()) # legend.position = "none"
 
 plot<-a1 + b1 + a2 + b2 + 
   plot_layout(design = layout)
 
 # # pdf(paste0(save_loc,"Fig3B_noApecosm.pdf"), height=6.5, width=15) # old name
-# pdf(paste0(save_loc,"FigS9_noApecosm.pdf"), height=12, width=15) # CONSIDER ALL MODELS
+pdf(paste0(save_loc,"FigS9.pdf"), height=12, width=15) # CONSIDER ALL MODELS
+plot
+dev.off()
+
+# pdf(paste0(save_loc,"Fig4.pdf"), height=12, width=15) # CONSIDER LOTZE MODEL SET
 # plot
 # dev.off()
 
-pdf(paste0(save_loc,"Fig4_noApecosm.pdf"), height=12, width=15) # CONSIDER LOTZE MODEL SET
+# 2.6 scenario
+res<-plot_trends(all_models_26)
+a1 = res$a1
+b1 = res$b1
+a2 = res$a2
+b2 = res$b2
+
+layout <- "
+AB
+CD
+"
+
+a1<-a1 + ggtitle("a) CMIP5 IPSL-CM5A-LR") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0), axis.title.x = element_blank())
+b1<-b1 + ggtitle("b) CMIP6 IPSL-CM6A-LR") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
+a2<-a2 + ggtitle("c) CMIP5 GFDL-ESM2M") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+b2<-b2 + ggtitle("d) CMIP6 GFDL-ESM4") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.y = element_blank()) # legend.position = "none"
+
+plot<-a1 + b1 + a2 + b2 + 
+  plot_layout(design = layout)
+
+# # pdf(paste0(save_loc,"Fig3B_noApecosm.pdf"), height=6.5, width=15) # old name
+pdf(paste0(save_loc,"FigS9_126.pdf"), height=12, width=15) # CONSIDER ALL MODELS
 plot
 dev.off()
+
+# pdf(paste0(save_loc,"Fig4_126.pdf"), height=12, width=15) # CONSIDER LOTZE MODEL SET
+# plot
+# dev.off()
 
 ```
 
