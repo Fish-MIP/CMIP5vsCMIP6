@@ -27,7 +27,7 @@ source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
 source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
 
 # saving outputs location  
-save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/20210510/"
+save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/20210525/"
 
 # variables - TO CHANGE 
 cmip<-c("CMIP5", "CMIP6")
@@ -445,6 +445,7 @@ for (i in 1:length(data_average_change_CMIP5)){
   
 }
 
+# map_average_change_CMIP5$to
 # map_average_value_2000_CMIP5$phy
 # map_average_value_2000_CMIP5$zoo
 # map_average_value_2100_CMIP5$pp
@@ -498,7 +499,7 @@ for (i in 1:length(data_average_change_CMIP5)){
 ```{r}
 
 data_summaries_CMIP5<-list(data_average_change_CMIP5 = data_average_change_CMIP5, data_average_value_2000_CMIP5 = data_average_value_2000_CMIP5, data_average_value_2100_CMIP5 = data_average_value_2100_CMIP5)
-map_summaries_CMIP5<-list(map_average_change_CMIP5 = map_average_change_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5, map_average_change_CMIP5_ipsl = map_average_change_CMIP5_ipsl, map_average_change_CMIP5_gfdl = map_average_change_CMIP5_gfdl)
+map_summaries_CMIP5<-list(map_average_change_CMIP5 = map_average_change_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5) #, map_average_change_CMIP5_ipsl = map_average_change_CMIP5_ipsl, map_average_change_CMIP5_gfdl = map_average_change_CMIP5_gfdl)
 save(data_ipsl_CMIP5, data_gfdl_CMIP5, data_summaries_CMIP5, map_summaries_CMIP5, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP5.RData")
 
 ```
@@ -735,7 +736,7 @@ save(data_ipsl_CMIP6, data_gfdl_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6
 rm(list=ls())
 variable_to_extract <-c("to", "pp", "phy", "zoo")
 titles<-c("Sea surface temperature", "Net primary production","Phytoplankton carbon","Zooplankton carbon")
-coltitles<-c("C", "g C m-2 d-1","g C m-2","g C m-2") #
+coltitles<-c("°C", "g C m-2 d-1","g C m-2","g C m-2") #
 
 # run first 2 sections above 
 load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP6.RData")
@@ -759,7 +760,7 @@ source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
 source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
 
 # saving outputs location  
-save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/20210510/"
+save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/20210525/"
 
 # variables - TO CHANGE 
 cmip<-c("CMIP5", "CMIP6")
@@ -805,26 +806,25 @@ world_sf <- st_transform(world, crs = st_crs(robCRS)) # Convert to different CRS
 
 ```{r}
 
-# you could calculate delta as scatter plot - as in batch_run_maps.R
 # option 1 - subtract (julia) - OK
-# delta_plot_colour_values_new2<-delta_plot_colour_values_new
 delta_plot_colour_values_new2<-list(c(-2, 2), c(-30, 30), c(-30, 30), c(-30, 30)) # highlight delta changes more ..... 
 
 delta_data<-list()
 delta_map<-list()
+
+coltitleDelta<-c("Difference \nin \nchange \n(°C)","Difference \nin \nchange \n(%)","Difference \nin \nchange \n(%)","Difference \nin \nchange \n(%)")
 
 for(i in 1:length(data_summaries_CMIP6$data_average_change_CMIP6)){
  
   # NOTE it should be OK with temp too even if temp is in C change and the other are in % change
   # if positive -> t, pp, phy or zoo have increased between 1990s and 2090s more in CMIP6 than in CMIP5
   # if negative, inputs have increased more in CMIP5 than CMIP6
-  # THIS IS STRANGE!!! for temp results are different if I consider % change or C change !!! why??? 
   
   delta_data[[i]]<-data_summaries_CMIP6$data_average_change_CMIP6[[i]] - data_summaries_CMIP5$data_average_change_CMIP5[[i]]
   names(delta_data)[[i]]<-variable_to_extract[[i]]
   
   tit<-paste("Delta (CMIP6 change - CMIP5 change)", titles[[i]], sep =" ")
-  delta_map[[i]]<-plot_FISH_MIP(delta_data[[i]], tit, delta_plot_colour_values_new2[[i]], colour_scheme = colour_scheme3, coltitle = "Difference \nin \nchange \n")  
+  delta_map[[i]]<-plot_FISH_MIP(delta_data[[i]], tit, delta_plot_colour_values_new2[[i]], colour_scheme = colour_scheme3, coltitle = coltitleDelta[[i]])  
   names(delta_map)[[i]]<-variable_to_extract[[i]]
   
 }
@@ -853,9 +853,9 @@ pt<- a + b +
   c + d +
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig2.pdf"), height=10, width=15)
-pt 
-dev.off()
+# pdf(paste0(save_loc,"Fig2.pdf"), height=10, width=15)
+# pt 
+# dev.off()
 
 # as above but with info on all variables 
 
@@ -888,9 +888,19 @@ pt<-a1 + a + b +
   h+ i + l +
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"FigS3.pdf"), height=15, width=20)
+pdf(paste0(save_loc,"Fig2.pdf"), height=15, width=20)
 pt 
 dev.off()
+
+
+
+# can do RCP2.6 too?? 
+
+
+
+
+
+
 
 # plot of values can skyp 
 # layout <- "
@@ -934,8 +944,6 @@ dev.off()
 
 ```{r}
 
-# Fig 1 and 1B split by earth system models 
-
 delta_plot_colour_values_new<-list(c(0,4), delta_plot_colour_values, delta_plot_colour_values, delta_plot_colour_values)
 coltitles1<-list("Change \n(°C)", "Change \n(%)", "Change \n(%)", "Change \n(%)")
 colour_scheme_vary<-list(c(low = "white", mid = '#fee5d9', high = "#de2d26"),colour_scheme2,colour_scheme2,colour_scheme2) # or mid = #fcbba1 for darker 
@@ -945,6 +953,8 @@ num_dp_variables<-c(0,1,0,0)
 map_ipsl_change_CMIP5<-list()
 map_ipsl_value_2000_CMIP5<-list()
 map_ipsl_value_2100_CMIP5<-list()
+
+map_ipsl_change_CMIP5$to
 
 for (i in 1:length(data_ipsl_CMIP5)){
     
@@ -1044,23 +1054,21 @@ GHK
 LMN
 "
 
-# right column (first raw for all section) is the left colummn of S3... 
-
 a1<-map_summaries_CMIP5$map_average_change_CMIP5$to +  ggtitle("c) SST CMIP5 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 a<-map_ipsl_change_CMIP5$to +  ggtitle("a) SST CMIP5 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 b<-map_gfdl_change_CMIP5$to +  ggtitle("b) SST CMIP5 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
-c1<-map_summaries_CMIP5$map_average_change_CMIP5$pp + ggtitle("d) NPP CMIP5 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-c<-map_ipsl_change_CMIP5$pp + ggtitle("e) NPP CMIP5 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-d<-map_gfdl_change_CMIP5$pp + ggtitle("f) NPP CMIP5 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+c1<-map_summaries_CMIP5$map_average_change_CMIP5$pp + ggtitle("f) NPP CMIP5 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+c<-map_ipsl_change_CMIP5$pp + ggtitle("d) NPP CMIP5 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+d<-map_gfdl_change_CMIP5$pp + ggtitle("e) NPP CMIP5 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
-e<-map_summaries_CMIP5$map_average_change_CMIP5$phy +  ggtitle("g) Phytoplankton carbon CMIP5 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-f<-map_ipsl_change_CMIP5$phy + ggtitle("h) Phytoplankton carbon CMIP5 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-g<-map_gfdl_change_CMIP5$phy + ggtitle("i) Phytoplankton carbon CMIP5 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+e<-map_summaries_CMIP5$map_average_change_CMIP5$phy +  ggtitle("i) Phytoplankton carbon CMIP5 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+f<-map_ipsl_change_CMIP5$phy + ggtitle("g) Phytoplankton carbon CMIP5 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+g<-map_gfdl_change_CMIP5$phy + ggtitle("h) Phytoplankton carbon CMIP5 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
-h<-map_summaries_CMIP5$map_average_change_CMIP5$zoo +  ggtitle("j) Zooplankton carbon CMIP5 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-i<- map_ipsl_change_CMIP5$zoo + ggtitle("k) Zooplankton carbon CMIP5 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-l<-map_gfdl_change_CMIP5$zoo+ ggtitle("l) Zooplankton carbon CMIP5 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+h<-map_summaries_CMIP5$map_average_change_CMIP5$zoo +  ggtitle("l) Zooplankton carbon CMIP5 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+i<- map_ipsl_change_CMIP5$zoo + ggtitle("j) Zooplankton carbon CMIP5 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+l<-map_gfdl_change_CMIP5$zoo+ ggtitle("k) Zooplankton carbon CMIP5 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
 pt<-a + b + a1 +
   c + d + c1 +
@@ -1069,26 +1077,26 @@ pt<-a + b + a1 +
   plot_layout(design = layout)
 
 pdf(paste0(save_loc,"FigS1.pdf"), height=15, width=20)
-pt 
+pt
 dev.off()
 
-# right column (first raw for all section) is the middle colummn of S3... 
+# CMIP6
 
 a1<-map_summaries_CMIP6$map_average_change_CMIP6$to +  ggtitle("c) SST CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 a<-map_ipsl_change_CMIP6$to +  ggtitle("a) SST CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 b<-map_gfdl_change_CMIP6$to +  ggtitle("b) SST CMIP6 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
-c1<-map_summaries_CMIP6$map_average_change_CMIP6$pp + ggtitle("d) NPP CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-c<-map_ipsl_change_CMIP6$pp + ggtitle("e) NPP CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-d<-map_gfdl_change_CMIP6$pp + ggtitle("f) NPP CMIP6 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+c1<-map_summaries_CMIP6$map_average_change_CMIP6$pp + ggtitle("f) NPP CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+c<-map_ipsl_change_CMIP6$pp + ggtitle("d) NPP CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+d<-map_gfdl_change_CMIP6$pp + ggtitle("e) NPP CMIP6 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
-e<-map_summaries_CMIP6$map_average_change_CMIP6$phy +  ggtitle("g) Phytoplankton carbon CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-f<-map_ipsl_change_CMIP6$phy + ggtitle("h) Phytoplankton carbon CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-g<-map_gfdl_change_CMIP6$phy + ggtitle("i) Phytoplankton carbon CMIP6 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+e<-map_summaries_CMIP6$map_average_change_CMIP6$phy +  ggtitle("i) Phytoplankton carbon CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+f<-map_ipsl_change_CMIP6$phy + ggtitle("g) Phytoplankton carbon CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+g<-map_gfdl_change_CMIP6$phy + ggtitle("h) Phytoplankton carbon CMIP6 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
-h<-map_summaries_CMIP6$map_average_change_CMIP6$zoo +  ggtitle("j) Zooplankton carbon CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-i<- map_ipsl_change_CMIP6$zoo + ggtitle("k) Zooplankton carbon CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-l<-map_gfdl_change_CMIP6$zoo+ ggtitle("l) Zooplankton carbon CMIP6 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+h<-map_summaries_CMIP6$map_average_change_CMIP6$zoo +  ggtitle("l) Zooplankton carbon CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+i<- map_ipsl_change_CMIP6$zoo + ggtitle("j) Zooplankton carbon CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+l<-map_gfdl_change_CMIP6$zoo+ ggtitle("k) Zooplankton carbon CMIP6 GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
 pt<-a + b + a1 +
   c + d + c1 +
