@@ -754,6 +754,8 @@ a<-ggplot(filter(all, cmip==5), aes(group = protocol, x=year,y = mean, ymin = sd
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
   scale_color_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "RCP2.6", "RCP8.5"))+
   scale_fill_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "RCP2.6", "RCP8.5"))+
+  # scale_color_manual(values = c("black" ,"red"), name = "Scenarios", labels = c("Historical", "SSP5-8.5"))+
+  # scale_fill_manual(values = c("black" ,"red"), name = "Scenarios", labels = c("Historical", "SSP5-8.5"))+
   theme_bw()+
   theme(text = element_text(size=20),
         axis.title.y = element_text(vjust=0.4, size = 22),
@@ -778,6 +780,9 @@ b<-ggplot(filter(all, cmip==6), aes(group = protocol, x=year, y = mean))+
   scale_color_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "SSP1-2.6", "SSP5-8.5"))+
   scale_fill_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "SSP1-2.6", "SSP5-8.5"))+
   theme_bw()+
+  # scale_color_manual(values = c("black" ,"red"), name = "Scenarios", labels = c("Historical", "SSP5-8.5"))+
+  # scale_fill_manual(values = c("black" ,"red"), name = "Scenarios", labels = c("Historical", "SSP5-8.5"))+
+  theme_bw()+
   theme(text = element_text(size=20),
         axis.title.y = element_text(vjust=0.4, size = 22),
         axis.title.x = element_text(vjust=0.3, size = 22),
@@ -801,6 +806,11 @@ b<-b + ggtitle("b) CMIP6") + theme(plot.title = element_text(size = 16, face = "
 plot<-a + b + 
   plot_layout(design = layout)
 
+# # alternative for Derek presentation - only ssp585
+# setwd("/Users/camillan/Desktop/")
+# pdf("Fig3.pdf", height=6.5, width=15) # CONSIDER ALL MODELS
+# plot
+# dev.off()
 
 if(set == "full"){
   pdf(paste0(save_loc,"Fig3.pdf"), height=6.5, width=15) # CONSIDER ALL MODELS
