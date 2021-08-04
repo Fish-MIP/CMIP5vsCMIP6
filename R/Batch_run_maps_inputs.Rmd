@@ -1,77 +1,114 @@
 ---
 title: "Plotting global models' inputs"
-author: "Camilla Novaglio"
+author: "Camilla Novaglio & Derek Tittensor"
 date: "02/02/2021"
 output: html_document
 editor_options: 
   chunk_output_type: console
 ---
 
-# Load libraries for netcdf and define variables
+This script analysis Earth System Models' outputs used as inputs for Marine Ecosystem Models. It is structured in two steps:
+Step 1 extracts environmental variables (temperature, PP, phytoplankton and zooplankton) from ESMs netcdfs and collapses them into a time-averaged (1990s for the historical period and 2090s for future scenarios) spatial dataset (1 grid cell resolution).    
+Step 2 averages the data across ESMs and scenarios and produces Figure 2 along with supplementary figures.  
+
+# STEP 1 extract data
+
+## Load libraries for netcdf and define variables
 
 ```{r load CMIP5}
 
 rm(list=ls())
-library(grid)
-library(zoo)
-library(viridis)
-library(tidyr)
-library(dplyr)
-library(patchwork)
 
-source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
-source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
+install_load <- function (this_package)  {   
 
-# saving outputs location  
-save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/20210525/"
+   package <- c(this_package)
+   if(package %in% rownames(installed.packages()))
+        do.call('library', list(package))
 
-# variables 
+    # if package is not installed locally, download, then load
+    else {
+        install.packages(package)
+         do.call("library", list(package))
+    }
+}
+
+### load/install libraries ###
+install_load("grid")
+install_load("zoo")
+install_load("viridis")
+install_load("tidyr")
+install_load("dplyr")
+install_load("ncdf4")
+install_load("ggplot2")
+install_load("patchwork")
+
+### load helper scripts with functions to extract data from netcdfs ###
+source("R/HelperScripts.r")
+source("R/Funcs_maps.r")
+
+### create folders where temporary data can be stored ###
+mainDir = "../CMIP5vsCMIP6_data/"
+DirStep1 = "temp_data"
+ifelse(!dir.exists(file.path(mainDir, DirStep1)), dir.create(file.path(mainDir, DirStep1)), FALSE)
+
+### define variables to extract ###
 cmip<-c("CMIP5", "CMIP6")
 protocol <- c("picontrol","historical", "future")
 future<-c("SSP126", "SSP585")
 
+### create folders where figures can be saved ###
+mainDir = "../CMIP5vsCMIP6_data/"
+DirStep2 = "figures"
+ifelse(!dir.exists(file.path(mainDir, DirStep2)), dir.create(file.path(mainDir, DirStep2)), FALSE)
+save_loc<-"../CMIP5vsCMIP6_data/figures/"
+
 ```
 
-# load libraries for plotting and define criteria 
+## Load libraries for plotting and define criteria 
 
 ```{r}
 
-# Define color/legend limits 
-main_plot_colour_values_tos = c(0,30) # C and following Ryan paper  
+### Define color/legend limits ###
+main_plot_colour_values_tos = c(0,30) # C   
 main_plot_colour_values_pp = c(0,1) # g C m-2 d-1 
 main_plot_colour_values_phyto = c(0, 4) # g C m-2 
 main_plot_colour_values_zoo = c(0, 4) # g C m-2 
 delta_plot_colour_values = c(-50,50)
 
-# define a color scheme 
-colour_scheme1 <- c(low = 'white', mid = "skyblue1",  high = 'royalblue1') # for statistics - e.g model mean, SD and agreement
-colour_scheme2 <- c(low = 'red', mid = "white",  high = 'royalBlue1') # for % changes - either increasing or decreasing 
-colour_scheme3 <- c("#fdb863", "#f7f7f7","#b2abd2") # for delta plots (% change between cmips) # purple to yellow shades
-colour_scheme4 <- c(low = '#e0ecf4', mid = "#9ebcda",  high = '#8856a7') # for inputs values # shades of blue to purple? 
-colour_scheme4 <- c(low = 'white', mid = "#9ebcda",  high = '#8856a7') # for inputs values # shades of blue to purple? 
+#### define color schemes ###
+colour_scheme1 <- c(low = 'white', mid = "skyblue1",  high = 'royalblue1') # for statistics - e.g model mean
+colour_scheme2 <- c(low = 'red', mid = "white",  high = 'royalBlue1') # for % changes
+colour_scheme3 <- c("#fdb863", "#f7f7f7","#b2abd2") # for delta plots
+colour_scheme4 <- c(low = 'white', mid = "#9ebcda",  high = '#8856a7') # for inputs values 
 
-# Download and process world outline
-library(sf)
-library(rnaturalearth)
-library("rgeos")
+### Download and process world outline ###
+install_load("sf")
+install_load("rnaturalearth")
+install_load("rgeos")
 world <- ne_countries(scale = "medium", returnclass = "sf")
 robCRS <- CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-world_sf <- st_transform(world, crs = st_crs(robCRS)) # Convert to different CRS
+world_sf <- st_transform(world, crs = st_crs(robCRS)) 
+
+### other mapping libraries ####
+install_load("raster")
+install_load("maptools")
+install_load("RColorBrewer")
+install_load("scales")
 
 ```
 
-# load ISIMIP2b inputs 
+## Load ISIMIP2b inputs 
 
 ```{r}
 
 # extract data IPSL ---- 
 
-directory = "/Users/camillan/fishmip_inputs/marine-fishery_global_ISIMIP2b/IPSL_CM5A_LR/"
+directory = "../CMIP5vsCMIP6_data/fishmip_inputs/marine-fishery_global_ISIMIP2b/IPSL_CM5A_LR/"
 
 variable_to_extract <-c("to", "pp", "phy", "zoo")
 
 yearmonth1<- as.yearmon("1990-01")
-yearmonth2<- as.yearmon("1999-01") # yearly values
+yearmonth2<- as.yearmon("1999-01") 
 
 yearmonth1_fut<- as.yearmon("2090-01")
 yearmonth2_fut<- as.yearmon("2099-01")
@@ -80,23 +117,23 @@ data_ipsl_CMIP5<-list()
 
 for (i in 1:length(variable_to_extract)){
 
-  # the variable is temperature,extract and convert from K to C
+  # extract temperature and convert from K to C
   if(variable_to_extract[[i]] == "to"){
     
     filename<-paste0(variable_to_extract[i], ".nc4.zs.rgrd.v3.historical1_19500101_20051231_1Y.nc4")
-    hist<- averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1, yearmonth2, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = TRUE)
+    hist<- averageEnvironmentalCDF(directory, filename, variable_to_extract[i], yearmonth1, yearmonth2, average_whole_period = TRUE, ipsl = TRUE, hist = TRUE)
     
     # from k to C
-    hist$fishvar<-hist$fishvar - 273.15 # can be done later on if this is going to be merged with the loop below
+    hist$fishvar<-hist$fishvar - 273.15 
     hist$data_units<-"C"
   
     filename<-paste0(variable_to_extract[i],".nc4.zs.rgrd.v3.rcp261_20060101_21001231_1Y.nc4")
-    fut126<-averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = FALSE)
+    fut126<-averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = TRUE, hist = FALSE)
     fut126$fishvar<-fut126$fishvar - 273.15
     fut126$data_units<-"C"
   
     filename<-paste0(variable_to_extract[i],".nc4.zs.rgrd.v3.rcp851_20060101_21001231_1Y.nc4")
-    fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = FALSE)
+    fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = TRUE, hist = FALSE)
     fut585$fishvar<-fut585$fishvar - 273.15
     fut126$data_units<-"C"
 
@@ -104,13 +141,13 @@ for (i in 1:length(variable_to_extract)){
     diff_2p6 = fut126$fishvar - hist$fishvar # 20C - 15C = 5C (celsius increase)
     diff_8p5 = fut585$fishvar - hist$fishvar
   
-  }else{ # the variable is other than temperature, extract both small and large PP, phy or zoo and sum the size classes
+  }else{ # extract small and large PP, phy or zoo and sum the size classes
     
       filename<-paste0("s",variable_to_extract[i], ".nc4.zint.rgrd.v3.historical1_19500101_20051231_1Y.nc4")
-      histS<- averageEnvironmentalCDF(directory, filename , paste0("s", variable_to_extract[i]), yearmonth1, yearmonth2, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = TRUE)
+      histS<- averageEnvironmentalCDF(directory, filename , paste0("s", variable_to_extract[i]), yearmonth1, yearmonth2, average_whole_period = TRUE, ipsl = TRUE, hist = TRUE)
       
       filename<-paste0("l",variable_to_extract[i], ".nc4.zint.rgrd.v3.historical1_19500101_20051231_1Y.nc4")
-      histL<- averageEnvironmentalCDF(directory, filename , paste0("l", variable_to_extract[i]), yearmonth1, yearmonth2, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = TRUE)
+      histL<- averageEnvironmentalCDF(directory, filename , paste0("l", variable_to_extract[i]), yearmonth1, yearmonth2, average_whole_period = TRUE, ipsl = TRUE, hist = TRUE)
       hist<-histS
       hist$fishvar<-hist$fishvar+histL$fishvar 
       
@@ -118,9 +155,10 @@ for (i in 1:length(variable_to_extract)){
       hist$data_units<-paste0(hist$data_units, " CN converted in g C")
  
       filename<-paste0("s",variable_to_extract[i],".nc4.zint.rgrd.v3.rcp26.1_20060101_21001231_1Y.nc4")
-      fut126S<-averageEnvironmentalCDF(directory, filename , paste0("s", variable_to_extract[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = FALSE)
+      fut126S<-averageEnvironmentalCDF(directory, filename , paste0("s", variable_to_extract[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = TRUE, hist = FALSE)
+      
       filename<-paste0("l",variable_to_extract[i],".nc4.zint.rgrd.v3.rcp26.1_20060101_21001231_1Y.nc4")
-      fut126L<-averageEnvironmentalCDF(directory, filename , paste0("l", variable_to_extract[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = FALSE)
+      fut126L<-averageEnvironmentalCDF(directory, filename , paste0("l", variable_to_extract[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = TRUE, hist = FALSE)
       fut126<-fut126S
       fut126$fishvar<-fut126$fishvar+fut126L$fishvar 
       
@@ -128,10 +166,10 @@ for (i in 1:length(variable_to_extract)){
       fut126$data_units<-paste0(fut126$data_units, " CN converted in g C")
       
       filename<-paste0("s",variable_to_extract[i],".nc4.zint.rgrd.v3.rcp85.1_20060101_21001231_1Y.nc4")
-      fut585S<-averageEnvironmentalCDF(directory, filename , paste0("s", variable_to_extract[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = FALSE)
+      fut585S<-averageEnvironmentalCDF(directory, filename , paste0("s", variable_to_extract[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = TRUE, hist = FALSE)
       
       filename<-paste0("l",variable_to_extract[i],".nc4.zint.rgrd.v3.rcp85.1_20060101_21001231_1Y.nc4")
-      fut585L<-averageEnvironmentalCDF(directory, filename , paste0("l", variable_to_extract[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = TRUE, hist = FALSE)
+      fut585L<-averageEnvironmentalCDF(directory, filename , paste0("l", variable_to_extract[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = TRUE, hist = FALSE)
       
       fut585<-fut585S
       fut585$fishvar<-fut585$fishvar+fut585L$fishvar 
@@ -148,9 +186,9 @@ for (i in 1:length(variable_to_extract)){
         fut585$data_units<-paste0(fut585$data_units, " CN converted in d-1") 
       }
       
-      # (mean(hist$fishvar, na.rm = TRUE)/0.0000115741)*1000 # mg * day as per Ryan 
-      # (mean(hist$fishvar, na.rm = TRUE)/3.1709791983765e-8) # g per year as per cmip6 input paper 
-      # (mean(hist$fishvar, na.rm = TRUE)/0.0000115741) # g per days as here 
+      # (mean(hist$fishvar, na.rm = TRUE)/0.0000115741)*1000 # mg / day  
+      # (mean(hist$fishvar, na.rm = TRUE)/3.1709791983765e-8) # g / year 
+      # (mean(hist$fishvar, na.rm = TRUE)/0.0000115741) # g / days 
       
       diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100
       diff_8p5 = fut585$fishvar / hist$fishvar * 100 - 100
@@ -166,10 +204,11 @@ for (i in 1:length(variable_to_extract)){
 
 # extract data GFDL ---- 
 
-directory = "/Users/camillan/fishmip_inputs/marine-fishery_global_ISIMIP2b/GFDL_ESM2M/"
+directory = "../CMIP5vsCMIP6_data/fishmip_inputs/marine-fishery_global_ISIMIP2b/GFDL_ESM2M/"
 
 variable_to_extract <-c("to", "pp", "phy", "zoo")
-# the variable inside the netcdf is called differently than the variable in the file name.  
+
+# consider names withing netcdf  
 variable_to_extract2 <-c("TO_ZS", "PP_ZINT", "PHY_ZINT", "ZOO_ZINT")
 
 data_gfdl_CMIP5<-list()
@@ -179,18 +218,18 @@ for (i in 1:length(variable_to_extract)){
   if(variable_to_extract[[i]] == "to"){
     
     filename<-paste0(variable_to_extract[i], "_gfdl-esm2m_historical_zs_annual_195001-200512.nc4")
-    hist<- averageEnvironmentalCDF(directory, filename , variable_to_extract2[i], yearmonth1, yearmonth2, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = TRUE)
+    hist<- averageEnvironmentalCDF(directory, filename , variable_to_extract2[i], yearmonth1, yearmonth2, average_whole_period = TRUE, ipsl = FALSE, hist = TRUE)
     # from k to C
     hist$fishvar<-hist$fishvar - 273.15 
     hist$data_units<-"C"
   
     filename<-paste0(variable_to_extract[i],"_gfdl-esm2m_rcp26_zs_annual_200601-210012.nc4")
-    fut126<-averageEnvironmentalCDF(directory, filename , variable_to_extract2[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE)
+    fut126<-averageEnvironmentalCDF(directory, filename , variable_to_extract2[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = FALSE, hist = FALSE)
     fut126$fishvar<-fut126$fishvar - 273.15
     fut126$data_units<-"C"
   
     filename<-paste0(variable_to_extract[i],"_gfdl-esm2m_rcp85_zs_annual_200601-210012.nc4")
-    fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract2[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE)
+    fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract2[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = FALSE, hist = FALSE)
     fut585$fishvar<-fut585$fishvar - 273.15
     fut126$data_units<-"C"
     
@@ -198,12 +237,12 @@ for (i in 1:length(variable_to_extract)){
     diff_2p6 = fut126$fishvar - hist$fishvar # 20C - 15C = 5C (celsius increase)
     diff_8p5 = fut585$fishvar - hist$fishvar
   
-  }else{ # # the variable is other than temperature, extract both small and large PP, phy or zoo and sum the size classes
+  }else{ 
     
       filename<-paste0("s",variable_to_extract[i], "_gfdl-esm2m_historical_zint_annual_195001-200512.nc4")
-      histS<- averageEnvironmentalCDF(directory, filename , paste0("S", variable_to_extract2[i]), yearmonth1, yearmonth2, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = TRUE)
+      histS<- averageEnvironmentalCDF(directory, filename , paste0("S", variable_to_extract2[i]), yearmonth1, yearmonth2, average_whole_period = TRUE, ipsl = FALSE, hist = TRUE)
       filename<-paste0("l",variable_to_extract[i], "_gfdl-esm2m_historical_zint_annual_195001-200512.nc4")
-      histL<- averageEnvironmentalCDF(directory, filename , paste0("L", variable_to_extract2[i]), yearmonth1, yearmonth2, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = TRUE)
+      histL<- averageEnvironmentalCDF(directory, filename , paste0("L", variable_to_extract2[i]), yearmonth1, yearmonth2, average_whole_period = TRUE, ipsl = FALSE, hist = TRUE)
       hist<-histS
       hist$fishvar<-hist$fishvar+histL$fishvar 
       
@@ -211,9 +250,9 @@ for (i in 1:length(variable_to_extract)){
       hist$data_units<-paste0(hist$data_units, " CN converted in g C")
  
       filename<-paste0("s",variable_to_extract[i],"_gfdl-esm2m_rcp26_zint_annual_200601-210012.nc4")
-      fut126S<-averageEnvironmentalCDF(directory, filename , paste0("S", variable_to_extract2[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE)
+      fut126S<-averageEnvironmentalCDF(directory, filename , paste0("S", variable_to_extract2[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = FALSE, hist = FALSE)
       filename<-paste0("l",variable_to_extract[i],"_gfdl-esm2m_rcp26_zint_annual_200601-210012.nc4")
-      fut126L<-averageEnvironmentalCDF(directory, filename , paste0("L", variable_to_extract2[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE)
+      fut126L<-averageEnvironmentalCDF(directory, filename , paste0("L", variable_to_extract2[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = FALSE, hist = FALSE)
       fut126<-fut126S
       fut126$fishvar<-fut126$fishvar+fut126L$fishvar 
       
@@ -221,9 +260,9 @@ for (i in 1:length(variable_to_extract)){
       fut126$data_units<-paste0(fut126$data_units, " CN converted in g C")
       
       filename<-paste0("s",variable_to_extract[i],"_gfdl-esm2m_rcp85_zint_annual_200601-210012.nc4")
-      fut585S<-averageEnvironmentalCDF(directory, filename , paste0("S", variable_to_extract2[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE)
+      fut585S<-averageEnvironmentalCDF(directory, filename , paste0("S", variable_to_extract2[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = FALSE, hist = FALSE)
       filename<-paste0("l",variable_to_extract[i],"_gfdl-esm2m_rcp85_zint_annual_200601-210012.nc4")
-      fut585L<-averageEnvironmentalCDF(directory, filename , paste0("L", variable_to_extract2[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, ipsl = FALSE, hist = FALSE)
+      fut585L<-averageEnvironmentalCDF(directory, filename , paste0("L", variable_to_extract2[i]), yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, ipsl = FALSE, hist = FALSE)
   
       fut585<-fut585S
       fut585$fishvar<-fut585$fishvar+fut585L$fishvar 
@@ -251,15 +290,13 @@ for (i in 1:length(variable_to_extract)){
   
 }
 
-names(data_gfdl_CMIP5)
-
 ```
 
-# Plot ISIMIP2b inputs
+## Plot ISIMIP2b inputs
 
 ```{r map CMIP6}
 
-# flip matrix
+# function to flip matrix if needed
 
 fliplr_matrix<- function(data_to_flip){
   temp= data_to_flip
@@ -269,6 +306,9 @@ fliplr_matrix<- function(data_to_flip){
   data_to_flip
 }
 
+
+# function to move hemisphere if needed 
+
 move_hemispheres<- function(data_to_flip){
   temp= data_to_flip
   data_to_flip[1:180,] = temp[181:360,]
@@ -276,7 +316,6 @@ move_hemispheres<- function(data_to_flip){
   data_to_flip
 }
   
-
 ## plot IPSL ----
 
 data_ipsl_CMIP5$to$diff_8p5<- fliplr_matrix(data_ipsl_CMIP5$to$diff_8p5)
@@ -309,7 +348,7 @@ data_ipsl_CMIP5$zoo$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP5$zoo$hist$fishva
 data_ipsl_CMIP5$zoo$hist$fishvar<- move_hemispheres(data_ipsl_CMIP5$zoo$hist$fishvar)
 
 titles<-c("Sea surface temperature", "Net primary production","Phytoplankton carbon","Zooplankton carbon")
-coltitles<-c("C", "g C m-2 d-1","g C m-2","g C m-2") # check that all units are the same across CMIPs and earth models - transform to more meaningful - e.g. milligrams?
+coltitles<-c("C", "g C m-2 d-1","g C m-2","g C m-2") 
 data_ipsl_CMIP5$to$hist$data_units
 data_ipsl_CMIP5$pp$hist$data_units
 data_ipsl_CMIP5$phy$hist$data_units
@@ -319,8 +358,6 @@ color<-list(main_plot_colour_values_tos, main_plot_colour_values_pp, main_plot_c
 num_dp_variables<-c(0,1,0,0)
 
 ## plot GFDL ----
-
-names(data_gfdl_CMIP5)
 
 data_gfdl_CMIP5$to$diff_8p5<- fliplr_matrix(data_gfdl_CMIP5$to$diff_8p5)
 data_gfdl_CMIP5$to$diff_8p5<- move_hemispheres(data_gfdl_CMIP5$to$diff_8p5)
@@ -353,11 +390,11 @@ data_gfdl_CMIP5$zoo$hist$fishvar<- move_hemispheres(data_gfdl_CMIP5$zoo$hist$fis
 
 ```
 
-# Model average for CMIP5
+## Model average for CMIP5 and plots
 
 ```{r}
 
-# you can calculate SD and agreement as in batch_run_maps.R
+# function to calculate mean across ESMs 
 
 model_stat<-function(data, variable){
 
@@ -379,8 +416,6 @@ data_average_change_CMIP5<-list()
 data_average_value_2000_CMIP5<-list()
 data_average_value_2100_CMIP5<-list()
 
-names(data_ipsl_CMIP5)
-
 for(i in 1:length(data_ipsl_CMIP5)){
   
   data_average_change_CMIP5[[i]]<-model_stat(list(data_ipsl_CMIP5[[i]], data_gfdl_CMIP5[[i]]), variable = 'diff_8p5')$model_average
@@ -398,7 +433,7 @@ for(i in 1:length(data_ipsl_CMIP5)){
 
 delta_plot_colour_values_new<-list(c(0,4), delta_plot_colour_values, delta_plot_colour_values, delta_plot_colour_values)
 coltitles1<-list("Change \n(°C)", "Change \n(%)", "Change \n(%)", "Change \n(%)")
-colour_scheme_vary<-list(c(low = "white", mid = '#fee5d9', high = "#de2d26"),colour_scheme2,colour_scheme2,colour_scheme2) # or mid = #fcbba1 for darker 
+colour_scheme_vary<-list(c(low = "white", mid = '#fee5d9', high = "#de2d26"),colour_scheme2,colour_scheme2,colour_scheme2) 
 
 map_average_change_CMIP5<-list()
 map_average_value_2000_CMIP5<-list()
@@ -424,28 +459,31 @@ for (i in 1:length(data_average_change_CMIP5)){
 
 ```
 
-# save inputs ISIMIP2b temp 
+## Save temporary outputs ISIMIP2b 
 
 ```{r}
 
 data_summaries_CMIP5<-list(data_average_change_CMIP5 = data_average_change_CMIP5, data_average_value_2000_CMIP5 = data_average_value_2000_CMIP5, data_average_value_2100_CMIP5 = data_average_value_2100_CMIP5)
 
-map_summaries_CMIP5<-list(map_average_change_CMIP5 = map_average_change_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5) #, map_average_change_CMIP5_ipsl = map_average_change_CMIP5_ipsl, map_average_change_CMIP5_gfdl = map_average_change_CMIP5_gfdl)
+map_summaries_CMIP5<-list(map_average_change_CMIP5 = map_average_change_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5, map_average_value_2000_CMIP5 = map_average_value_2000_CMIP5) 
 
-save(data_ipsl_CMIP5, data_gfdl_CMIP5, data_summaries_CMIP5, map_summaries_CMIP5, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP5.RData")
+# save(data_ipsl_CMIP5, data_gfdl_CMIP5, data_summaries_CMIP5, map_summaries_CMIP5, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP5.RData")
+
+save(data_ipsl_CMIP5, data_gfdl_CMIP5, data_summaries_CMIP5, map_summaries_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_inputs_CMIP5.RData")
 
 ```
 
-# Load ISIMIP3b inputs 
+## Load ISIMIP3b inputs 
 
 ```{r}
 
 # CMIP6 data location
-directory = "/Users/camillan/fishmip_inputs/marine-fishery_global_ISIMIP3b/"
+
+directory = "../CMIP5vsCMIP6_data/fishmip_inputs/marine-fishery_global_ISIMIP3b/"
 
 # extract data IPSL ---- 
 
-variable_to_extract <-c("to", "pp", "phy", "zoo") # just to be consistent with names across cmips and earth models 
+variable_to_extract <-c("to", "pp", "phy", "zoo") 
 variable_to_extract3 <-c("tos", "intpp", "phyc-vint", "zooc-vint")
 
 yearmonth1<- as.yearmon("1990-01")
@@ -460,15 +498,15 @@ for (i in 1:length(variable_to_extract3)){
 
   filename<-paste0("ipsl-cm6a-lr_r1i1p1f1_historical_", variable_to_extract3[i],"_onedeg_global_monthly_1850_2014.nc")
   
-  hist<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1, yearmonth2, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = TRUE, cmip = 6)
+  hist<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1, yearmonth2, average_whole_period = TRUE, hist = TRUE, cmip = 6)
   
   filename<-paste0("ipsl-cm6a-lr_r1i1p1f1_ssp126_", variable_to_extract3[i],"_onedeg_global_monthly_2015_2100.nc")
   
-  fut126<-averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = FALSE, cmip = 6)
+  fut126<-averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, hist = FALSE, cmip = 6)
   
   filename<-paste0("ipsl-cm6a-lr_r1i1p1f1_ssp585_", variable_to_extract3[i],"_onedeg_global_monthly_2015_2100.nc")
   
-  fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = FALSE, cmip = 6)
+  fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, hist = FALSE, cmip = 6)
   
   if (variable_to_extract3[[i]] == "tos"){
     # do celsius change 
@@ -503,8 +541,6 @@ for (i in 1:length(variable_to_extract3)){
  
 }
 
-names(data_ipsl_CMIP6)
-
 # extract data GFDL ---- 
 
 data_gfdl_CMIP6<-list()
@@ -513,15 +549,15 @@ for (i in 1:length(variable_to_extract3)){
 
   filename<-paste0("gfdl-esm4_r1i1p1f1_historical_", variable_to_extract3[i],"_onedeg_global_monthly_1850_2014.nc")
   
-  hist<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1, yearmonth2, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = TRUE, cmip = 6)
+  hist<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1, yearmonth2, average_whole_period = TRUE, hist = TRUE, cmip = 6)
   
   filename<-paste0("gfdl-esm4_r1i1p1f1_ssp126_", variable_to_extract3[i],"_onedeg_global_monthly_2015_2100.nc")
   
-  fut126<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = FALSE, cmip = 6)
+  fut126<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, hist = FALSE, cmip = 6)
   
   filename<-paste0("gfdl-esm4_r1i1p1f1_ssp585_", variable_to_extract3[i],"_onedeg_global_monthly_2015_2100.nc")
   
-  fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, convert_to_kg_km = FALSE, hist = FALSE, cmip = 6)
+  fut585<- averageEnvironmentalCDF(directory, filename , variable_to_extract3[i], yearmonth1_fut, yearmonth2_fut, average_whole_period = TRUE, hist = FALSE, cmip = 6)
   
   if (variable_to_extract3[[i]] == "tos"){
     # do celsius change 
@@ -556,20 +592,15 @@ for (i in 1:length(variable_to_extract3)){
  
 }
 
-names(data_gfdl_CMIP6)
-
 ```
 
-# Plot ISIMIP3b inputs
+## Plot ISIMIP3b inputs
 
 ```{r map CMIP6}
 
-## plot IPSL ----
-
 ## plot GFDL ----
 
-# need to model hemisphere
-# checked: different data layout do not effect the calculation of model mean, SD and agreements because these are done after you flipped the matrix and/or change hemisphere. it does not effect the calculation of trends because you are first weighting biomass by grid cell according to explicit lat values and then you are averaging by lat and long anyway.
+# checked: different data layout do not effect the calculation of model mean, SD and agreements because these are calculated after flipping the matrix and/or changing the hemisphere. It does not effect the calculation of trends because first biomass is weighted by grid cell according to explicit lat values and then it is averadged by lat and long anyway.
 
 data_gfdl_CMIP6$to$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$to$diff_8p5)
 data_gfdl_CMIP6$to$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$to$fut585$fishvar)
@@ -589,7 +620,7 @@ data_gfdl_CMIP6$zoo$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$zoo$hist$fishva
 
 ```
 
-# Model average for CMIP6
+## Model average for CMIP6 and plots
 
 ```{r}
 
@@ -610,7 +641,7 @@ for(i in 1:length(data_ipsl_CMIP6)){
   
 }
 
-# plot earth models average for all input variables
+# plot ESMs average for all input variables
 
 map_average_change_CMIP6<-list()
 map_average_value_2000_CMIP6<-list()
@@ -636,8 +667,7 @@ for (i in 1:length(data_average_change_CMIP6)){
 
 ```
 
-
-# save inputs ISIMIP3b temp 
+## Save temporary outputs ISIMIP3b 
 
 ```{r}
 
@@ -645,79 +675,112 @@ data_summaries_CMIP6<-list(data_average_change_CMIP6 = data_average_change_CMIP6
 
 map_summaries_CMIP6<-list(map_average_change_CMIP6 = map_average_change_CMIP6, map_average_value_2000_CMIP6 = map_average_value_2000_CMIP6, map_average_value_2000_CMIP6 = map_average_value_2000_CMIP6)
 
-save(data_ipsl_CMIP6, data_gfdl_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP6.RData")
+# save(data_ipsl_CMIP6, data_gfdl_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP6.RData")
+
+save(data_ipsl_CMIP6, data_gfdl_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_inputs_CMIP6.RData")
 
 ```
 
-# load outputs 
+
+# STEP 2 averadge and plot data
+
+## Load data 
 
 ```{r}
 
 rm(list=ls())
-variable_to_extract <-c("to", "pp", "phy", "zoo")
-titles<-c("Sea surface temperature", "Net primary production","Phytoplankton carbon","Zooplankton carbon")
-coltitles<-c("°C", "g C m-2 d-1","g C m-2","g C m-2") #
 
-# run first 2 sections above 
-load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP6.RData")
-load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_inputs_CMIP5.RData")
+load("../CMIP5vsCMIP6_data/temp_data/data_inputs_CMIP5.RData")
+load("../CMIP5vsCMIP6_data/temp_data/data_inputs_CMIP6.RData")
 
 ```
 
-# Load libraries for netcdf and define variables
+## Load libraries for netcdf and define variables
 
 ```{r load CMIP5}
 
-#rm(list=ls())
-library(grid)
-library(zoo)
-library(viridis)
-library(tidyr)
-library(dplyr)
-library(patchwork)
+install_load <- function (this_package)  {   
 
-source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/HelperScripts.r")
-source("/Users/camillan/R-projects/CMIP5vsCMIP6/R/Funcs_maps.r")
+   package <- c(this_package)
+   if(package %in% rownames(installed.packages()))
+        do.call('library', list(package))
 
-# saving outputs location  
-save_loc <- "/Users/camillan/Dropbox/CMIP5vsCMIP6/CMIP5vsCMIP6_figs/20210525/"
+    # if package is not installed locally, download, then load
+    else {
+        install.packages(package)
+         do.call("library", list(package))
+    }
+}
 
-# variables - TO CHANGE 
+### load/install libraries ###
+install_load("grid")
+install_load("zoo")
+install_load("viridis")
+install_load("tidyr")
+install_load("dplyr")
+install_load("ncdf4")
+install_load("patchwork")
+install_load("ggplot2")
+
+### load helper scripts with functions to extract data from netcdfs ###
+source("R/HelperScripts.r")
+source("R/Funcs_maps.r")
+
+### define variables to extract ###
+variable_to_extract <-c("to", "pp", "phy", "zoo")
+titles<-c("Sea surface temperature", "Net primary production","Phytoplankton carbon","Zooplankton carbon")
+coltitles<-c("°C", "g C m-2 d-1","g C m-2","g C m-2")
+
+### create folders where figures can be saved ###
+mainDir = "../CMIP5vsCMIP6_data/"
+DirStep2 = "figures"
+ifelse(!dir.exists(file.path(mainDir, DirStep2)), dir.create(file.path(mainDir, DirStep2)), FALSE)
+save_loc<-"../CMIP5vsCMIP6_data/figures/"
+
+# variables
 cmip<-c("CMIP5", "CMIP6")
 protocol <- c("picontrol","historical", "future")
 future<-c("SSP126", "SSP585")
 
 ```
 
-# load libraries for plotting and define criteria 
+## Load libraries for plotting and define criteria 
 
 ```{r}
 
-# Define color/legend limits 
-main_plot_colour_values_tos = c(0,30) # C and following Ryan paper  
+### see STEP 1 above ### 
+
+### Define color/legend limits ###
+main_plot_colour_values_tos = c(0,30) # C   
 main_plot_colour_values_pp = c(0,1) # g C m-2 d-1 
 main_plot_colour_values_phyto = c(0, 4) # g C m-2 
 main_plot_colour_values_zoo = c(0, 4) # g C m-2 
 delta_plot_colour_values = c(-50,50)
 
-# define a color scheme 
-colour_scheme1 <- c(low = 'white', mid = "skyblue1",  high = 'royalblue1') # for statistics - e.g model mean, SD and agreement
-colour_scheme2 <- c(low = 'red', mid = "white",  high = 'royalBlue1') # for % changes - either increasing or decreasing 
-colour_scheme3 <- c("#fdb863", "#f7f7f7","#b2abd2") # for delta plots (% change between cmips) # purple to yellow shades
-colour_scheme4 <- c(low = '#e0ecf4', mid = "#9ebcda",  high = '#8856a7') # for inputs values # shades of blue to purple?? 
-colour_scheme4 <- c(low = 'white', mid = "#9ebcda",  high = '#8856a7') # for inputs values # shades of blue to purple?? 
+#### define color schemes ###
+colour_scheme1 <- c(low = 'white', mid = "skyblue1",  high = 'royalblue1') # for statistics - e.g model mean
+colour_scheme2 <- c(low = 'red', mid = "white",  high = 'royalBlue1') # for % changes
+colour_scheme3 <- c("#fdb863", "#f7f7f7","#b2abd2") # for delta plots
+colour_scheme4 <- c(low = '#e0ecf4', mid = "#9ebcda",  high = '#8856a7') # for inputs values 
+colour_scheme4 <- c(low = 'white', mid = "#9ebcda",  high = '#8856a7') # for inputs values 
 
-# Download and process world outline
-library(sf)
-library(rnaturalearth)
-library("rgeos")
+### Download and process world outline ###
+install_load("sf")
+install_load("rnaturalearth")
+install_load("rgeos")
 world <- ne_countries(scale = "medium", returnclass = "sf")
 robCRS <- CRS("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
-world_sf <- st_transform(world, crs = st_crs(robCRS)) # Convert to different CRS
+world_sf <- st_transform(world, crs = st_crs(robCRS)) 
+
+### other mapping libraries ####
+install_load("raster")
+install_load("maptools")
+install_load("RColorBrewer")
+install_load("scales")
 
 ```
 
-# Delta plot 
+## Delta plot 
 
 ```{r}
 
@@ -742,32 +805,9 @@ for(i in 1:length(data_summaries_CMIP6$data_average_change_CMIP6)){
 
 ```
 
-# Put all maps together 
+## Fig 2 - maps of environmental variables 
 
 ```{r multipanel plot}
-
-library(patchwork)
-
-# # change between 1990 and 2090s for CMIP5 and form CMIP6 and delta between CMIPs 
-# layout <- "
-# AB
-# CD
-# "
-# 
-# a<-map_summaries_CMIP6$map_average_change_CMIP6$to +  ggtitle("a) SST CMIP6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-# b<-delta_map$to +  ggtitle("b) SST change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-# c<-map_summaries_CMIP6$map_average_change_CMIP6$pp + ggtitle("c) NPP CMIP6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-# d<-delta_map$pp + ggtitle("d) NPP change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-# 
-# pt<- a + b +
-#   c + d +
-#   plot_layout(design = layout)
-# 
-# pdf(paste0(save_loc,"Fig2.pdf"), height=10, width=15)
-# pt
-# dev.off()
-
-# as above but with info on all variables 
 
 layout <- "
 ABC
@@ -802,47 +842,9 @@ pdf(paste0(save_loc,"Fig2.pdf"), height=15, width=20)
 pt 
 dev.off()
 
-# can do RCP2.6 too 
-
-# plot of values can skyp 
-# layout <- "
-# AB
-# CD
-# EF
-# GH
-# "
-# 
-# pt<-map_summaries_CMIP5$map_average_value_2000_CMIP5$to + map_summaries_CMIP6$map_average_value_2000_CMIP6$to +
-#   map_summaries_CMIP5$map_average_value_2000_CMIP5$pp + map_summaries_CMIP6$map_average_value_2000_CMIP6$pp + 
-#   map_summaries_CMIP5$map_average_value_2000_CMIP5$phy + map_summaries_CMIP6$map_average_value_2000_CMIP6$phy + 
-#   map_summaries_CMIP5$map_average_value_2000_CMIP5$zoo + map_summaries_CMIP6$map_average_value_2000_CMIP6$zoo + 
-#   plot_layout(design = layout)
-# 
-# pdf(paste0(save_loc,"Fig1B_1990.pdf"), height=15, width=15)
-# pt 
-# dev.off()
-# 
-# # FIG 1B or S1?? 
-# layout <- "
-# AB
-# CD
-# EF
-# GH
-# "
-# 
-# pt<-map_summaries_CMIP5$map_average_value_2100_CMIP5$to + map_summaries_CMIP6$map_average_value_2100_CMIP6$to +
-#   map_summaries_CMIP5$map_average_value_2100_CMIP5$pp + map_summaries_CMIP6$map_average_value_2100_CMIP6$pp + 
-#   map_summaries_CMIP5$map_average_value_2100_CMIP5$phy + map_summaries_CMIP6$map_average_value_2100_CMIP6$phy + 
-#   map_summaries_CMIP5$map_average_value_2100_CMIP5$zoo + map_summaries_CMIP6$map_average_value_2100_CMIP6$zoo + 
-#   plot_layout(design = layout)
-# 
-# pdf(paste0(save_loc,"Fig1B_2090.pdf"), height=15, width=15)
-# pt 
-# dev.off()
-
 ```
 
-# maps of inputs by ESM 
+## Fig S1 and S2 - maps of environmental variables by ESM 
 
 ```{r}
 
@@ -942,7 +944,7 @@ for (i in 1:length(data_gfdl_CMIP6)){
   
 }
 
-# changes between 90s and 2090s for CMIP5 by ESM
+### Fig S1 ####
 
 layout <- "
 ABC
@@ -977,7 +979,7 @@ pdf(paste0(save_loc,"FigS1.pdf"), height=15, width=20)
 pt
 dev.off()
 
-# CMIP6
+### Fig S2 ####
 
 a1<-map_summaries_CMIP6$map_average_change_CMIP6$to +  ggtitle("c) SST CMIP6 ESMs average") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 a<-map_ipsl_change_CMIP6$to +  ggtitle("a) SST CMIP6 IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
@@ -1004,35 +1006,6 @@ pt<-a + b + a1 +
 pdf(paste0(save_loc,"FigS2.pdf"), height=15, width=20)
 pt 
 dev.off()
-
-# # values by IPSL and GFDL 
-# layout <- "
-# AB
-# CD
-# EF
-# GH
-# "
-# 
-# pt<-map_ipsl_value_2000_CMIP5$to + map_ipsl_value_2000_CMIP6$to +
-#   map_ipsl_value_2000_CMIP5$pp + map_ipsl_value_2000_CMIP6$pp + 
-#   map_ipsl_value_2000_CMIP5$phy + map_ipsl_value_2000_CMIP6$phy + 
-#   map_ipsl_value_2000_CMIP5$zoo + map_ipsl_value_2000_CMIP6$zoo + 
-#   plot_layout(design = layout)
-# 
-# pdf(paste0(save_loc,"Fig1B_1990_IPSL.pdf"), height=15, width=15)
-# pt 
-# dev.off()
-# 
-# pt<-map_gfdl_value_2000_CMIP5$to + map_gfdl_value_2000_CMIP6$to +
-#   map_gfdl_value_2000_CMIP5$pp + map_gfdl_value_2000_CMIP6$pp + 
-#   map_gfdl_value_2000_CMIP5$phy + map_gfdl_value_2000_CMIP6$phy + 
-#   map_gfdl_value_2000_CMIP5$zoo + map_gfdl_value_2000_CMIP6$zoo + 
-#   plot_layout(design = layout)
-# 
-# pdf(paste0(save_loc,"Fig1B_1990_GFDL.pdf"), height=15, width=15)
-# pt 
-# dev.off()
-
 
 ```
 
