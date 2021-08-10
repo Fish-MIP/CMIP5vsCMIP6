@@ -869,16 +869,49 @@ plot<-a + b +
 
 if(set == "full"){name = "Fig3.pdf"}else{name = "FigS7.pdf"}
 
-pdf(paste0(save_loc,name), height=6.5, width=15) 
-plot
-dev.off()
+# pdf(paste0(save_loc,name), height=6.5, width=15) 
+# plot
+# dev.off()
 
 lastDecade<-filter(all, year >= 2090, year <= 2099) %>% 
   group_by(cmip, protocol) %>% 
   summarise(mean2 = mean(mean), 
             sd2 = mean(sd))
 
+# full set
+#    cmip protocol  mean2   sd2
+#   <dbl> <chr>     <dbl> <dbl>
+# 1     5 ssp126    -4.32  3.18
+# 2     5 ssp585   -15.4   9.61
+# 3     6 ssp126    -5.81  2.97
+# 4     6 ssp585   -17.1   5.89
+
+# reduced set - CMIP5 has not the same values becasue of ZoomSS
+#   cmip protocol  mean2   sd2
+#   <dbl> <chr>     <dbl> <dbl>
+# 1     5 ssp126    -4.47  3.30
+# 2     5 ssp585   -16.2  10.1 
+# 3     6 ssp126    -6.19  2.93
+# 4     6 ssp585   -17.5   6.82
+
+
 lastYear<-filter(all, year == 2099) 
+
+# full set
+#   protocol  year  cmip   mean    sd sd_min sd_max      A
+#   <chr>    <dbl> <dbl>  <dbl> <dbl>  <dbl>  <dbl>  <dbl>
+# 1 ssp126    2099     5  -4.69  2.97  -7.66  -1.72  -4.69
+# 2 ssp126    2099     6  -6.66  2.89  -9.55  -3.77  -4.69
+# 3 ssp585    2099     5 -16.5  10.1  -26.5   -6.39 -16.5 
+# 4 ssp585    2099     6 -18.9   6.54 -25.4  -12.4  -16.5
+
+# reduced set
+#   protocol  year  cmip   mean    sd sd_min sd_max      A
+#   <chr>    <dbl> <dbl>  <dbl> <dbl>  <dbl>  <dbl>  <dbl>
+# 1 ssp126    2099     5  -4.82  3.10  -7.92  -1.73  -4.82
+# 2 ssp126    2099     6  -7.20  2.60  -9.80  -4.60  -4.82
+# 3 ssp585    2099     5 -17.2  10.6  -27.8   -6.68 -17.2 
+# 4 ssp585    2099     6 -19.2   7.54 -26.8  -11.7  -17.2 
 
 ```
 
@@ -894,18 +927,75 @@ all_models<-data_ipsl_CMIP5_tcb %>%
 
 # stat test 
 test5_85<-all_models %>% 
-  filter(cmip == 5, year == 2090, protocol == "ssp585")
+  filter(cmip == 5, year >= 2090, protocol == "ssp585")
 test5_26<-all_models %>% 
-  filter(cmip == 5, year == 2090, protocol == "ssp126")
+  filter(cmip == 5, year >= 2090, protocol == "ssp126")
 
+# between protocols CMIP5
 wilcox.test(test5_26$tcbChange, test5_85$tcbChange, alternative = "two.sided")
 
-test6_85<-all_models %>% 
-  filter(cmip == 6, year == 2090, protocol == "ssp585")
-test6_26<-all_models %>% 
-  filter(cmip == 6, year == 2090, protocol == "ssp126")
+# full set
+# data:  test5_26$tcbChange and test5_85$tcbChange
+# W = 12822, p-value < 2.2e-16
+# alternative hypothesis: true location shift is not equal to 0
 
+# reduced set 
+# data:  test5_26$tcbChange and test5_85$tcbChange
+# W = 8966, p-value < 2.2e-16
+# alternative hypothesis: true location shift is not equal to 0
+
+test6_85<-all_models %>% 
+  filter(cmip == 6, year >= 2090, protocol == "ssp585")
+test6_26<-all_models %>% 
+  filter(cmip == 6, year >= 2090, protocol == "ssp126")
+
+# between protocols CMIP6
 wilcox.test(test6_26$tcbChange, test6_85$tcbChange, alternative = "two.sided")
+
+# full set 
+# data:  test6_26$tcbChange and test6_85$tcbChange
+# W = 25123, p-value < 2.2e-16
+# alternative hypothesis: true location shift is not equal to 0
+
+# reduced set 
+# data:  test6_26$tcbChange and test6_85$tcbChange
+# W = 9702, p-value < 2.2e-16
+# alternative hypothesis: true location shift is not equal to 0
+
+# between CMIPS
+
+# mitigation
+wilcox.test(test5_26$tcbChange, test6_26$tcbChange, alternative = "two.sided")
+
+# full set 
+# data:  test5_26$tcbChange and test6_26$tcbChange
+# W = 12291, p-value = 6.007e-05
+# alternative hypothesis: true location shift is not equal to 0
+
+# reduced set
+# data:  test5_26$tcbChange and test6_26$tcbChange
+# W = 6626, p-value = 7.135e-05
+# alternative hypothesis: true location shift is not equal to 0
+
+# high emission - the one less significant across all tests
+wilcox.test(test5_85$tcbChange, test6_85$tcbChange, alternative = "two.sided")
+
+# full set 
+# data:  test5_85$tcbChange and test6_85$tcbChange
+# W = 11246, p-value = 0.01413
+# alternative hypothesis: true location shift is not equal to 0
+
+# reduced set
+# data:  test5_85$tcbChange and test6_85$tcbChange
+# W = 5449, p-value = 0.2731
+# alternative hypothesis: true location shift is not equal to 0
+
+mean(test5_26$tcbChange)
+mean(test6_26$tcbChange)
+
+mean(test5_85$tcbChange)
+mean(test6_85$tcbChange)
+
 # end test
 
 all_models_85<-all_models %>% 

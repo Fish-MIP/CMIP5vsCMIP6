@@ -1369,16 +1369,12 @@ if(set == "full"){
 
 rm(list=ls())
 
-set = "not_full"
+set = "full"
 
 if(set == "full"){
-  # load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP5.RData")
-  # load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP6.RData")
   load("../CMIP5vsCMIP6_data/temp_data/data_CMIP5.RData")
   load("../CMIP5vsCMIP6_data/temp_data/data_CMIP6.RData")
 }else{
-  # load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP5_reducedModelSet.RData")
-  # load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP6_reducedModelSet.RData")
   load("../CMIP5vsCMIP6_data/temp_data/data_CMIP5_reducedModelSet.RData")
   load("../CMIP5vsCMIP6_data/temp_data/data_CMIP6_reducedModelSet.RData")
 }
@@ -1572,6 +1568,14 @@ d<-sum(!is.na(flip_sign_data$data_neutral))
 (b/a)*100 + (c/a)*100 + (d/a)*100 
 # not perfect match to 100%  
 
+# full set
+# > (b/a)*100 # turned negative 
+# [1] 13.54085
+# > (c/a)*100 # turned positive
+# [1] 14.93126
+# > (d/a)*100 # did not change sign  
+# [1] 71.09784
+
 # plot
 colour_scheme4 <- c(low = "#fc9617", mid = "#fecf95",  high = "#fef4e7")
 maptitle_sign_negative<-"Delta for cells that changed from an increase in CMIP5 to a decrease in CMIP6"
@@ -1661,21 +1665,6 @@ map_sign_negative_gfdl_126<-plot_FISH_MIP(flip_sign_data_gfdl_126$data_negative,
 map_sign_positive_gfdl_126<-plot_FISH_MIP(flip_sign_data_gfdl_126$data_positive, NA, c(0, 50), colour_scheme = colour_scheme5, coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 3)
 
 map_sign_neutral_gfdl_126<-plot_FISH_MIP(flip_sign_data_gfdl_126$data_neutral, NA, c(-50, 50), colour_scheme = colour_scheme3, coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 5)
-
-```
-
-## Save temporary outputs - second batch 
-
-```{r}
-
-# # NOT NECESSARY
-# # Save data and maps - delta and flipped signed maps 
-# 
-# if(set == "full"){
-#   save(flip_sign_data,flip_sign_data_ipsl,flip_sign_data_gfdl, flip_sign_data_126,flip_sign_data_ipsl_126,flip_sign_data_gfdl_126, file = "../CMIP5vsCMIP6_data/temp_data/data_CMIPs_deltaFigures.RData")
-# }else{
-#   save(flip_sign_data,flip_sign_data_ipsl,flip_sign_data_gfdl,flip_sign_data_126,flip_sign_data_ipsl_126,flip_sign_data_gfdl_126, file = "../CMIP5vsCMIP6_data/temp_data/data_CMIPs_deltaFigures_reducedModelSet.RData")
-# }
 
 ```
 
