@@ -5,7 +5,7 @@ This folder contains four master scripts that load libraries and data, and perfo
 
 **Step 1**: run Batch_run_timeseries_inputs.Rmd which a) loads ESMs outputs (temperature, Primary Production, phytoplankton, zooplakton) from CMIP5 and CMIP6 runs, and saves temporary RData files; b) loads temporary files, averages the data and produces Fig 1.  
 
-**Step 2***: run Batch_run_maps_inputs.Rmd which a) loads ESMs outputs (temperature, Primary Production,  phytoplankton, zooplakton) from CMIP5 and CMIP6 runs, averages the data, and saves RData temporary files; b) loads temporary files, calculates changes between the 1990s and the 2090s and produces Fig 2, Fig S1 and Fig S2.
+**Step 2**: run Batch_run_maps_inputs.Rmd which a) loads ESMs outputs (temperature, Primary Production,  phytoplankton, zooplakton) from CMIP5 and CMIP6 runs, averages the data, and saves RData temporary files; b) loads temporary files, calculates changes between the 1990s and the 2090s and produces Fig 2, Fig S1 and Fig S2.
 
 **Step 3**: run Batch_run_timeseries.Rmd which a) loads MEMs outputs (ocean biomass) from CMIP5 and CMIP6 and saves temporary RData files; b) loads temporary files, averages the data and produces Fig 3, Fig 4, Fig S7, Fig S8, Fig S11 and Fig S17.  
 
