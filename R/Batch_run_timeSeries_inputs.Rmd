@@ -73,6 +73,7 @@ data_ipsl_CMIP5<-list()
 
 for (i in 1:length(variable_to_extract)){
 
+  # i = 2
   # extract temperature and convert from K to C
   if(variable_to_extract[[i]] == "to"){
     
@@ -151,6 +152,8 @@ for (i in 1:length(variable_to_extract)){
   rm(hist, fut126, fut585, all)
   
 }
+
+# data_ipsl_CMIP5[[2]]$all
 
 # extract data GFDL ---- 
 
@@ -244,7 +247,46 @@ for (i in 1:length(variable_to_extract)){
 
 ```{r}
 
-save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5.RData")
+# save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5.RData")
+save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5_weigthedMean2.RData")
+
+```
+
+
+## Load libraries for netcdf and define variables
+
+```{r load CMIP5}
+
+rm(list=ls())
+
+install_load <- function (this_package)  {   
+
+   package <- c(this_package)
+   if(package %in% rownames(installed.packages()))
+        do.call('library', list(package))
+
+    # if package is not installed locally, download, then load
+    else {
+        install.packages(package)
+         do.call("library", list(package))
+    }
+}
+
+### load/install libraries ###
+install_load("grid")
+install_load("zoo")
+install_load("viridis")
+install_load("tidyr")
+install_load("dplyr")
+install_load("ncdf4")
+
+### load helper scripts with functions to extract data from netcdfs ###
+source("R/HelperScripts.r")
+
+### create folders where temporary data can be stored ###
+mainDir = "../CMIP5vsCMIP6_data/"
+DirStep1 = "temp_data"
+ifelse(!dir.exists(file.path(mainDir, DirStep1)), dir.create(file.path(mainDir, DirStep1)), FALSE)
 
 ```
 
@@ -369,7 +411,8 @@ for (i in 1:length(variable_to_extract3)){
 
 ```{r}
 
-save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6.RData")
+# save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6.RData")
+save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6_weigthedMean2.RData")
 
 ```
 
@@ -381,8 +424,11 @@ save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/da
 
 rm(list=ls())
 
-load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5.RData")
-load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6.RData")
+# load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5.RData")
+# load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6.RData")
+
+load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5_weigthedMean2.RData")
+load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6_weigthedMean2.RData")
 
 ```
 
@@ -441,22 +487,30 @@ for (i in 1:length(variable_to_extract)){
     mutate(cmip = 5, 
            earth = "ipsl") %>% 
     `colnames<-`(c("year", "tcb", "tcbChange", "protocol", "cmip", "earth"))
+    # if option1 in helper function:
+    # `colnames<-`(c("year", "tcbChange", "protocol", "cmip", "earth"))
   
   data_gfdl_CMIP5_tcb<-as.data.frame(data_gfdl_CMIP5[[i]]$all) %>% 
     mutate(cmip = 5, 
            earth = "gfdl") %>% 
     `colnames<-`(c("year", "tcb", "tcbChange", "protocol", "cmip", "earth"))
+    # # if option1 in helper function:
+    # `colnames<-`(c("year", "tcbChange", "protocol", "cmip", "earth"))
   
   # CMIP6
   data_ipsl_CMIP6_tcb<-as.data.frame(data_ipsl_CMIP6[[i]]$all) %>% 
     mutate(cmip = 6, 
            earth = "ipsl") %>% 
     `colnames<-`(c("year", "tcb", "tcbChange", "protocol", "cmip", "earth"))
+    # if option1 in helper function:
+    # `colnames<-`(c("year", "tcbChange", "protocol", "cmip", "earth"))
   
   data_gfdl_CMIP6_tcb<-as.data.frame(data_gfdl_CMIP6[[i]]$all) %>% 
     mutate(cmip = 6, 
            earth = "gfdl") %>% 
     `colnames<-`(c("year", "tcb", "tcbChange", "protocol", "cmip", "earth"))
+    # if option1 in helper function:
+    # `colnames<-`(c("year", "tcbChange", "protocol", "cmip", "earth"))
   
   # add all together and average
   all_notMean[[i]]<-data_ipsl_CMIP5_tcb %>% 
@@ -508,27 +562,27 @@ general_plot<-function(data){
   
   plot<-ggplot(data, aes(x=year, y = tcbChange,  color = protocol, linetype = earth))+ 
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_line(size=0.7) +
-  geom_hline(yintercept = 0, color = "grey60", size = 1)+
+  geom_line(size=0.3) +
+  geom_hline(yintercept = 0, color = "grey60", size = 0.5)+
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(data$year, n = 10), name = "Year")+
   scale_color_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "RCP2.6", "RCP8.5"))+
   scale_fill_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "RCP2.6", "RCP8.5"))+
   scale_linetype_manual(values = c("solid","dotdash"),name = "Earth System Models", labels =c("GFDL-ESM2M","IPSL-CM5A-LR"))+
   theme_bw()+
-  theme(text = element_text(size=14),
-        axis.title.y = element_text(vjust=0.4, size = 20),
-        axis.title.x = element_text(vjust=0.3, size = 20),
-        axis.text.x = element_text(angle=90, size=16),
-        axis.text.y = element_text(angle=0, size=16),
-        panel.border = element_rect(colour = "black"),
+  theme(text = element_text(size=6),
+        axis.title.y = element_text(vjust=0.4, size = 6),
+        axis.title.x = element_text(vjust=0.3, size = 6),
+        axis.text.x = element_text(angle=90, size=6),
+        axis.text.y = element_text(angle=0, size=6),
+        panel.border = element_rect(colour = "black", size = 0.3),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_blank(),
         strip.text.x = element_text(face = "bold"),
-        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid'),
-        legend.text=element_text(size=16),
-        legend.title = element_text(size=16),
-        legend.position = c(0.18, 0.65),
-        legend.key.size = unit(0.8, "cm"))
+        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid', size = 0.1),
+        legend.text=element_text(size=5),
+        legend.title = element_text(size=5),
+        legend.position = c(0.15, 0.65),
+        legend.key.size = unit(0.2, "cm"))
   
   return (plot = plot)
   
@@ -538,18 +592,28 @@ general_plot<-function(data){
 data = all_notMean$to %>% 
   filter(cmip == 5)
 
+filter(all_notMean$to, year == 2099, cmip == 5, earth == "ipsl", protocol == "ssp585")
+filter(all_notMean$pp, year == 2099, cmip == 5, earth == "ipsl", protocol == "ssp585")
+filter(all_notMean$phy, year == 2099, cmip == 5, earth == "ipsl", protocol == "ssp585")
+filter(all_notMean$phy, year == 2099, cmip == 5, earth == "gfdl", protocol == "ssp585")
+filter(all_notMean$zoo, year == 2099, cmip == 5, earth == "ipsl", protocol == "ssp585")
+
+filter(all_notMean$zoo, year == 2099, cmip == 6, earth == "ipsl", protocol == "ssp585")
+
+
+max(data$tcbChange)
 to_cmip5<-general_plot(data)
 to_cmip5<-to_cmip5 +
-  geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
-  scale_y_continuous(limits = c(-1, 5), breaks = pretty(seq(5, -1), n = 5), name = "Change in sea surface temperature (°C)")
+  geom_vline(xintercept = 2005.5, color = "grey60", size = 0.8)+
+  scale_y_continuous(limits = c(-1, 5), breaks = pretty(seq(5, -1), n = 5), name = "Change in sea surface temperature (°C)") # revision - limits changed according to weighed mean
 
 # temperature CMIP6
 data = all_notMean$to %>% 
   filter(cmip == 6)
 
 to_cmip6<-general_plot(data)
-to_cmip6<-to_cmip6 +geom_vline(xintercept = 2015, color = "grey60", size = 2)+
-  scale_y_continuous(limits = c(-1, 5), breaks = pretty(seq(5, -1), n = 5), name = "Change in sea surface temperature (°C)")+
+to_cmip6<-to_cmip6 +geom_vline(xintercept = 2015, color = "grey60", size = 0.8)+
+  scale_y_continuous(limits = c(-1, 5), breaks = pretty(seq(5, -1), n = 5), name = "Change in sea surface temperature (°C)")+ # revision - limits changed according to weighed mean
   scale_color_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "SSP1-2.6", "SSP5-8.5"))+
   scale_fill_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "SSP1-2.6", "SSP5-8.5"))+
   scale_linetype_manual(values = c("solid","dotdash"),name = "Earth System Models", labels =c("GFDL-ESM4","IPSL-CM6A-LR"))+
@@ -561,7 +625,7 @@ data = all_notMean$pp %>%
 
 pp_cmip5<-general_plot(data)
 pp_cmip5<-pp_cmip5 +
-  geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
+  geom_vline(xintercept = 2005.5, color = "grey60", size = 0.8)+
   scale_y_continuous(limits = c(-15, 15), breaks = pretty(seq(15, -15), n = 10), name = "Change in net primary production (%)")+
   theme(legend.position = "none")
 
@@ -571,7 +635,7 @@ data = all_notMean$pp %>%
 
 pp_cmip6<-general_plot(data)
 pp_cmip6<-pp_cmip6 +
-  geom_vline(xintercept = 2015, color = "grey60", size = 2)+
+  geom_vline(xintercept = 2015, color = "grey60", size = 0.8)+
   scale_y_continuous(limits = c(-15, 15), breaks = pretty(seq(15, -15), n = 10), name = "Change in net primary production (%)")+
   theme(legend.position = "none")
 
@@ -581,7 +645,7 @@ data = all_notMean$phy %>%
 
 ph_cmip5<-general_plot(data)
 ph_cmip5<-ph_cmip5 +
-  geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
+  geom_vline(xintercept = 2005.5, color = "grey60", size = 0.8)+
   scale_y_continuous(limits = c(-15, 5), breaks = pretty(seq(15, -15), n = 10), name = "Change in phytoplankton carbon (%)") +
   theme(legend.position = "none")
 
@@ -591,7 +655,7 @@ data = all_notMean$phy %>%
 
 ph_cmip6<-general_plot(data)
 ph_cmip6<-ph_cmip6 +
-  geom_vline(xintercept = 2015, color = "grey60", size = 2)+
+  geom_vline(xintercept = 2015, color = "grey60", size = 0.8)+
   scale_y_continuous(limits = c(-15, 5), breaks = pretty(seq(15, -15), n = 10), name = "Change in phytoplankton carbon (%)") +
   theme(legend.position = "none")
 
@@ -601,7 +665,7 @@ data = all_notMean$zoo %>%
 
 zoo_cmip5<-general_plot(data)
 zoo_cmip5<-zoo_cmip5 +
-  geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
+  geom_vline(xintercept = 2005.5, color = "grey60", size = 0.8)+
   scale_y_continuous(limits = c(-20, 5), breaks = pretty(seq(5,-20), n = 5), name = "Change in zooplankton carbon (%)") +
   theme(legend.position = "none")
 
@@ -609,12 +673,13 @@ zoo_cmip5<-zoo_cmip5 +
 data = all_notMean$zoo %>% 
   filter(cmip == 6)
 
+data$tcbChange
+
 zoo_cmip6<-general_plot(data)
 zoo_cmip6<-zoo_cmip6 +
-  geom_vline(xintercept = 2015, color = "grey60", size = 2)+
+  geom_vline(xintercept = 2015, color = "grey60", size = 0.8)+
   scale_y_continuous(limits = c(-20, 5), breaks = pretty(seq(5,-20), n = 5), name = "Change in zooplankton carbon (%)") +
   theme(legend.position = "none")
-
 
 # add all together 
 layout <- "
@@ -624,22 +689,25 @@ EF
 GH
 "
 
-to_cmip5<-to_cmip5 + ggtitle("a)") + theme(plot.title = element_text(size = 20, face = "bold", hjust = 0), axis.title.x = element_blank())
-to_cmip6<-to_cmip6 + ggtitle("b)") + theme(plot.title = element_text(size = 20, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
-pp_cmip5<-pp_cmip5 + ggtitle("c)") + theme(plot.title = element_text(size = 20, face = "bold", hjust = 0))
-pp_cmip6<-pp_cmip6 + ggtitle("d)") + theme(plot.title = element_text(size = 20, face = "bold",hjust = 0), axis.title.y = element_blank())
-
-ph_cmip5<-ph_cmip5 + ggtitle("e)") + theme(plot.title = element_text(size = 20, face = "bold", hjust = 0), axis.title.x = element_blank())
-ph_cmip6<-ph_cmip6 + ggtitle("f)") + theme(plot.title = element_text(size = 20, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
-zoo_cmip5<-zoo_cmip5 + ggtitle("g)") + theme(plot.title = element_text(size = 20, face = "bold", hjust = 0))
-zoo_cmip6<-zoo_cmip6 + ggtitle("h)") + theme(plot.title = element_text(size = 20, face = "bold",hjust = 0), axis.title.y = element_blank())
+to_cmip5<-to_cmip5 + ggtitle("a)") + theme(plot.title = element_text(size=7, face = "bold", hjust = 0), axis.title.x = element_blank())
+to_cmip6<-to_cmip6 + ggtitle("b)") + theme(plot.title = element_text(size=7, face = "bold", hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
+pp_cmip5<-pp_cmip5 + ggtitle("c)") + theme(plot.title = element_text(size=7, face = "bold", hjust = 0))
+pp_cmip6<-pp_cmip6 + ggtitle("d)") + theme(plot.title = element_text(size=7, face = "bold", hjust = 0), axis.title.y = element_blank())
+ph_cmip5<-ph_cmip5 + ggtitle("e)") + theme(plot.title = element_text(size=7, face = "bold", hjust = 0), axis.title.x = element_blank())
+ph_cmip6<-ph_cmip6 + ggtitle("f)") + theme(plot.title = element_text(size=7, face = "bold", hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
+zoo_cmip5<-zoo_cmip5 + ggtitle("g)") + theme(plot.title = element_text(size=7, face = "bold", hjust = 0)) 
+zoo_cmip6<-zoo_cmip6 + ggtitle("h)") + theme(plot.title = element_text(size=7, face = "bold", hjust = 0), axis.title.y = element_blank())
 
 plot<-to_cmip5 + to_cmip6 + pp_cmip5 + pp_cmip6 +
   ph_cmip5 + ph_cmip6 + zoo_cmip5 + zoo_cmip6 +
   plot_layout(design = layout)
 
-pdf(paste0(save_loc,"Fig1.pdf"), height=22, width=15)
-plot 
+# pdf(paste0(save_loc,"Fig1.pdf"), height=22, width=15)
+# plot 
+# dev.off()
+
+pdf(paste0(save_loc,"Fig1_weigthedMean3.pdf"), height=8.858, width=7.086) # width can only be 180 mm if the fig spans 2 columns (7,086 inch)
+plot
 dev.off()
 
 ```

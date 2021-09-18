@@ -124,6 +124,9 @@ convert_model_dates <- function(netcdf_file, model_type)
 convert_model_dates_CMIP6 <- function(netcdf_file, model_type)
 {
   
+  # trial 
+  # netcdf_file = nc
+  
   time_months <- ncvar_get(netcdf_file, "time")
   print(netcdf_file$dim$time$units)
   
@@ -131,8 +134,23 @@ convert_model_dates_CMIP6 <- function(netcdf_file, model_type)
   if (model_type$BOATS){
     # this means that the time dimension starts at 1 which is jan 1950 for hist 
     # and at 781 which are months between 1950 and 2015 for future 
-    yearmonth = as.yearmon("1950-01") + time_months[1] / 12 - 0.08333333
-    print(yearmonth)
+    # yearmonth = as.yearmon("1950-01") + time_months[1] / 12 - 0.08333333
+    # print(yearmonth)
+    
+    # new file formatting as per OutputData folder 
+    
+    # this means that the time dimension starts at 4188 which is 4188 between 
+    # jan 1601 (the convention) and jan 1850 (when the model actually starts) 
+    # the number of months are different for the future protocols and that's 
+    # given by time_months[1]
+    yearmonth = as.yearmon("1601-01") + time_months[1] / 12
+    # if (model_type$future == FALSE){
+    #   yearmonth = as.yearmon("1950-01") 
+    # }else{
+    #   yearmonth = as.yearmon("2015-01") 
+    # }
+    print(yearmonth) 
+    
   } else if (model_type$APECOSM)  
   {
     # this means that the time dimension starts at 4188 which is 4188 between 
@@ -140,9 +158,10 @@ convert_model_dates_CMIP6 <- function(netcdf_file, model_type)
     # the number of months are different for the future protocols and that's 
     # given by time_months[1]
     # yearmonth = as.yearmon("1601-01") + time_months[1] / 12 
-    # new version - NICOLAS
+    # new version - NICOLAS:
+    
     if (model_type$future == FALSE){
-      yearmonth = as.yearmon("1850-01") 
+      yearmonth = as.yearmon("1850-01") # the above works too as it gives Jan 1850
     }else{
       yearmonth = as.yearmon("2015-01") 
     }
@@ -283,6 +302,15 @@ averageFishCDF <- function(directory,
            CMIP = 5)
   {
     
+  
+  # # # trial
+  # variable = variable_to_extract[1]
+  # time1 = yearmonth1[i]
+  # time2 = yearmonth2[i]
+  # average_whole_period = TRUE
+  # convert_to_kg_km = TRUE
+  # CMIP =  6
+  
     model_type <- get_model_type(filename)
     
     # Open the netcdf file
@@ -340,6 +368,11 @@ averageFishCDF <- function(directory,
       # Now get the variable of interest
       if (names(nc$dim)[length(nc$dim)] != "time")
         print("Warning: might be assuming wrong dimension for time from NetCDF file")
+      
+      # # check time needs to be the 3rd dimension ...
+      # temp_array1 <- ncvar_get(nc, variable)
+      # dim(temp_array1)
+      
       temp_array1 <- ncvar_get(nc, variable)[, , tpte$start_point_to_extract:tpte$end_point_to_extract]
        
         # Average data
@@ -434,7 +467,7 @@ extractFishCDF <- function(directory,
                            convert_to_kg_km = TRUE, 
                            CMIP = 5)
 {
-
+  
   model_type <- get_model_type(filename)
   
   # Open the netcdf file
@@ -462,6 +495,7 @@ extractFishCDF <- function(directory,
   
   # extract all 
   new_var_mat <- ncvar_get(nc, variable)
+  # dim(new_var_mat)
   
   years = time_vector
   
@@ -499,23 +533,140 @@ get_timeSeries<-function(hist, fut126, fut585, output = "yearly"){
     hist$fishvar<-hist$fishvar[,,which(hist$years >= "1971")] # REVISION: changed from 1971
   }
   
-  hist_2<-as.data.frame.table(hist$fishvar) %>%
-    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
-    # weight by grid area (smaller at higher lats)
-    mutate(lat = as.numeric(as.character(lat))) %>% 
-    mutate(lat2 = cos(abs(lat) * (pi/180))) %>% # transform lat in radiant and calculate cosine. These values are not 0-1 because lats are not 0-90 but 0.5-89.5 (midpoint of the grid cell)
-    mutate(tcb = tcb * lat2) %>% 
-    # mutate(year = round(as.numeric(as.character(year1)))) %>% # NOTE Dec 2014 becomes 2015. That's how we end up with this year.
-    mutate(year = as.numeric(as.character(gsub("\\..*", "", year1)))) %>% # REVISION: changed from above line 
-    group_by(year) %>% 
-    dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
+  # # OPTION 1 
+  # # hist
+  # hist_2<-as.data.frame.table(hist$fishvar) %>%
+  #   `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+  #   mutate(year = as.numeric(as.character(gsub("\\..*", "", year1))))
+  # 
+  # # ref decade
+  # refDecade <- hist_2 %>% 
+  #   filter(year >= 1990, year <=2000) %>%
+  #   # filter(year >= 1995, year <= 2014) %>% # prepare data and fig for IPCC report: Laurent Bopp ref year 1995-2014
+  #   group_by(lon, lat) %>% 
+  #   dplyr::summarize(refValue = mean(tcb, na.rm = TRUE)) # CHECK na.rm makes difference (IT DOES!) and it is in temp below too
+  # 
+  # hist_2<-hist_2 %>% 
+  #   full_join(refDecade)
+  # 
+  # # calculate change 
+  # hist_2<-hist_2 %>%
+  #   mutate(TcbChange = (tcb - refValue)/refValue * 100)
+  # 
+  # # weight by grid cell 
+  # hist_2<-hist_2 %>% 
+  #   # weight by grid area (smaller at higher lats)
+  #   mutate(lat = as.numeric(as.character(lat))) %>% 
+  #   mutate(lat2 = cos(abs(lat) * (pi/180))) # %>% # transform lat in radiant and calculate cosine. These values are not 0-1 because lats are not 0-90 but 0.5-89.5 (midpoint of the grid cell)
+  #   
+  # # mean weight over years 
+  # hist_2<-hist_2 %>% 
+  #   group_by(year) %>% 
+  #   dplyr::summarise(TcbChange = weighted.mean(TcbChange, lat2, na.rm=TRUE))
+  # 
+  # hist_2<-hist_2 %>% 
+  #   mutate(color = "hist")
+  # 
+  # filter(hist_2, year == 1971)
+  # 
+  # # ssp126
+  # dimnames(fut126$fishvar)<-list(fut126$lon, fut126$lat, fut126$years)
+  # if(output == "monthly"){
+  #   fut126$fishvar<-fut126$fishvar[,,which(fut126$years <= "Dec 2099")] # REVISION: changed from Jan 2099 to Dec 2100 (or keep 2099 but Dec?)
+  # }else{
+  #   fut126$fishvar<-fut126$fishvar[,,which(fut126$years <= "2099")] # REVISION: changed from 2099 to 2100 (or keep 2099?)
+  # }
+  # 
+  # fut126_2<-as.data.frame.table(fut126$fishvar) %>%
+  #   `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+  #   mutate(year = as.numeric(as.character(gsub("\\..*", "", year1))))
+  # 
+  # fut126_2<-fut126_2 %>% 
+  #   full_join(refDecade)
+  # 
+  # # calculate change 
+  # fut126_2<-fut126_2 %>%
+  #   mutate(TcbChange = (tcb - refValue)/refValue * 100)
+  # 
+  # # weight by grid cell 
+  # fut126_2<-fut126_2 %>% 
+  #   # weight by grid area (smaller at higher lats)
+  #   mutate(lat = as.numeric(as.character(lat))) %>% 
+  #   mutate(lat2 = cos(abs(lat) * (pi/180))) # %>% # transform lat in radiant and calculate cosine. These values are not 0-1 because lats are not 0-90 but 0.5-89.5 (midpoint of the grid cell)
+  # 
+  # # mean weight over years 
+  # fut126_2<-fut126_2 %>% 
+  #   group_by(year) %>% 
+  #   dplyr::summarise(TcbChange = weighted.mean(TcbChange, lat2, na.rm=TRUE))
+  # 
+  # fut126_2<-fut126_2 %>% 
+  #   mutate(color = "ssp126")
+  # 
+  # filter(fut126_2, year == 2099)
+  # 
+  # # ssp585
+  # dimnames(fut585$fishvar)<-list(fut585$lon, fut585$lat, fut585$years)
+  # if(output == "monthly"){
+  #   fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "Dec 2099")] # REVISION see above 
+  # }else{
+  #   fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "2099")] # REVISION see above
+  # }
+  # 
+  # fut585_2<-as.data.frame.table(fut585$fishvar) %>%
+  #   `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+  #   mutate(year = as.numeric(as.character(gsub("\\..*", "", year1))))
+  # 
+  # fut585_2<-fut585_2 %>% 
+  #   full_join(refDecade)
+  # 
+  # # calculate change 
+  # fut585_2<-fut585_2 %>%
+  #   mutate(TcbChange = (tcb - refValue)/refValue * 100)
+  # 
+  # # weight by grid cell 
+  # fut585_2<-fut585_2 %>% 
+  #   # weight by grid area (smaller at higher lats)
+  #   mutate(lat = as.numeric(as.character(lat))) %>% 
+  #   mutate(lat2 = cos(abs(lat) * (pi/180))) # %>% # transform lat in radiant and calculate cosine. These values are not 0-1 because lats are not 0-90 but 0.5-89.5 (midpoint of the grid cell)
+  # 
+  # # mean weight over years 
+  # fut585_2<-fut585_2 %>% 
+  #   group_by(year) %>% 
+  #   dplyr::summarise(TcbChange = weighted.mean(TcbChange, lat2, na.rm=TRUE))
+  # 
+  # fut585_2<-fut585_2 %>% 
+  #   mutate(color = "ssp585")
+  # 
+  # filter(fut585_2, year == 2099)
+  # 
+  # all<-hist_2 %>% 
+  #   full_join(fut126_2) %>% 
+  #   full_join(fut585_2)
+  # 
+  # rm(hist_2, refDecade, fut126_2, fut585_2)
   
+  # OPTION 2 - see below for differences
+  # A # mutate(tcb = tcb * lat2) %>% dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
+  # B # dplyr::summarise(tcb = weighted.mean(tcb, lat2, na.rm=TRUE))
+  
+  hist_2<-as.data.frame.table(hist$fishvar) %>%
+    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>%
+    # weight by grid area (smaller at higher lats)
+    mutate(lat = as.numeric(as.character(lat))) %>%
+    mutate(lat2 = cos(abs(lat) * (pi/180))) %>% # transform lat in radiant and calculate cosine. These values are not 0-1 because lats are not 0-90 but 0.5-89.5 (midpoint of the grid cell)
+    # mutate(tcb = tcb * lat2) %>%
+    # mutate(year = round(as.numeric(as.character(year1)))) %>% # NOTE Dec 2014 becomes 2015. That's how we end up with this year.
+    mutate(year = as.numeric(as.character(gsub("\\..*", "", year1)))) %>% # REVISION: changed from above line
+    group_by(year) %>%
+    dplyr::summarise(tcb = weighted.mean(tcb, lat2, na.rm=TRUE)) # REVISION - weighed mean - NO
+    # dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
+
   # ref decade
-  refDecade <- hist_2 %>% 
+  refDecade <- hist_2 %>%
     filter(year >= 1990, year <=2000) %>%
     # filter(year >= 1995, year <= 2014) %>% # prepare data and fig for IPCC report: Laurent Bopp ref year 1995-2014
     dplyr::summarize(value = mean(tcb, na.rm = TRUE))
-  
+
   # ssp126
   dimnames(fut126$fishvar)<-list(fut126$lon, fut126$lat, fut126$years)
   if(output == "monthly"){
@@ -523,52 +674,57 @@ get_timeSeries<-function(hist, fut126, fut585, output = "yearly"){
   }else{
     fut126$fishvar<-fut126$fishvar[,,which(fut126$years <= "2099")] # REVISION: changed from 2099 to 2100 (or keep 2099?)
   }
-  fut126_2<-as.data.frame.table(fut126$fishvar) %>% 
-    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
-    mutate(lat = as.numeric(as.character(lat))) %>% 
-    mutate(lat2 = cos(abs(lat) * (pi/180))) %>% 
-    mutate(tcb = tcb * lat2) %>% 
+  fut126_2<-as.data.frame.table(fut126$fishvar) %>%
+    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>%
+    mutate(lat = as.numeric(as.character(lat))) %>%
+    mutate(lat2 = cos(abs(lat) * (pi/180))) %>%
+    # mutate(tcb = tcb * lat2) %>%
     # mutate(year = round(as.numeric(as.character(year1)))) %>%
     mutate(year = as.numeric(as.character(gsub("\\..*", "", year1)))) %>% # REVISION: changed from above line
-    group_by(year) %>% 
-    dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
-  
-  # projections start at different times for the 2 cmips 
+    group_by(year) %>%
+    dplyr::summarise(tcb = weighted.mean(tcb, lat2, na.rm=TRUE)) # REVISION - weighed mean - NO
+    # dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
+
+  # projections start at different times for the 2 cmips
   if(cmip == 5){
-    all126<-hist_2 %>% 
-      full_join(fut126_2) %>% 
-      mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>% 
+    all126<-hist_2 %>%
+      full_join(fut126_2) %>%
+      mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>%
       mutate(color = ifelse(year < 2006, "hist", "ssp126")) # REVISION: changed from 2005 because 2005 is actually hist
   }else{
-    all126<-hist_2 %>% 
-      full_join(fut126_2) %>% 
-      mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>% 
+    all126<-hist_2 %>%
+      full_join(fut126_2) %>%
+      mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>%
       mutate(color = ifelse(year < 2015, "hist", "ssp126"))
   }
-  
+
+  filter(all126, year == 1971)
+  filter(all126, year == 2099)
+
   # ssp585
   dimnames(fut585$fishvar)<-list(fut585$lon, fut585$lat, fut585$years)
   if(output == "monthly"){
-    fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "Dec 2099")] # REVISION see above 
+    fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "Dec 2099")] # REVISION see above
   }else{
     fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "2099")] # REVISION see above
   }
-  
+
   fut585_2<-as.data.frame.table(fut585$fishvar) %>%
-    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
-    mutate(lat = as.numeric(as.character(lat))) %>% 
-    mutate(lat2 = cos(abs(lat) * (pi/180))) %>% 
-    mutate(tcb = tcb * lat2) %>% 
+    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>%
+    mutate(lat = as.numeric(as.character(lat))) %>%
+    mutate(lat2 = cos(abs(lat) * (pi/180))) %>%
+    # mutate(tcb = tcb * lat2) %>%
     # mutate(year = round(as.numeric(as.character(year1)))) %>%
     mutate(year = as.numeric(as.character(gsub("\\..*", "", year1)))) %>% # REVISION: changed from above line
-    group_by(year) %>% 
-    dplyr::summarise(tcb = mean(tcb, na.rm=TRUE)) %>% 
+    group_by(year) %>%
+    # dplyr::summarise(tcb = mean(tcb, na.rm=TRUE)) %>%
+    dplyr::summarise(tcb = weighted.mean(tcb, lat2, na.rm=TRUE)) %>% # REVISION - weighed mean - NO
     mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>%
     mutate(color = "ssp585")
-  
+
   all<-all126 %>%
     full_join(fut585_2)
-  
+
   rm(hist_2, refDecade, fut126_2, all126, fut585_2)
   return(all)
   
@@ -585,21 +741,136 @@ get_timeSeries_temperature<-function(hist, fut126, fut585, output = "yearly"){
   }else{
     hist$fishvar<-hist$fishvar[,,which(hist$years >= "1971")] 
   }
+  
+  # # OPTION 1 
+  # 
+  # # hist
+  # hist_2<-as.data.frame.table(hist$fishvar) %>%
+  #   `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+  #   mutate(year = round(as.numeric(as.character(year1))))
+  # 
+  # refDecade <- hist_2 %>% 
+  #   filter(year >= 1990, year <=2000) %>% 
+  #   group_by(lon, lat) %>% 
+  #   dplyr::summarise(refValue = mean(tcb, na.rm=TRUE))
+  # 
+  # hist_2<-hist_2 %>% 
+  #   full_join(refDecade)
+  # 
+  # hist_2<-hist_2 %>% 
+  #   mutate(TcbChange = tcb - refValue) 
+  # 
+  # hist_2<-hist_2 %>% 
+  #   mutate(lat = as.numeric(as.character(lat))) %>%
+  #   mutate(lat2 = cos(abs(lat) * (pi/180))) # %>% # transform lat in radiant and calculate cosine
+  #   # mutate(TcbChange = TcbChange * lat2) # should this be part of the weighted.mean below? 
+  # 
+  # hist_2<-hist_2 %>% 
+  #   group_by(year) %>% 
+  #   dplyr::summarise(TcbChange = weighted.mean(TcbChange, lat2, na.rm=TRUE)) 
+  # # revision weighted mean, should this be lat2 or lat2/sum(lat2)? it does not seem to make any difference...
+  # 
+  # hist_2<-hist_2 %>%
+  #   mutate(color = "hist")
+  # 
+  # # ssp126
+  # dim(fut126$fishvar)
+  # dimnames(fut126$fishvar)<-list(fut126$lon, fut126$lat, fut126$years)
+  # if(output == "monthly"){
+  #   fut126$fishvar<-fut126$fishvar[,,which(fut126$years <= "Jan 2099")]
+  # }else{
+  #   fut126$fishvar<-fut126$fishvar[,,which(fut126$years <= "2099")]
+  # }
+  # 
+  # fut126_2<-as.data.frame.table(fut126$fishvar) %>% 
+  #   `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+  #   mutate(year = round(as.numeric(as.character(year1)))) 
+  # 
+  # fut126_2<-fut126_2 %>% 
+  #   full_join(refDecade)
+  # 
+  # fut126_2<-fut126_2 %>% 
+  #   mutate(TcbChange = tcb - refValue) 
+  # 
+  # fut126_2<-fut126_2 %>%
+  #   mutate(lat = as.numeric(as.character(lat))) %>%
+  #   mutate(lat2 = cos(abs(lat) * (pi/180))) # %>%
+  #   # mutate(TcbChange = TcbChange * lat2) 
+  # 
+  # fut126_2<-fut126_2 %>% 
+  #   group_by(year) %>% 
+  #   dplyr::summarise(TcbChange = weighted.mean(TcbChange, lat2, na.rm=TRUE)) 
+  # # revision weighted mean, 
+  # 
+  # filter(fut126_2, year ==2099)
+  # 
+  # fut126_2<-fut126_2 %>% 
+  #   mutate(color = "ssp126")
+  # 
+  # # ssp585
+  # dimnames(fut585$fishvar)<-list(fut585$lon, fut585$lat, fut585$years)
+  # if(output == "monthly"){
+  #   fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "Jan 2099")]
+  # }else{
+  #   fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "2099")]
+  # }
+  # 
+  # fut585_2<-as.data.frame.table(fut585$fishvar) %>%
+  #   `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+  #   mutate(year = round(as.numeric(as.character(year1)))) 
+  # 
+  # fut585_2<-fut585_2 %>% 
+  #   full_join(refDecade)
+  # 
+  # fut585_2<-fut585_2 %>% 
+  #   mutate(TcbChange = tcb - refValue)
+  # 
+  # fut585_2<-fut585_2 %>% 
+  #   mutate(lat = as.numeric(as.character(lat))) %>%
+  #   mutate(lat2 = cos(abs(lat) * (pi/180))) #%>%
+  #   # mutate(TcbChange = TcbChange * lat2) 
+  # 
+  # fut585_2<-fut585_2 %>% 
+  #   group_by(year) %>% 
+  #   dplyr::summarise(TcbChange = weighted.mean(TcbChange, lat2, na.rm=TRUE)) # revision weighted mean - NO
+  # 
+  # filter(fut585_2, year ==2099)
+  # 
+  # fut585_2<-fut585_2 %>% 
+  #   mutate(color = "ssp585")
+  # 
+  # # ?weighted.mean
+  # 
+  # all<-hist_2 %>% 
+  #   full_join(fut126_2) %>% 
+  #   full_join(fut585_2)
+  # 
+  # rm(hist_2, refDecade, fut126_2, fut585_2)
+  
+  # OPTION 2
+  # A # mutate(tcb = tcb * lat2) %>% dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
+  # B # dplyr::summarise(tcb = weighted.mean(tcb, lat2, na.rm=TRUE))
+  # no difference in results if we calcaulte relative changes before weighting.
+  # The difference between the two approached is only due to the weighting function used:
+  # mutate(tcb = tcb * lat2) %>% dplyr::summarise(tcb = mean(tcb, na.rm=TRUE)) OR
+  # dplyr::summarise(tcb = weighted.mean(tcb, lat2, na.rm=TRUE))
+
   hist_2<-as.data.frame.table(hist$fishvar) %>%
-    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
+    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>%
     # weight by grid area (smaller at higher lats)
-    # mutate(lat = as.numeric(as.character(lat))) %>% 
-    # mutate(lat2 = cos(abs(lat) * (pi/180))) %>% # transform lat in radiant and calculate cosine. NOT needed for temperature? 
-    # mutate(tcb = tcb * lat2) %>% 
-    mutate(year = round(as.numeric(as.character(year1)))) %>%
-    group_by(year) %>% 
-    dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
-  
+    mutate(lat = as.numeric(as.character(lat))) %>%
+    mutate(lat2 = cos(abs(lat) * (pi/180))) %>% # transform lat in radiant and calculate cosine
+    # mutate(tcb = tcb * lat2) %>%
+    mutate(year = round(as.numeric(as.character(year1))))  %>% # TRIAL HERE
+    group_by(year) %>%
+    # dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
+    dplyr::summarise(tcb = weighted.mean(tcb, lat2, na.rm=TRUE)) # revision weighted mean - NO
+
   # ref decade
-  refDecade <- hist_2 %>% 
-    filter(year >= 1990, year <=2000) %>% 
+  refDecade <- hist_2 %>%
+    filter(year >= 1990, year <=2000) %>%
     dplyr::summarize(value = mean(tcb, na.rm = TRUE))
-  
+
   # ssp126
   dimnames(fut126$fishvar)<-list(fut126$lon, fut126$lat, fut126$years)
   if(output == "monthly"){
@@ -607,30 +878,31 @@ get_timeSeries_temperature<-function(hist, fut126, fut585, output = "yearly"){
   }else{
     fut126$fishvar<-fut126$fishvar[,,which(fut126$years <= "2099")]
   }
-  fut126_2<-as.data.frame.table(fut126$fishvar) %>% 
-    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
-    # mutate(lat = as.numeric(as.character(lat))) %>% 
-    # mutate(lat2 = cos(abs(lat) * (pi/180))) %>% 
-    # mutate(tcb = tcb * lat2) %>% 
-    mutate(year = round(as.numeric(as.character(year1)))) %>%
-    group_by(year) %>% 
-    dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
-  
-  # projections start at different times for the 2 cmips 
+  fut126_2<-as.data.frame.table(fut126$fishvar) %>%
+    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>%
+    mutate(lat = as.numeric(as.character(lat))) %>%
+    mutate(lat2 = cos(abs(lat) * (pi/180))) %>%
+    # mutate(tcb = tcb * lat2) %>%
+    mutate(year = round(as.numeric(as.character(year1)))) %>% # TRIAL HERE
+    group_by(year) %>%
+    # dplyr::summarise(tcb = mean(tcb, na.rm=TRUE))
+    dplyr::summarise(tcb = weighted.mean(tcb, lat2, na.rm=TRUE))  # revision weighted mean - NO
+
+  # projections start at different times for the 2 cmips
   if(cmip == 5){
-    all126<-hist_2 %>% 
-      full_join(fut126_2) %>% 
-      # mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>% # percentage 
+    all126<-hist_2 %>%
+      full_join(fut126_2) %>%
+      # mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>% # percentage
       mutate(TcbChange = tcb - refDecade$value) %>% # celsius change as per map: diff_2p6 = fut126$fishvar - hist$fishvar # 20C - 15C = 5C (celsius increase)
       mutate(color = ifelse(year <= 2005, "hist", "ssp126"))
   }else{
-    all126<-hist_2 %>% 
-      full_join(fut126_2) %>% 
-      # mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>% 
+    all126<-hist_2 %>%
+      full_join(fut126_2) %>%
+      # mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>%
       mutate(TcbChange = tcb - refDecade$value) %>% # celsius change
       mutate(color = ifelse(year <= 2015, "hist", "ssp126"))
   }
-  
+
   # ssp585
   dimnames(fut585$fishvar)<-list(fut585$lon, fut585$lat, fut585$years)
   if(output == "monthly"){
@@ -639,20 +911,40 @@ get_timeSeries_temperature<-function(hist, fut126, fut585, output = "yearly"){
     fut585$fishvar<-fut585$fishvar[,,which(fut585$years <= "2099")]
   }
   fut585_2<-as.data.frame.table(fut585$fishvar) %>%
-    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>% 
-    # mutate(lat = as.numeric(as.character(lat))) %>% 
-    # mutate(lat2 = cos(abs(lat) * (pi/180))) %>% 
-    # mutate(tcb = tcb * lat2) %>% 
+    `colnames<-`(c("lon", "lat", "year1", "tcb")) %>%
+    mutate(lat = as.numeric(as.character(lat))) %>%
+    mutate(lat2 = cos(abs(lat) * (pi/180))) %>%
+    # mutate(tcb = tcb * lat2) %>%
     mutate(year = round(as.numeric(as.character(year1)))) %>%
-    group_by(year) %>% 
-    dplyr::summarise(tcb = mean(tcb, na.rm=TRUE)) %>% 
-    # mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>%
+    group_by(year) %>% # TRIAL HERE
+    # dplyr::summarise(tcb = mean(tcb, na.rm=TRUE)) %>%
+    dplyr::summarise(tcb = weighted.mean(tcb, lat2, na.rm=TRUE)) %>% # revision weighted mean - NO
+    # # mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>%
     mutate(TcbChange = tcb - refDecade$value) %>% # celsius change
     mutate(color = "ssp585")
-  
+
   all<-all126 %>%
     full_join(fut585_2)
-  
+
+  # filter(all, year == 2099) # option 1
+  # filter(all1, year == 2099)
+  # # year   tcb TcbChange color
+  # # <dbl> <dbl>     <dbl> <chr>
+  # # 1  2099  12.5     0.634 ssp126
+  # # 2  2099  14.5     2.58  ssp585
+  #
+  # # instead mean the difference here - after having calculated the difference in each grid cell
+  # # all<-all %>%
+  # #   group_by(year,color) %>%
+  # #   dplyr::summarise(TcbChange = mean(TcbChange, na.rm=TRUE))
+  # #
+  # # check difference
+  # # filter(all, year == 2099) # option 2
+  # # year color  TcbChange
+  # # <dbl> <chr>      <dbl>
+  # # 1  2099 ssp126     0.634
+  # # 2  2099 ssp585     2.58
+
   rm(hist_2, refDecade, fut126_2, all126, fut585_2)
   return(all)
   

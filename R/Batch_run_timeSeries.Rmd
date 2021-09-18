@@ -17,7 +17,6 @@ Step 2 averages the data across MEMs and scenarios and produces Figure
 
 ```{r load CMIP5}
 
-
 rm(list=ls())
 
 install_load <- function (this_package)  {   
@@ -125,6 +124,9 @@ yearmonth1_fut<-rep(NA, length(mod_ipsl))
 yearmonth2_fut<-rep(NA, length(mod_ipsl))
 cmip = 5
 
+### if we are preparing data and fig for IPCC report (Laurent Bopp) then reference year must be changed.
+# reference year for the time series: 1995-2014 - change in HelperScript get_timeSeries().
+
 data_ipsl_CMIP5<-list()
 
 for (i in 1:length(mod_ipsl)){
@@ -185,6 +187,12 @@ f_years[3]<-"2006_2099"
 output <-c(outputB, outputD, outputE, outputM)
 oa <-c(oaB, oaD, oaE, oaM)
 
+# ADDED
+yearmonth1<-rep(NA, length(mod_gfdl))
+yearmonth2<-rep(NA, length(mod_gfdl))
+yearmonth1_fut<-rep(NA, length(mod_gfdl))
+yearmonth2_fut<-rep(NA, length(mod_gfdl))
+
 data_gfdl_CMIP5<-list()
 
 for (i in 1:length(mod_gfdl)){
@@ -214,19 +222,21 @@ names(data_gfdl_CMIP5)
 
 ## add ZOOM GFDL ----
 
+# ADDED 1 to yearmonth
+
 # hist
 directory_zoom<-paste0(directory, "ZooMSS/_tmp/historical/")
 filename<-"zoomss_gfdl-esm2m_nobc_historical_nosoc_co2_tcb_global_annual_1950_2005.nc4"
-hist<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = FALSE)
+hist<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1[1], yearmonth2[1], average_whole_period = FALSE)
 
 # 126
 directory_zoom<-paste0(directory, "ZooMSS/_tmp/future/")
 filename<-"zoomss_gfdl-esm2m_nobc_rcp26_nosoc_co2_tcb_global_annual_2006_2100.nc4"
-fut126<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = FALSE)
+fut126<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1[1], yearmonth2[1], average_whole_period = FALSE)
 
 # 585
 filename<-"zoomss_gfdl-esm2m_nobc_rcp85_nosoc_co2_tcb_global_annual_2006_2100.nc4"
-fut585<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1, yearmonth2, average_whole_period = FALSE)
+fut585<-extractFishCDF(directory_zoom, filename , variable_to_extract[1], yearmonth1[1], yearmonth2[1], average_whole_period = FALSE)
 
 all<-get_timeSeries(hist, fut126, fut585, output = "yearly")
 
@@ -239,7 +249,67 @@ rm(hist, fut126, fut585, all)
 
 ```{r}
 
-save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5.RData")
+# save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5.RData")
+
+save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5_weigthedMean.RData")
+
+# # # for IPCC - Laurent Bopp
+# save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP5_IPCC_toCut.RData")
+
+```
+
+
+## Load libraries for netcdf and define variables
+
+```{r load CMIP5}
+
+rm(list=ls())
+
+install_load <- function (this_package)  {
+
+   package <- c(this_package)
+   if(package %in% rownames(installed.packages()))
+        do.call('library', list(package))
+
+    # if package is not installed locally, download, then load
+    else {
+        install.packages(package)
+         do.call("library", list(package))
+    }
+}
+
+### load/install libraries ###
+install_load("grid")
+install_load("zoo")
+install_load("viridis")
+install_load("tidyr")
+install_load("dplyr")
+install_load("ncdf4")
+install_load("ggplot2")
+install_load("patchwork")
+install_load("reshape2")
+
+### load helper scripts with functions to extract data from netcdfs ###
+source("R/HelperScripts.r")
+
+### create folders where temporary data can be stored ###
+mainDir = "../CMIP5vsCMIP6_data/"
+DirStep1 = "temp_data"
+ifelse(!dir.exists(file.path(mainDir, DirStep1)), dir.create(file.path(mainDir, DirStep1)), FALSE)
+
+### create folders where figures can be saved ###
+mainDir = "../CMIP5vsCMIP6_data/"
+DirStep2 = "figures"
+ifelse(!dir.exists(file.path(mainDir, DirStep2)), dir.create(file.path(mainDir, DirStep2)), FALSE)
+save_loc<-"../CMIP5vsCMIP6_data/figures/"
+
+### define variables ###
+cmip<-c("CMIP5", "CMIP6")
+mod_ipsl <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL")
+mod_gfdl <- c("BOATS", "DBEM", "EcoOcean", "MACROECOLOGICAL")
+protocol <- c("picontrol","historical", "future")
+future<-c("SSP126", "SSP585")
+variable_to_extract <-c("tcb","tpb", "bp30cm", "bp30to90cm", "bp90cm")
 
 ```
 
@@ -253,17 +323,18 @@ mod_ipsl <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL", 
 mod_ipsl <- c("APECOSM","BOATS","DBPM","MACROECOLOGICAL","FEISTY","ZooMSS") 
 
 # APECOSM ----
-# to update
 h_yearsA <- "1850_2014"
 f_yearsA<- "2015_2100"
-earthA<-"_ipsl-esm4_nobc_" # will change ....
+# earthA<-"_ipsl-esm4_nobc_" 
+earthA<-"_ipsl-cm6a-lr_nobasd_"
 outputA<-"monthly"
 extensionA<-".nc" 
 
 # BOATS ----
 h_yearsB <- "1950_2014"
 f_yearsB<- "2015_2100"
-earthB<-"_ipsl-cm6a-lr_nobc_"
+# earthB<-"_ipsl-cm6a-lr_nobc_"
+earthB<-"_ipsl-cm6a-lr_nobasd_"
 outputB<-"monthly"
 extensionB<-".nc"
 
@@ -282,8 +353,10 @@ extensionDB <-".nc"
 
 # macroecological ----  
 h_yearsM <- "1950_2014"
-f_yearsM<- "2015-2100"
-earthM<-"_ipsl-cm6a-lr_nobc_"
+# f_yearsM<- "2015-2100"
+f_yearsM<- "2015_2100"
+# earthM<-"_ipsl-cm6a-lr_nobc_"
+earthM<-"_ipsl-cm6a-lr_nobasd_"
 outputM<-"annual"
 extensionM<-".nc"
 
@@ -309,6 +382,14 @@ earthZ<-"_ipsl-cm6a-lr_nobasd_"
 outputZ<-"annual"
 extensionZ<-".nc"
 
+# # New folder structure - add DBEM in netcdf format (instead of RDS) - though still not final 
+# # ADDED D to the below vectors - NO HISTORICAL FILE FOR IPSL...  also in function below date will need updating as per above models
+# h_yearsD <- "1950_2014"
+# f_yearsD<- "2015_2100"
+# earthD<-"_ipsl-cm6a-lr_nobasd_"
+# outputD<-"annual"
+# extensionD<-".nc"
+
 # extract data IPSL ---- 
 h_years <-c(h_yearsA, h_yearsB, h_yearsDB, h_yearsM,h_yearsF, h_yearsZ) 
 f_years <-c(f_yearsA, f_yearsB, f_yearsDB, f_yearsM,f_yearsF, f_yearsZ) 
@@ -325,20 +406,41 @@ cmip = 6
 data_ipsl_CMIP6<-list()
 
 ### if we are preparing data and fig for IPCC report (Laurent Bopp) then reference year must be changed.
-# reference year for the time series: 1995-2014 - change in HelperScript get_timeSeries(). Only CMIP6
+# reference year for the time series: 1995-2014 - change in HelperScript get_timeSeries().
 
 for (i in 1:length(mod_ipsl)){
   
-  filename<-paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
+  # i = 1
+  
+  # filename<-paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
+  
+  # APECOSM: 
+  # delete _tmp, change file name in details above 
+  # BOATS
+  # delete _tmp, change file name in details above, change date reference (HelperScript line ~120)
+  # DBPM 
+  # delete _tmp
+  # MACROECOLOGICAL 
+  # delete _tmp, change file name in details above X 2
+  # FEISTY 
+  # delete _tmp
+  # ZooMSS
+  # delete _tmp
+  
+  filename<-paste0(mod_ipsl[i], "/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
   
   hist<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = FALSE, CMIP =  6)
   
-  filename <- paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+  # filename <- paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+  
+  filename <- paste0(mod_ipsl[i], "/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
   fut126<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE, CMIP = 6)
   
-  filename <- paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+  # filename <- paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
+  filename <- paste0(mod_ipsl[i], "/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+
   fut585<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE,CMIP = 6)
   
   # apply function to extract time series
@@ -346,7 +448,7 @@ for (i in 1:length(mod_ipsl)){
   data_ipsl_CMIP6[[i]]<-list(all = all)
   names(data_ipsl_CMIP6)[[i]]<-mod_ipsl[[i]]
 
-  rm(hist, fut126, fut585, all126, hist_2, refDecade, fut585_2, all)
+  rm(hist, fut126, fut585, all)
  
 }
 
@@ -357,7 +459,12 @@ names(data_ipsl_CMIP6)
 # no need for specific function - the only difference is that the variable to extract is called "Band1"
 
 filename<-"EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc" # REVISION: it was ssp585 now corrected to 126
-combined<-extractFishCDF(directory, filename , "Band1", yearmonth1, yearmonth2, average_whole_period = FALSE, CMIP = 6)
+
+# NEW OutputData folder structure - here keep the original folder as source because these files are not ready yet. NOTE directory2! do the same for EcoOcean and DBEM
+directory2<-"../CMIP5vsCMIP6_data/fishmip_outputs/marine-fishery_global_ISIMIP3b_original/"
+
+# ADDED [1] to yearmonth
+combined<-extractFishCDF(directory2, filename , "Band1", yearmonth1[1], yearmonth2[1], average_whole_period = FALSE, CMIP = 6)
 
 # hist
 start_point_to_extract = which(1971 == combined$years) # REVISION: changed from 1971
@@ -375,7 +482,7 @@ fut126$years <- fut126$years[start_point_to_extract:end_point_to_extract]
 
 # 585
 filename<-"EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc"
-fut585<-extractFishCDF(directory, filename , "Band1", yearmonth1, yearmonth2, average_whole_period = FALSE, CMIP = 6)
+fut585<-extractFishCDF(directory2, filename , "Band1", yearmonth1[1], yearmonth2[1], average_whole_period = FALSE, CMIP = 6)
 fut585$fishvar <- fut585$fishvar[, , start_point_to_extract:end_point_to_extract]
 fut585$years <- fut585$years[start_point_to_extract:end_point_to_extract]
 
@@ -431,17 +538,17 @@ extractFishCDF_EcoOcean <- function(file, type = "hist"){
 }
 
 # hist
-file<-readRDS(paste0(directory,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_historical_nosoc_default_tcb_global_monthly_1950-2005.RDS"))
+file<-readRDS(paste0(directory2,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_historical_nosoc_default_tcb_global_monthly_1950-2005.RDS"))
 lon<-hist$lon # lat and lon from EcoTroph above as missing for EcoOcean
 lat<-hist$lat
 hist<-extractFishCDF_EcoOcean(file, type = "hist")
 
 # 126
-file<-readRDS(paste0(directory,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp126_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
+file<-readRDS(paste0(directory2,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp126_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
 fut126<-extractFishCDF_EcoOcean(file, type= "fut")
 
 # 585
-file<-readRDS(paste0(directory, "EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp585_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
+file<-readRDS(paste0(directory2, "EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp585_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
 fut585<-extractFishCDF_EcoOcean(file, type= "fut")
 
 output[i]<-"monthly" 
@@ -502,17 +609,17 @@ extractFishCDF_DBEM<-function(file, type = "hist"){
       )
 }
 
-coord<-read.delim(paste0(directory,"DBEM_RData/Lat_Lon.txt"),header = FALSE, sep = ",")
+coord<-read.delim(paste0(directory2,"DBEM_RData/Lat_Lon.txt"),header = FALSE, sep = ",")
 colnames(coord)<-c("grid", "lon", "lat")
 
 # hist & 126
-file<-load(paste0(directory,"DBEM_RData/C6IPSL26F0_t2_Abd.RData"))
+file<-load(paste0(directory2,"DBEM_RData/C6IPSL26F0_t2_Abd.RData"))
 file<-sppfnlmap
 hist<-extractFishCDF_DBEM(file, type = "hist")
 fut126<-extractFishCDF_DBEM(file, type = "fut")
 
 # 585
-file<-load(paste0(directory,"DBEM_RData/C6IPSL85F0_t2_Abd.RData"))
+file<-load(paste0(directory2,"DBEM_RData/C6IPSL85F0_t2_Abd.RData"))
 file<-sppfnlmap
 fut585<-extractFishCDF_DBEM(file, type = "fut")
 
@@ -522,27 +629,48 @@ data_ipsl_CMIP6$DBEM<-list(all = all)
 
 # extract data GFDL ---- 
 
-mod_gfdl <- c("BOATS","DBPM", "MACROECOLOGICAL","ZooMSS", "FEISTY") 
+# NEW OutputData folder structure - remove DBPM and change earth
+# mod_gfdl <- c("BOATS","DBPM", "MACROECOLOGICAL","ZooMSS", "FEISTY") 
+# 
+# h_years <-c(h_yearsB,h_yearsDB, h_yearsM, h_yearsZ,h_yearsF) 
+# f_years <-c(f_yearsB,f_yearsDB, f_yearsM, f_yearsZ, f_yearsF) 
+# earth<-c("_gfdl-esm4_nobc_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobc_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobasd_")
+# output <-c(outputB,outputDB, outputM, outputZ, outputF) 
+# extension <-c(extensionB, extensionDB,extensionM, extensionZ, extensionF) 
 
-h_years <-c(h_yearsB,h_yearsDB, h_yearsM, h_yearsZ,h_yearsF) 
-f_years <-c(f_yearsB,f_yearsDB, f_yearsM, f_yearsZ, f_yearsF) 
-earth<-c("_gfdl-esm4_nobc_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobc_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobasd_")
-output <-c(outputB,outputDB, outputM, outputZ, outputF) 
-extension <-c(extensionB, extensionDB,extensionM, extensionZ, extensionF) 
+mod_gfdl <- c("BOATS", "MACROECOLOGICAL","ZooMSS", "FEISTY") 
+
+h_years <-c(h_yearsB, h_yearsM, h_yearsZ,h_yearsF) 
+f_years <-c(f_yearsB, f_yearsM, f_yearsZ, f_yearsF) 
+earth<-c("_gfdl-esm4_nobasd_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobasd_")
+output <-c(outputB, outputM, outputZ, outputF) 
+extension <-c(extensionB,extensionM, extensionZ, extensionF) 
 
 data_gfdl_CMIP6<-list()
 
+# ADDED
+yearmonth1<-rep(NA, length(mod_gfdl))
+yearmonth2<-rep(NA, length(mod_gfdl))
+yearmonth1_fut<-rep(NA, length(mod_gfdl))
+yearmonth2_fut<-rep(NA, length(mod_gfdl))
+
 for (i in 1:length(mod_gfdl)){
 
-  filename<-paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[2],"/", tolower(mod_gfdl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
+  # filename<-paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[2],"/", tolower(mod_gfdl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
+  
+  filename<-paste0(mod_gfdl[i], "/gfdl-esm4/", protocol[2],"/", tolower(mod_gfdl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
   
   hist<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = FALSE, CMIP =  6)
 
-  filename <- paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+  # filename <- paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+  
+  filename <- paste0(mod_gfdl[i], "/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
   fut126<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE, CMIP = 6)
   
-  filename <- paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+  # filename <- paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+  
+  filename <- paste0(mod_gfdl[i], "/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
   fut585<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE,CMIP = 6)
   
@@ -551,14 +679,16 @@ for (i in 1:length(mod_gfdl)){
   data_gfdl_CMIP6[[i]]<-list(all = all)
   names(data_gfdl_CMIP6)[[i]]<-mod_gfdl[[i]]
 
-  rm(hist, fut126, fut585, all126, hist_2, refDecade, fut585_2, all)
+  rm(hist, fut126, fut585, all)
  
 }
 
 # add EcoTrpoh GFDL ----
 
 filename<-"EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc"
-combined<-extractFishCDF(directory, filename , "Band1", yearmonth1, yearmonth2, average_whole_period = FALSE, CMIP = 6)
+
+# ADDED [1] to yearmonth
+combined<-extractFishCDF(directory2, filename , "Band1", yearmonth1[1], yearmonth2[1], average_whole_period = FALSE, CMIP = 6)
 
 # hist
 start_point_to_extract = which(1971 == combined$years) # REVISION: changed from 1971
@@ -576,7 +706,7 @@ fut126$years <- fut126$years[start_point_to_extract:end_point_to_extract]
 
 # 585
 filename<-"EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc"
-fut585<-extractFishCDF(directory, filename , "Band1", yearmonth1, yearmonth2, average_whole_period = FALSE, CMIP = 6)
+fut585<-extractFishCDF(directory2, filename , "Band1", yearmonth1[1], yearmonth2[1], average_whole_period = FALSE, CMIP = 6)
 fut585$fishvar <- fut585$fishvar[, , start_point_to_extract:end_point_to_extract]
 fut585$years <- fut585$years[start_point_to_extract:end_point_to_extract]
 
@@ -587,17 +717,17 @@ data_gfdl_CMIP6$EcoTroph<-list(all = all)
 # add EcoOcean GFDL ----
 
 # hist
-file<-readRDS(paste0(directory, "EcoOcean CMIP6 RDS files/ecoocean_gfdl_nobc_historical_nosoc_default_tcb_global_monthly_1950-2005.RDS"))
+file<-readRDS(paste0(directory2, "EcoOcean CMIP6 RDS files/ecoocean_gfdl_nobc_historical_nosoc_default_tcb_global_monthly_1950-2005.RDS"))
 lon<-hist$lon # lat and long from EcoTroph above as missing for EcoOcean
 lat<-hist$lat
 hist<-extractFishCDF_EcoOcean(file, type = "hist")
 
 # 126
-file<-readRDS(paste0(directory, "EcoOcean CMIP6 RDS files/ecoocean_gfdl_nobc_ssp126_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
+file<-readRDS(paste0(directory2, "EcoOcean CMIP6 RDS files/ecoocean_gfdl_nobc_ssp126_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
 fut126<-extractFishCDF_EcoOcean(file, type= "fut")
 
 # 585
-file<-readRDS(paste0(directory,"EcoOcean CMIP6 RDS files/ecoocean_gfdl_nobc_ssp585_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
+file<-readRDS(paste0(directory2,"EcoOcean CMIP6 RDS files/ecoocean_gfdl_nobc_ssp585_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
 fut585<-extractFishCDF_EcoOcean(file, type= "fut")
 
 output[i]<-"monthly" 
@@ -607,13 +737,13 @@ data_gfdl_CMIP6$EcoOcean<-list(all = all)
 # add DBEM GFDL ----
 
 # hist & 126
-file<-load(paste0(directory, "DBEM_RData/C6GFDL26F0_t2_Abd.RData"))
+file<-load(paste0(directory2, "DBEM_RData/C6GFDL26F0_t2_Abd.RData"))
 file<-sppfnlmap
 hist<-extractFishCDF_DBEM(file, type = "hist")
 fut126<-extractFishCDF_DBEM(file, type = "fut")
 
 # 585
-file<-load(paste0(directory, "DBEM_RData/C6GFDL85F0_t2_Abd.RData"))
+file<-load(paste0(directory2, "DBEM_RData/C6GFDL85F0_t2_Abd.RData"))
 file<-sppfnlmap
 fut585<-extractFishCDF_DBEM(file, type = "fut")
 
@@ -627,7 +757,12 @@ data_gfdl_CMIP6$DBEM<-list(all = all)
 
 ```{r}
 
-save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6.RData")
+# save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6.RData")
+
+save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_weigthedMean.RData")
+
+# # file structure from OutputData folder
+# save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_OutputDataFolder.RData")
 
 # # for IPCC - Laurent Bopp
 # data_gfdl_CMIP6$DBPM<-NULL
@@ -647,9 +782,14 @@ rm(list=ls())
 # load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP5_revision.RData")
 # load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP6_revision.RData")
 
-load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5.RData")
-load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6.RData")
+# load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5.RData")
+# load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6.RData")
 
+load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5_weigthedMean.RData")
+load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_weigthedMean.RData")
+
+# load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_OutputDataFolder.RData")
+# load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_wrong.RData")
 ```
 
 ## Load libraries for netcdf and define variables
@@ -686,6 +826,7 @@ source("R/HelperScripts.r")
 cmip<-c("CMIP5", "CMIP6")
 mod_ipsl <- c("APECOSM", "BOATS", "DBEM", "DBPM","EcoOcean", "MACROECOLOGICAL")
 mod_gfdl <- c("BOATS", "DBEM", "DBPM", "EcoOcean", "MACROECOLOGICAL")
+mod_gfdl <- c("BOATS", "DBPM", "EcoOcean", "MACROECOLOGICAL") # new structure folder 
 protocol <- c("picontrol","historical", "future")
 future<-c("SSP126", "SSP585")
 variable_to_extract <-c("tcb","tpb", "bp30cm", "bp30to90cm", "bp90cm")
@@ -759,7 +900,7 @@ data_ipsl_CMIP6_tcb<-data_ipsl_CMIP6_tcb %>%
 data_ipsl_CMIP6_tcb<-data_ipsl_CMIP6_tcb %>% 
   mutate(year = as.numeric(year))
 
-# fix ecoOcean 
+# fix EcoOcean 
 
 data_ipsl_CMIP6_tcb[which(data_ipsl_CMIP6_tcb$model == "EcoOcean" & data_ipsl_CMIP6_tcb$year >= 2005 & data_ipsl_CMIP6_tcb$year<2015 & data_ipsl_CMIP6_tcb$protocol == "ssp585"), ]
 
@@ -775,7 +916,7 @@ data_gfdl_CMIP6_tcb<-data_gfdl_CMIP6_tcb %>%
 data_gfdl_CMIP6_tcb<-data_gfdl_CMIP6_tcb %>% 
   mutate(year = as.numeric(year))
 
-# fix ecoOcean 
+# fix EcoOcean 
 
 data_gfdl_CMIP6_tcb [which(data_gfdl_CMIP6_tcb$model == "EcoOcean" & data_gfdl_CMIP6_tcb$year >= 2005 & data_gfdl_CMIP6_tcb$year<2015 & data_gfdl_CMIP6_tcb$protocol == "ssp585"), ]
 
@@ -815,61 +956,67 @@ all<-all %>%
 a<-ggplot(filter(all, cmip==5), aes(group = protocol, x=year,y = mean, ymin = sd_min, ymax = sd_max))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
   geom_ribbon(aes(fill = protocol), alpha=0.2)+
-  geom_line(aes(color = protocol)) +
-  geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
-  geom_hline(yintercept = 0, color = "grey60", size = 1)+
+  geom_line(aes(color = protocol), size=0.3) +
+  geom_vline(xintercept = 2005.5, color = "grey60", size = 0.8)+
+  geom_hline(yintercept = 0, color = "grey60", size = 0.5)+
   scale_y_continuous(limits = c(-30, 6), breaks = pretty(seq(15, -30), n = 10), name = "Change in biomass (%)") +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
   scale_color_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "RCP2.6", "RCP8.5"))+
   scale_fill_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "RCP2.6", "RCP8.5"))+
   theme_bw()+
-  theme(text = element_text(size=20),
-        axis.title.y = element_text(vjust=0.4, size = 22),
-        axis.title.x = element_text(vjust=0.3, size = 22),
+  theme(text = element_text(size=7),
+        axis.title.y = element_text(vjust=0.4, size = 7),
+        axis.title.x = element_text(vjust=0.3, size = 7),
         axis.text.x = element_text(angle=90, hjust=0.5),
         panel.grid.minor = element_blank(),
-        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid'),
+        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid', size = 0.1),
         panel.border = element_rect(colour = "black"),
         panel.grid.major = element_blank(),
         strip.text.x = element_text(face = "bold"),
-        legend.position = c(0.13, 0.3))
+        legend.position = c(0.13, 0.3),
+        legend.key.size = unit(0.3, "cm"))
 
 b<-ggplot(filter(all, cmip==6), aes(group = protocol, x=year, y = mean))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
   geom_ribbon(aes(ymin = sd_min, ymax = sd_max, fill = protocol), alpha=0.2)+
-  geom_line(aes(color = protocol)) +
-  geom_point(aes(y = A, color = protocol), size = 0.8)+
-  geom_vline(xintercept = 2015, color = "grey60", size = 2)+
-  geom_hline(yintercept = 0, color = "grey60", size = 1)+
+  geom_line(aes(color = protocol),size=0.3) +
+  geom_point(aes(y = A, color = protocol), size = 0.1)+
+  geom_vline(xintercept = 2015, color = "grey60", size = 0.8)+
+  geom_hline(yintercept = 0, color = "grey60", size = 0.5)+
   scale_y_continuous(limits = c(-30, 6), breaks = pretty(seq(15, -30), n = 10), name = NULL) +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
   scale_color_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "SSP1-2.6", "SSP5-8.5"))+
   scale_fill_manual(values = c("black","blue" ,"red"), name = "Scenarios", labels = c("Historical", "SSP1-2.6", "SSP5-8.5"))+
   theme_bw()+
-  theme(text = element_text(size=20),
-        axis.title.y = element_text(vjust=0.4, size = 22),
-        axis.title.x = element_text(vjust=0.3, size = 22),
+  theme(text = element_text(size=7),
+        axis.title.y = element_text(vjust=0.4, size = 7),
+        axis.title.x = element_text(vjust=0.3, size = 7),
         axis.text.x = element_text(angle=90, hjust=0.5),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_blank(),
         panel.border = element_rect(colour = "black"),
         strip.text.x = element_text(face = "bold"),
-        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid'),
-        legend.position = c(0.13, 0.3))
+        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid', size = 0.1),
+        legend.position = c(0.13, 0.3),
+        legend.key.size = unit(0.3, "cm"))
 
 layout <- "
 AB
 "
 
-a<-a + ggtitle("a) CMIP5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-b<-b + ggtitle("b) CMIP6") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0))
+a<-a + ggtitle("a) CMIP5") + theme(plot.title = element_text(size = 7, face = "bold", hjust = 0))
+b<-b + ggtitle("b) CMIP6") + theme(plot.title = element_text(size = 7, face = "bold",hjust = 0))
 
 plot<-a + b + 
   plot_layout(design = layout)
 
-if(set == "full"){name = "Fig3.pdf"}else{name = "FigS7.pdf"}
+if(set == "full"){name = "Fig3_weigthedMean.pdf"}else{name = "FigS7_weigthedMean.pdf"}
 
-# pdf(paste0(save_loc,name), height=6.5, width=15) 
+pdf(paste0(save_loc,name), height=2.8, width=7.086)
+plot
+dev.off()
+
+# pdf(paste0(save_loc,name), height=6.5, width=15)
 # plot
 # dev.off()
 
@@ -934,6 +1081,9 @@ test5_26<-all_models %>%
 # between protocols CMIP5
 wilcox.test(test5_26$tcbChange, test5_85$tcbChange, alternative = "two.sided")
 
+length(test5_26$tcbChange) # 120
+length(test5_85$tcbChange) # 120
+
 # full set
 # data:  test5_26$tcbChange and test5_85$tcbChange
 # W = 12822, p-value < 2.2e-16
@@ -952,6 +1102,9 @@ test6_26<-all_models %>%
 # between protocols CMIP6
 wilcox.test(test6_26$tcbChange, test6_85$tcbChange, alternative = "two.sided")
 
+length(test6_26$tcbChange) # 160
+length(test6_85$tcbChange) # 160
+
 # full set 
 # data:  test6_26$tcbChange and test6_85$tcbChange
 # W = 25123, p-value < 2.2e-16
@@ -967,6 +1120,9 @@ wilcox.test(test6_26$tcbChange, test6_85$tcbChange, alternative = "two.sided")
 # mitigation
 wilcox.test(test5_26$tcbChange, test6_26$tcbChange, alternative = "two.sided")
 
+length(test5_26$tcbChange) # 120
+length(test6_26$tcbChange) # 160
+
 # full set 
 # data:  test5_26$tcbChange and test6_26$tcbChange
 # W = 12291, p-value = 6.007e-05
@@ -980,6 +1136,9 @@ wilcox.test(test5_26$tcbChange, test6_26$tcbChange, alternative = "two.sided")
 # high emission - the one less significant across all tests
 wilcox.test(test5_85$tcbChange, test6_85$tcbChange, alternative = "two.sided")
 
+length(test5_85$tcbChange) # 120
+length(test6_85$tcbChange) # 160
+
 # full set 
 # data:  test5_85$tcbChange and test6_85$tcbChange
 # W = 11246, p-value = 0.01413
@@ -989,12 +1148,6 @@ wilcox.test(test5_85$tcbChange, test6_85$tcbChange, alternative = "two.sided")
 # data:  test5_85$tcbChange and test6_85$tcbChange
 # W = 5449, p-value = 0.2731
 # alternative hypothesis: true location shift is not equal to 0
-
-mean(test5_26$tcbChange)
-mean(test6_26$tcbChange)
-
-mean(test5_85$tcbChange)
-mean(test6_85$tcbChange)
 
 # end test
 
@@ -1014,97 +1167,94 @@ df_cmip6ipsl<-df %>% filter(model %in% unique(filter(all_models, cmip==6, earth 
 df_cmip6gfdl<-df %>% filter(model %in% unique(filter(all_models, cmip==6, earth =="gfdl")$model))
 
 plot_trends<-function(all_models){
-  
+
 a1<-ggplot(filter(all_models, cmip==5, earth =="ipsl"), aes(x=year, y = tcbChange,  color = model))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_line(size=1) +
-  geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
-  geom_hline(yintercept = 0, color = "grey60", size = 1)+
+  geom_line(size=0.3) +
+  geom_vline(xintercept = 2005.5, color = "grey60", size = 0.8)+
+  geom_hline(yintercept = 0, color = "grey60", size = 0.5)+
   scale_y_continuous(limits = c(-35, 6), breaks = pretty(seq(20, -40), n = 10), name = "Change in biomass (%)") + 
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
   scale_color_manual(values = df_cmip5ipsl$color, name = "Ecosystem Models") +
   theme_bw()+
-  theme(text = element_text(size=14),
-        axis.title.y = element_text(vjust=0.4, size = 22),
-        axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5, size=16),
-        axis.text.y = element_text(angle=0, size=16),
+  theme(text = element_text(size=7),
+        axis.title.y = element_text(vjust=0.4, size = 7),
+        axis.title.x = element_text(vjust=0.3, size = 7),
+        axis.text.x = element_text(angle=90, hjust=0.5, size=7),
+        axis.text.y = element_text(angle=0, size=7),
         panel.border = element_rect(colour = "black"),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_blank(),
         strip.text.x = element_text(face = "bold"),
-        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid'),
-        legend.position = c(0.17, 0.4),
-        legend.key.size = unit(0.6, "cm"))
-
+        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid', size = 0.1),
+        legend.position = c(0.21, 0.4),
+        legend.key.size = unit(0.27, "cm"))
 
 b1<-ggplot(filter(all_models, cmip==6, earth =="ipsl"), aes(x=year, y = tcbChange,  color = model))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_line(size=1) +
-  geom_vline(xintercept = 2015, color = "grey60", size = 2)+
-  geom_hline(yintercept = 0, color = "grey60", size = 1)+
+  geom_line(size=0.3) +
+  geom_vline(xintercept = 2015, color = "grey60", size = 0.8)+
+  geom_hline(yintercept = 0, color = "grey60", size = 0.5)+
   scale_y_continuous(limits = c(-35, 6), breaks = pretty(seq(20, -40), n = 10), name = "Change in biomass (%)") +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year-1, n = 10), name = "Year")+
   scale_color_manual(values = df_cmip6ipsl$color, name = "Ecosystem Models") +
   theme_bw()+
-  theme(text = element_text(size=14),
-        axis.title.y = element_text(vjust=0.4, size = 22),
-        axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5, size=16),
-        axis.text.y = element_text(angle=0, size=16),
+  theme(text = element_text(size=7),
+        axis.title.y = element_text(vjust=0.4, size = 7),
+        axis.title.x = element_text(vjust=0.3, size = 7),
+        axis.text.x = element_text(angle=90, hjust=0.5, size=7),
+        axis.text.y = element_text(angle=0, size=7),
         panel.border = element_rect(colour = "black"),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_blank(),
         strip.text.x = element_text(face = "bold"),
-        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid'),
-        legend.position = c(0.17, 0.4),
-        legend.key.size = unit(0.6, "cm"))
-
+        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid', size = 0.1),
+        legend.position = c(0.21, 0.4),
+        legend.key.size = unit(0.27, "cm"))
 
 a2<-ggplot(filter(all_models, cmip==5, earth =="gfdl"), aes(x=year, y = tcbChange,  color = model))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_line(size=1) +
-  geom_vline(xintercept = 2005.5, color = "grey60", size = 2)+
-  geom_hline(yintercept = 0, color = "grey60", size = 1)+
+  geom_line(size=0.3) +
+  geom_vline(xintercept = 2005.5, color = "grey60", size = 0.8)+
+  geom_hline(yintercept = 0, color = "grey60", size = 0.5)+
   scale_y_continuous(limits = c(-35, 6), breaks = pretty(seq(20, -40), n = 10), name = "Change in biomass (%)") + 
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year, n = 10), name = "Year")+
   scale_color_manual(values = df_cmip5gfdl$color, name = "Ecosystem Models") +
   theme_bw()+
-  theme(text = element_text(size=14),
-        axis.title.y = element_text(vjust=0.4, size = 22),
-        axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5, size=16),
-        axis.text.y = element_text(angle=0, size=16),
+  theme(text = element_text(size=7),
+        axis.title.y = element_text(vjust=0.4, size = 7),
+        axis.title.x = element_text(vjust=0.3, size = 7),
+        axis.text.x = element_text(angle=90, hjust=0.5, size=7),
+        axis.text.y = element_text(angle=0, size=7),
         panel.border = element_rect(colour = "black"),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_blank(),
         strip.text.x = element_text(face = "bold"),
-        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid'),
-        legend.position = c(0.17, 0.4),
-        legend.key.size = unit(0.6, "cm"))
-
+        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid', size = 0.1),
+        legend.position = c(0.21, 0.4),
+        legend.key.size = unit(0.27, "cm"))
 
 b2<-ggplot(filter(all_models, cmip==6, earth =="gfdl"), aes(x=year, y = tcbChange,  color = model))+
   annotate("rect", xmin = 1990, xmax = 2000, ymin = -Inf, ymax = Inf, alpha = .2)+
-  geom_line(size=1) +
-  geom_vline(xintercept = 2015, color = "grey60", size = 2)+
-  geom_hline(yintercept = 0, color = "grey60", size = 1)+
+  geom_line(size=0.3) +
+  geom_vline(xintercept = 2015, color = "grey60", size = 0.8)+
+  geom_hline(yintercept = 0, color = "grey60", size = 0.5)+
   scale_y_continuous(limits = c(-35, 6), breaks = pretty(seq(20, -40), n = 10), name = "Change in biomass (%)") +
   scale_x_continuous(limits = c(1970, 2100), breaks = pretty(all$year-1, n = 10), name = "Year")+
   scale_color_manual(values = df_cmip6gfdl$color, name = "Ecosystem Models") +
   theme_bw()+
-  theme(text = element_text(size=14),
-        axis.title.y = element_text(vjust=0.4, size = 22),
-        axis.title.x = element_text(vjust=0.3, size = 22),
-        axis.text.x = element_text(angle=90, hjust=0.5, size=16),
-        axis.text.y = element_text(angle=0, size=16),
+  theme(text = element_text(size=7),
+        axis.title.y = element_text(vjust=0.4, size = 7),
+        axis.title.x = element_text(vjust=0.3, size = 7),
+        axis.text.x = element_text(angle=90, hjust=0.5, size=7),
+        axis.text.y = element_text(angle=0, size=7),
         panel.border = element_rect(colour = "black"),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_blank(),
         strip.text.x = element_text(face = "bold"),
-        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid'),
-        legend.position = c(0.17, 0.4),
-        legend.key.size = unit(0.6, "cm"))
+        legend.background= element_rect(colour = 'black', fill = 'white', linetype='solid', size = 0.1),
+        legend.position = c(0.21, 0.4),
+        legend.key.size = unit(0.27, "cm"))
 
 return(list(a1 =a1 , b1 =b1, a2 = a2, b2 = b2))
 }
@@ -1120,17 +1270,23 @@ AB
 CD
 "
 
-a1<-a1 + ggtitle("a) CMIP5 IPSL-CM5A-LR") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0), axis.title.x = element_blank())
-b1<-b1 + ggtitle("b) CMIP6 IPSL-CM6A-LR") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
-a2<-a2 + ggtitle("c) CMIP5 GFDL-ESM2M") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-b2<-b2 + ggtitle("d) CMIP6 GFDL-ESM4") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.y = element_blank()) # legend.position = "none"
+a1<-a1 + ggtitle("a) CMIP5 IPSL-CM5A-LR") + theme(plot.title = element_text(size = 7, face = "bold", hjust = 0), axis.title.x = element_blank())
+b1<-b1 + ggtitle("b) CMIP6 IPSL-CM6A-LR") + theme(plot.title = element_text(size = 7, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
+a2<-a2 + ggtitle("c) CMIP5 GFDL-ESM2M") + theme(plot.title = element_text(size = 7, face = "bold", hjust = 0))
+b2<-b2 + ggtitle("d) CMIP6 GFDL-ESM4") + theme(plot.title = element_text(size = 7, face = "bold",hjust = 0), axis.title.y = element_blank()) # legend.position = "none"
 
 plot<-a1 + b1 + a2 + b2 + 
   plot_layout(design = layout)
 
-if(set == "full"){name = "Fig4.pdf"}else{name = "FigS8.pdf"}
+if(set == "full"){name = "Fig4_weigthedMean.pdf"}else{name = "FigS8_weigthedMean.pdf"}
 
-pdf(paste0(save_loc,name), height=12, width=15) 
+# name = "Fig4_OutputDataFolder2.pdf"
+
+# pdf(paste0(save_loc,name), height=12, width=15)
+# plot
+# dev.off()
+
+pdf(paste0(save_loc,name), height=5.6, width=7.086)
 plot
 dev.off()
 
@@ -1146,18 +1302,24 @@ AB
 CD
 "
 
-a1<-a1 + ggtitle("a) CMIP5 IPSL-CM5A-LR") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0), axis.title.x = element_blank())
-b1<-b1 + ggtitle("b) CMIP6 IPSL-CM6A-LR") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
-a2<-a2 + ggtitle("c) CMIP5 GFDL-ESM2M") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-b2<-b2 + ggtitle("d) CMIP6 GFDL-ESM4") + theme(plot.title = element_text(size = 16, face = "bold",hjust = 0), axis.title.y = element_blank()) 
+a1<-a1 + ggtitle("a) CMIP5 IPSL-CM5A-LR") + theme(plot.title = element_text(size = 7, face = "bold", hjust = 0), axis.title.x = element_blank())
+b1<-b1 + ggtitle("b) CMIP6 IPSL-CM6A-LR") + theme(plot.title = element_text(size = 7, face = "bold",hjust = 0), axis.title.x = element_blank(), axis.title.y = element_blank())
+a2<-a2 + ggtitle("c) CMIP5 GFDL-ESM2M") + theme(plot.title = element_text(size = 7, face = "bold", hjust = 0))
+b2<-b2 + ggtitle("d) CMIP6 GFDL-ESM4") + theme(plot.title = element_text(size = 7, face = "bold",hjust = 0), axis.title.y = element_blank()) 
 
 plot<-a1 + b1 + a2 + b2 + 
   plot_layout(design = layout)
 
-if(set == "full"){name = "FigS11.pdf"}else{name = "FigS17.pdf"}
+if(set == "full"){name = "FigS11_weigthedMean.pdf"}else{name = "FigS17_weigthedMean.pdf"}
 
-pdf(paste0(save_loc,name), height=12, width=15) # CONSIDER ALL MODELS
+# name = "FigS11_OutputDataFolder.pdf"
+
+pdf(paste0(save_loc,name), height=5.6, width=7.086)
 plot
 dev.off()
+
+# pdf(paste0(save_loc,name), height=12, width=15) # CONSIDER ALL MODELS
+# plot
+# dev.off()
 
 ```

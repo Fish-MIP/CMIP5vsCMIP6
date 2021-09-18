@@ -362,7 +362,7 @@ for (i in 1:length(data_gfdl_CMIP5)){
 
 # if model set == "full", we are considering all models and creating figures for the Main Document, otherwise we are considering the subset of models considered in Lotze et al. 2019 and producing figures for the Supplemntary Information. 
 
-set = "not_full"
+set = "N_full"
 
 if(set != "full"){
   data_ipsl_CMIP5$ZooMSS<-NULL
@@ -443,13 +443,13 @@ maptitle_agreement = paste("Agreement RCP 2.6, 1990s to 2090s CMIP5", sep=" ")
 
 # Plot the model average and standard deviation
 
-avarage_CMIP5_all_126<-plot_FISH_MIP(model_average_all_CMIP5, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
-sd_CMIP5_all_126<-plot_FISH_MIP(model_sd_all_CMIP5, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
-agreement_CMIP5_all_126<-plot_FISH_MIP(model_agreement_all_CMIP5, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)")
+avarage_CMIP5_all_126<-plot_FISH_MIP(model_average_all_CMIP5_126, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
+sd_CMIP5_all_126<-plot_FISH_MIP(model_sd_all_CMIP5_126, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
+agreement_CMIP5_all_126<-plot_FISH_MIP(model_agreement_all_CMIP5_126, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)")
 
 # plot average by ESMs 
-avarage_CMIP5_ipsl_126<-plot_FISH_MIP(model_average_ipsl_CMIP5, "Mean % change RCP 2.6, 1990s to 2090s CMIP5 IPSL", mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
-avarage_CMIP5_gfdl_126<-plot_FISH_MIP(model_average_gfdl_CMIP5, "Mean % change RCP 2.6, 1990s to 2090s CMIP5 GFDL", mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
+avarage_CMIP5_ipsl_126<-plot_FISH_MIP(model_average_ipsl_CMIP5_126, "Mean % change RCP 2.6, 1990s to 2090s CMIP5 IPSL", mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
+avarage_CMIP5_gfdl_126<-plot_FISH_MIP(model_average_gfdl_CMIP5_126, "Mean % change RCP 2.6, 1990s to 2090s CMIP5 GFDL", mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
 
 ```
 
@@ -470,7 +470,6 @@ if(set == "full"){
 }
 
 ```
-
 
 # STEP 2 extract data CMIP6
 
@@ -576,14 +575,16 @@ mod_ipsl <- c("APECOSM","BOATS","DBPM","MACROECOLOGICAL","FEISTY","ZooMSS")
 # APECOSM ----
 h_yearsA <- "1850_2014"
 f_yearsA<- "2015_2100"
-earthA<-"_ipsl-esm4_nobc_" 
+# earthA<-"_ipsl-esm4_nobc_"
+earthA<-"_ipsl-cm6a-lr_nobasd_"
 outputA<-"monthly"
 extensionA<-".nc" 
 
 # BOATS ----
 h_yearsB <- "1950_2014"
 f_yearsB<- "2015_2100"
-earthB<-"_ipsl-cm6a-lr_nobc_"
+# earthB<-"_ipsl-cm6a-lr_nobc_"
+earthB<-"_ipsl-cm6a-lr_nobasd_"
 outputB<-"monthly"
 extensionB<-".nc"
 
@@ -602,8 +603,10 @@ extensionDB <-".nc"
 
 # macroecological ----  
 h_yearsM <- "1950_2014"
-f_yearsM<- "2015-2100"
-earthM<-"_ipsl-cm6a-lr_nobc_"
+# f_yearsM<- "2015-2100"
+f_yearsM<- "2015_2100"
+# earthM<-"_ipsl-cm6a-lr_nobc_"
+earthM<-"_ipsl-cm6a-lr_nobasd_"
 outputM<-"annual"
 extensionM<-".nc"
 
@@ -652,19 +655,23 @@ yearmonth2_fut<- ifelse(output!="annual", as.yearmon("2099-12"), as.yearmon("209
 
 data_ipsl_CMIP6<-list()
 
-# NOTE: warning for FEISTY are OK - see above 
+# NOTE: warning for APECOSM all protocols, zoom all protocols, FEISTY all protocols are OK - see above 
 
 for (i in 1:length(mod_ipsl)){
 
-  filename<-paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
+  # i = 5
+  # New folder structure - see batch_run_timeSeriies.Rmd for edits 
+  # filename<-paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
+  
+  filename<-paste0(mod_ipsl[i], "/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
   
   hist<- averageFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = TRUE, CMIP =  6)
   
-  filename <- paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+  filename <- paste0(mod_ipsl[i], "/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
   fut126<- averageFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = TRUE, CMIP = 6)
   
-  filename <- paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+  filename <- paste0(mod_ipsl[i], "/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
   fut585<- averageFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = TRUE,CMIP = 6)
   
@@ -747,13 +754,16 @@ if(can_model_units_be_standardized(data_units, convert_to_kg_km))
 # hist is the beginning of the future files 
 
 # hist & 126
-# file<-"/Users/camillan/fishmip_outputs/marine-fishery_global_ISIMIP3b/EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc"
-file<-paste0(directory,"EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc")
+
+# NEW OutputData folder structure - here keep the original folder as source because these files are not ready yet. NOTE directory2! do the same for EcoOcean and DBEM
+directory2<-"../CMIP5vsCMIP6_data/fishmip_outputs/marine-fishery_global_ISIMIP3b_original/"
+
+file<-paste0(directory2,"EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc")
 hist<-averageFishCDF_EcoTroph(file, time1_h, time2_h)
 fut126<-averageFishCDF_EcoTroph(file, time1_f, time2_f)
 
 # 585
-file<-paste0(directory,"EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc")
+file<-paste0(directory2,"EcoTroph/_tmp/ipsl-cm6a-lr/future/ecotroph_ipsl-cm6a-lr_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc")
 fut585<-averageFishCDF_EcoTroph(file, time1_f, time2_f)
 
 diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100 
@@ -834,15 +844,15 @@ averageFishCDF_EcoOcean<-function(file, time1, time2, average_whole_period = TRU
 }
 
 # hist
-file<-readRDS(paste0(directory,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_historical_nosoc_default_tcb_global_monthly_1950-2005.RDS"))
+file<-readRDS(paste0(directory2,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_historical_nosoc_default_tcb_global_monthly_1950-2005.RDS"))
 hist<-averageFishCDF_EcoOcean(file, time1_h, time2_h, type = "hist")
 
 # 126
-file<-readRDS(paste0(directory,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp126_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
+file<-readRDS(paste0(directory2,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp126_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
 fut126<-averageFishCDF_EcoOcean(file, time1_f, time2_f, type = "fut")
 
 # 585
-file<-readRDS(paste0(directory,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp585_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
+file<-readRDS(paste0(directory2,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp585_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
 fut585<-averageFishCDF_EcoOcean(file, time1_f, time2_f, type = "fut")
 
 diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100  
@@ -914,17 +924,17 @@ averageFishCDF_DBEM<-function(file, time1, time2, average_whole_period = TRUE, c
       )
 }
 
-coord<-read.delim(paste0(directory,"DBEM_RData/Lat_Lon.txt"),header = FALSE, sep = ",")
+coord<-read.delim(paste0(directory2,"DBEM_RData/Lat_Lon.txt"),header = FALSE, sep = ",")
 colnames(coord)<-c("grid", "lon", "lat")
 
 # hist & 126
-file<-load(paste0(directory,"DBEM_RData/C6IPSL26F0_t2_Abd.RData"))
+file<-load(paste0(directory2,"DBEM_RData/C6IPSL26F0_t2_Abd.RData"))
 file<-sppfnlmap
 hist<-averageFishCDF_DBEM(file, time1_h, time2_h)
 fut126<-averageFishCDF_DBEM(file, time1_f, time2_f)
 
 # 585
-file<-load(paste0(directory,"DBEM_RData/C6IPSL85F0_t2_Abd.RData"))
+file<-load(paste0(directory2,"DBEM_RData/C6IPSL85F0_t2_Abd.RData"))
 file<-sppfnlmap
 fut585<-averageFishCDF_DBEM(file, time1_f, time2_f)
 
@@ -936,12 +946,14 @@ data_ipsl_CMIP6$DBEM<-list(hist = hist, fut126 = fut126, fut585 = fut585, diff_2
 # extract data GFDL ---- 
 
 mod_gfdl <- c("BOATS","DBPM" ,"MACROECOLOGICAL","ZooMSS", "FEISTY") 
+mod_gfdl <- c("BOATS" ,"MACROECOLOGICAL","ZooMSS", "FEISTY") # new data structure 
 
-h_years <-c(h_yearsB,h_yearsDB, h_yearsM, h_yearsZ,h_yearsF) 
-f_years <-c(f_yearsB,f_yearsDB, f_yearsM, f_yearsZ, f_yearsF) 
-earth<-c("_gfdl-esm4_nobc_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobc_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobasd_")
-output <-c(outputB,outputDB, outputM, outputZ, outputF) 
-extension <-c(extensionB, extensionDB,extensionM, extensionZ, extensionF) 
+h_years <-c(h_yearsB, h_yearsM, h_yearsZ,h_yearsF) 
+f_years <-c(f_yearsB, f_yearsM, f_yearsZ, f_yearsF) 
+# earth<-c("_gfdl-esm4_nobc_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobc_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobasd_")
+earth<-c("_gfdl-esm4_nobasd_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobasd_","_gfdl-esm4_nobasd_")
+output <-c(outputB, outputM, outputZ, outputF) 
+extension <-c(extensionB,extensionM, extensionZ, extensionF) 
 
 yearmonth1<- ifelse(output=="annual", as.yearmon("1990-01"), as.yearmon("1990-01"))
 yearmonth2<- ifelse(output!="annual", as.yearmon("1999-12"), as.yearmon("1999-01"))
@@ -956,17 +968,21 @@ yearmonth2_fut<- ifelse(output!="annual", as.yearmon("2099-12"), as.yearmon("209
 
 data_gfdl_CMIP6<-list()
 
+# warning for zoom all protocols and feisty all protocols have been checked and they are OK  
+
 for (i in 1:length(mod_gfdl)){
 
-  filename<-paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[2],"/", tolower(mod_gfdl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
+  # filename<-paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[2],"/", tolower(mod_gfdl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
+  
+  filename<-paste0(mod_gfdl[i], "/gfdl-esm4/", protocol[2],"/", tolower(mod_gfdl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
   
   hist<- averageFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = TRUE, CMIP =  6)
 
-  filename <- paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+  filename <- paste0(mod_gfdl[i], "/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
   fut126<- averageFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = TRUE, CMIP = 6)
   
-  filename <- paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
+  filename <- paste0(mod_gfdl[i], "/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
   fut585<- averageFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = TRUE,CMIP = 6)
   
@@ -994,12 +1010,12 @@ time2_f = 2099
 # time2_f = 2099
 
 # hist & 126
-file<-paste0(directory,"EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc")
+file<-paste0(directory2,"EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp126_nat_default_tcb_annual_1950_2100.nc")
 hist<-averageFishCDF_EcoTroph(file, time1_h, time2_h)
 fut126<-averageFishCDF_EcoTroph(file, time1_f, time2_f)
 
 # 585
-file<-paste0(directory,"EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc")
+file<-paste0(directory2,"EcoTroph/_tmp/gfdl-esm4/future/ecotroph_gfdl-esm4_nobc_ssp585_nat_default_tcb_annual_1950_2100.nc")
 fut585<-averageFishCDF_EcoTroph(file, time1_f, time2_f)
 
 diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100 
@@ -1021,15 +1037,15 @@ time2_f = as.yearmon("2099-12")
 # time2_f = as.yearmon("2099-12")
 
 # hist
-file<-readRDS(paste0(directory,"EcoOcean CMIP6 RDS files/ecoocean_gfdl_nobc_historical_nosoc_default_tcb_global_monthly_1950-2005.RDS"))
+file<-readRDS(paste0(directory2,"EcoOcean CMIP6 RDS files/ecoocean_gfdl_nobc_historical_nosoc_default_tcb_global_monthly_1950-2005.RDS"))
 hist<-averageFishCDF_EcoOcean(file, time1_h, time2_h, type = "hist")
 
 # 126
-file<-readRDS(paste0(directory,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp126_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
+file<-readRDS(paste0(directory2,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp126_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
 fut126<-averageFishCDF_EcoOcean(file, time1_f, time2_f, type = "fut")
 
 # 585
-file<-readRDS(paste0(directory,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp585_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
+file<-readRDS(paste0(directory2,"EcoOcean CMIP6 RDS files/ecoocean_ipsl_nobc_ssp585_nosoc_default_tcb_global_monthly_2006_2100.RDS"))
 fut585<-averageFishCDF_EcoOcean(file, time1_f, time2_f, type = "fut")
 
 diff_2p6 = fut126$fishvar / hist$fishvar * 100 - 100 
@@ -1051,13 +1067,13 @@ time2_f = 2099
 # time2_f = 2099
 
 # hist & 126
-file<-load(paste0(directory,"DBEM_RData/C6GFDL26F0_t2_Abd.RData"))
+file<-load(paste0(directory2,"DBEM_RData/C6GFDL26F0_t2_Abd.RData"))
 file<-sppfnlmap
 hist<-averageFishCDF_DBEM(file, time1_h, time2_h)
 fut126<-averageFishCDF_DBEM(file, time1_f, time2_f)
 
 # 585
-file<-load(paste0(directory,"DBEM_RData/C6GFDL85F0_t2_Abd.RData"))
+file<-load(paste0(directory2,"DBEM_RData/C6GFDL85F0_t2_Abd.RData"))
 file<-sppfnlmap
 fut585<-averageFishCDF_DBEM(file, time1_f, time2_f)
 
@@ -1084,17 +1100,18 @@ fliplr_matrix<- function(data_to_flip){
 
 # plot IPSL ----
 
-data_ipsl_CMIP6$MACROECOLOGICAL$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$hist$fishvar)
-data_ipsl_CMIP6$MACROECOLOGICAL$fut126$fishvar<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$fut126$fishvar)
-data_ipsl_CMIP6$MACROECOLOGICAL$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$fut585$fishvar)
-data_ipsl_CMIP6$MACROECOLOGICAL$diff_2p6<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$diff_2p6)
-data_ipsl_CMIP6$MACROECOLOGICAL$diff_8p5<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$diff_8p5)
-
-data_ipsl_CMIP6$ZooMSS$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP6$ZooMSS$hist$fishvar)
-data_ipsl_CMIP6$ZooMSS$fut126$fishvar<- fliplr_matrix(data_ipsl_CMIP6$ZooMSS$fut126$fishvar)
-data_ipsl_CMIP6$ZooMSS$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP6$ZooMSS$fut585$fishvar)
-data_ipsl_CMIP6$ZooMSS$diff_2p6<- fliplr_matrix(data_ipsl_CMIP6$ZooMSS$diff_2p6)
-data_ipsl_CMIP6$ZooMSS$diff_8p5<- fliplr_matrix(data_ipsl_CMIP6$ZooMSS$diff_8p5)
+# NEW data structure
+# data_ipsl_CMIP6$MACROECOLOGICAL$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$hist$fishvar)
+# data_ipsl_CMIP6$MACROECOLOGICAL$fut126$fishvar<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$fut126$fishvar)
+# data_ipsl_CMIP6$MACROECOLOGICAL$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$fut585$fishvar)
+# data_ipsl_CMIP6$MACROECOLOGICAL$diff_2p6<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$diff_2p6)
+# data_ipsl_CMIP6$MACROECOLOGICAL$diff_8p5<- fliplr_matrix(data_ipsl_CMIP6$MACROECOLOGICAL$diff_8p5)
+# 
+# data_ipsl_CMIP6$ZooMSS$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP6$ZooMSS$hist$fishvar)
+# data_ipsl_CMIP6$ZooMSS$fut126$fishvar<- fliplr_matrix(data_ipsl_CMIP6$ZooMSS$fut126$fishvar)
+# data_ipsl_CMIP6$ZooMSS$fut585$fishvar<- fliplr_matrix(data_ipsl_CMIP6$ZooMSS$fut585$fishvar)
+# data_ipsl_CMIP6$ZooMSS$diff_2p6<- fliplr_matrix(data_ipsl_CMIP6$ZooMSS$diff_2p6)
+# data_ipsl_CMIP6$ZooMSS$diff_8p5<- fliplr_matrix(data_ipsl_CMIP6$ZooMSS$diff_8p5)
 
 data_ipsl_CMIP6$FEISTY$hist$fishvar<- fliplr_matrix(data_ipsl_CMIP6$FEISTY$hist$fishvar)
 data_ipsl_CMIP6$FEISTY$fut126$fishvar<- fliplr_matrix(data_ipsl_CMIP6$FEISTY$fut126$fishvar)
@@ -1150,17 +1167,17 @@ for (i in 1:length(data_ipsl_CMIP6)){
 
 # plot GFDL ----
 
-data_gfdl_CMIP6$MACROECOLOGICAL$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$hist$fishvar)
-data_gfdl_CMIP6$MACROECOLOGICAL$fut126$fishvar<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$fut126$fishvar)
-data_gfdl_CMIP6$MACROECOLOGICAL$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$fut585$fishvar)
-data_gfdl_CMIP6$MACROECOLOGICAL$diff_2p6<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$diff_2p6)
-data_gfdl_CMIP6$MACROECOLOGICAL$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$diff_8p5)
-
-data_gfdl_CMIP6$ZooMSS$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$ZooMSS$hist$fishvar)
-data_gfdl_CMIP6$ZooMSS$fut126$fishvar<- fliplr_matrix(data_gfdl_CMIP6$ZooMSS$fut126$fishvar)
-data_gfdl_CMIP6$ZooMSS$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$ZooMSS$fut585$fishvar)
-data_gfdl_CMIP6$ZooMSS$diff_2p6<- fliplr_matrix(data_gfdl_CMIP6$ZooMSS$diff_2p6)
-data_gfdl_CMIP6$ZooMSS$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$ZooMSS$diff_8p5)
+# data_gfdl_CMIP6$MACROECOLOGICAL$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$hist$fishvar)
+# data_gfdl_CMIP6$MACROECOLOGICAL$fut126$fishvar<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$fut126$fishvar)
+# data_gfdl_CMIP6$MACROECOLOGICAL$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$fut585$fishvar)
+# data_gfdl_CMIP6$MACROECOLOGICAL$diff_2p6<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$diff_2p6)
+# data_gfdl_CMIP6$MACROECOLOGICAL$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$MACROECOLOGICAL$diff_8p5)
+# 
+# data_gfdl_CMIP6$ZooMSS$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$ZooMSS$hist$fishvar)
+# data_gfdl_CMIP6$ZooMSS$fut126$fishvar<- fliplr_matrix(data_gfdl_CMIP6$ZooMSS$fut126$fishvar)
+# data_gfdl_CMIP6$ZooMSS$fut585$fishvar<- fliplr_matrix(data_gfdl_CMIP6$ZooMSS$fut585$fishvar)
+# data_gfdl_CMIP6$ZooMSS$diff_2p6<- fliplr_matrix(data_gfdl_CMIP6$ZooMSS$diff_2p6)
+# data_gfdl_CMIP6$ZooMSS$diff_8p5<- fliplr_matrix(data_gfdl_CMIP6$ZooMSS$diff_8p5)
 
 data_gfdl_CMIP6$EcoTroph$hist$fishvar<- fliplr_matrix(data_gfdl_CMIP6$EcoTroph$hist$fishvar)
 data_gfdl_CMIP6$EcoTroph$fut126$fishvar<- fliplr_matrix(data_gfdl_CMIP6$EcoTroph$fut126$fishvar)
@@ -1201,6 +1218,12 @@ for (i in 1:length(data_gfdl_CMIP6)){
   
 }
 
+# CHECK that flip matrix etc worked for each model and given the new data structure 
+# IPSL: macroecological, zoom to change! no need to flip matrix - why!???!?!? maybe fixed by Matthias - but then wht FEISTY IPSL is the only final file that still needs flipping??? 
+# GFDL: macroecological, zoom as above 
+map_ipsl585_CMIP6$FEISTY
+map_gfdl585_CMIP6$FEISTY
+
 ## RCP 2.6
 
 # IPSL
@@ -1239,7 +1262,7 @@ for (i in 1:length(data_gfdl_CMIP6)){
 
 # if model set == "full", we are considering all models and creating figures for the Main Document, otherwise we are considering the subset of models considered in Lotze et al. 2019 and producing figures for the Supplemntary Information.
 
-set = "not_full"
+set = "N_full"
 
 if(set == "full"){
   data_gfdl_CMIP6$DBPM<-NULL # exclude DBPM GFDL CMIP6 anyways as this are not final runs 
@@ -1325,13 +1348,13 @@ maptitle_sd = paste("Standard Deviation RCP 2.6, 1990s to 2090s CMIP6", sep=" ")
 maptitle_agreement = paste("Agreement RCP 2.6, 1990s to 2090s CMIP6", sep=" ")
 
 # Plot the model average and standard deviation
-avarage_CMIP6_all_126<-plot_FISH_MIP(model_average_all_CMIP6, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
-sd_CMIP6_all_126<-plot_FISH_MIP(model_sd_all_CMIP6, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
-agreement_CMIP6_all_126<-plot_FISH_MIP(model_agreement_all_CMIP6, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)")
+avarage_CMIP6_all_126<-plot_FISH_MIP(model_average_all_CMIP6_126, maptitle_average, mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
+sd_CMIP6_all_126<-plot_FISH_MIP(model_sd_all_CMIP6_126, maptitle_sd, sd_plot_colour_values,colour_scheme = colour_scheme1, coltitle = "Variability  \n (SD)")
+agreement_CMIP6_all_126<-plot_FISH_MIP(model_agreement_all_CMIP6_126, maptitle_agreement, model_agreement_plot_colour_values ,colour_scheme = colour_scheme1, coltitle = "Model \n agreement \n (%)")
 
 # plot average by ESM 
-avarage_CMIP6_ipsl_126<-plot_FISH_MIP(model_average_ipsl_CMIP6, "Mean % change RCP 2.6, 1990s to 2090s CMIP6 IPSL", mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
-avarage_CMIP6_gfdl_126<-plot_FISH_MIP(model_average_gfdl_CMIP6, "Mean % change RCP 2.6, 1990s to 2090s CMIP6 GFDL", mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
+avarage_CMIP6_ipsl_126<-plot_FISH_MIP(model_average_ipsl_CMIP6_126, "Mean % change RCP 2.6, 1990s to 2090s CMIP6 IPSL", mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
+avarage_CMIP6_gfdl_126<-plot_FISH_MIP(model_average_gfdl_CMIP6_126, "Mean % change RCP 2.6, 1990s to 2090s CMIP6 GFDL", mean_plot_colour_values, colour_scheme = colour_scheme2, coltitle = "Biomass \n change \n (%)")
 
 ```
 
@@ -1345,7 +1368,12 @@ map_summaries_CMIP6<-list(avarage_CMIP6_all = avarage_CMIP6_all, sd_CMIP6_all = 
 
 if(set == "full"){
   # save(data_ipsl_CMIP6, data_gfdl_CMIP6, map_ipsl585_CMIP6, map_gfdl585_CMIP6, map_ipsl126_CMIP6, map_gfdl126_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP6.RData")
+  
+  # save(data_ipsl_CMIP6, data_gfdl_CMIP6, map_ipsl585_CMIP6, map_gfdl585_CMIP6, map_ipsl126_CMIP6, map_gfdl126_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_CMIP6.RData")
+
+  # file structure from OutputData folder - NOTE TEST ON FULL SET ONLY - if that works all is good 
   save(data_ipsl_CMIP6, data_gfdl_CMIP6, map_ipsl585_CMIP6, map_gfdl585_CMIP6, map_ipsl126_CMIP6, map_gfdl126_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_CMIP6.RData")
+
 }else{
   # save(data_ipsl_CMIP6, data_gfdl_CMIP6, map_ipsl585_CMIP6, map_gfdl585_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_CMIP6_reducedModelSet.RData")
   save(data_ipsl_CMIP6, data_gfdl_CMIP6, map_ipsl585_CMIP6, map_gfdl585_CMIP6, data_summaries_CMIP6, map_summaries_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_CMIP6_reducedModelSet.RData")
@@ -1369,11 +1397,17 @@ if(set == "full"){
 
 rm(list=ls())
 
-set = "full"
+set = "n_full"
 
 if(set == "full"){
+  
+  # NEED TO re-run or MOVE from old to ned folder 
   load("../CMIP5vsCMIP6_data/temp_data/data_CMIP5.RData")
+  # load("../CMIP5vsCMIP6_data/temp_data/data_CMIP6.RData")
+  
+  # new data structure 
   load("../CMIP5vsCMIP6_data/temp_data/data_CMIP6.RData")
+  
 }else{
   load("../CMIP5vsCMIP6_data/temp_data/data_CMIP5_reducedModelSet.RData")
   load("../CMIP5vsCMIP6_data/temp_data/data_CMIP6_reducedModelSet.RData")
@@ -1680,37 +1714,55 @@ CD
 EF
 "
 
-a <- map_summaries_CMIP5$avarage_CMIP5_all + ggtitle("a) CMIP5 RCP8.5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-b <- map_summaries_CMIP6$avarage_CMIP6_all + ggtitle("b) CMIP6 SSP5-8.5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-c <- delta_map_all_difference + ggtitle("c) Change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-d<- map_sign_neutral + ggtitle("d) Same direction of change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-e <- map_sign_positive + ggtitle("e) Shift to positive change") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-f <- map_sign_negative + ggtitle("f) Shift to negative change") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+# resize Main Fig according to NCC guidelines 
+theme_opts_new <- list(theme(plot.title = element_text(size=7, face = "bold", hjust = 0),
+                             legend.title=element_text(size=7), 
+                             legend.text=element_text(size=6), 
+                             axis.text=element_text(size=5)
+                             ))
+
+# titles get overwritten 
+tit = c("Biomass \n Change \n (%)","Difference \nin (%) \nchange \n")
+
+a <- map_summaries_CMIP5$avarage_CMIP5_all + ggtitle("a) CMIP5 RCP8.5") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[1])) + theme_opts_new 
+b <- map_summaries_CMIP6$avarage_CMIP6_all + ggtitle("b) CMIP6 SSP5-8.5") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[1])) + theme_opts_new 
+c <- delta_map_all_difference + ggtitle("c) Change between CMIPs") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[2])) + theme_opts_new 
+d<- map_sign_neutral + ggtitle("d) Same direction of change between CMIPs") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[2])) + theme_opts_new 
+e <- map_sign_positive + ggtitle("e) Shift to positive change") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[2])) + theme_opts_new 
+f <- map_sign_negative + ggtitle("f) Shift to negative change") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[2])) + theme_opts_new 
 
 pt<-a + b + c + d + e + f + plot_layout(design = layout)
 
 if(set == "full"){name = "Fig5.pdf"}else{name = "FigS9.pdf"}
 
-pdf(paste0(save_loc,name), height=10, width=15) 
+# pdf(paste0(save_loc,name), height=10, width=15)
+# pt
+# dev.off()
+
+pdf(paste0(save_loc,name), height=5.5, width=7.086) # width can only be 180 mm if the fig is a 2 column one (7,086 inch)
 pt
 dev.off()
 
 ### FIG S12 & S18 - 2.6 scenario ####
 
-a126 <- map_summaries_CMIP5$avarage_CMIP5_all_126 + ggtitle("a) CMIP5 RCP2.6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-b126 <- map_summaries_CMIP6$avarage_CMIP6_all_126 + ggtitle("b) CMIP6 SSP1-2.6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-c126 <- delta_map_all_difference_126 + ggtitle("c) Change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-d126 <- map_sign_neutral_126 + ggtitle("d) Same direction of change between CMIPs") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-e126 <- map_sign_positive_126 + ggtitle("e) Shift to positive change") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-f126 <- map_sign_negative_126 + ggtitle("f) Shift to negative change") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+a126 <- map_summaries_CMIP5$avarage_CMIP5_all_126 + ggtitle("a) CMIP5 RCP2.6") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[1])) + theme_opts_new
+b126 <- map_summaries_CMIP6$avarage_CMIP6_all_126 + ggtitle("b) CMIP6 SSP1-2.6") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[1])) + theme_opts_new 
+c126 <- delta_map_all_difference_126 + ggtitle("c) Change between CMIPs") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[2])) + theme_opts_new
+d126 <- map_sign_neutral_126 + ggtitle("d) Same direction of change between CMIPs") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[2])) + theme_opts_new 
+e126 <- map_sign_positive_126 + ggtitle("e) Shift to positive change") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[2])) + theme_opts_new 
+f126 <- map_sign_negative_126 + ggtitle("f) Shift to negative change") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit[2])) + theme_opts_new 
 
 pt<-a126 + b126 + c126 + d126 + e126 + f126+ plot_layout(design = layout)
 
 if(set == "full"){name = "FigS12.pdf"}else{name = "FigS18.pdf"}
 
-pdf(paste0(save_loc,name), height=10, width=15) 
+pdf(paste0(save_loc,name), height=5.5, width=7.086) # width can only be 180 mm if the fig is a 2 column one (7,086 inch)
 pt
 dev.off()
+
+# pdf(paste0(save_loc,name), height=10, width=15)
+# pt
+# dev.off()
 
 ### FIG S5 ####
 
@@ -1746,6 +1798,29 @@ pt<-a2 + b2 +
 
 if(set == "full"){name = "FigS5.pdf"}else{name = "FigS?.pdf"}
 
+# pdf(paste0(save_loc,name), height=20, width=15) 
+# pt
+# dev.off()
+
+# less legends 
+
+a2_noleg = a2 + theme(legend.position = "none")
+c_noleg = c + theme(legend.position = "none")
+e_noleg = e + theme(legend.position = "none")
+g_noleg = g + theme(legend.position = "none")
+i_noleg = i + theme(legend.position = "none")
+k_noleg = k + theme(legend.position = "none")
+
+pt<-a2_noleg + b2 + 
+  c_noleg + d +
+  e_noleg + f +
+  g_noleg + h + 
+  i_noleg + j + 
+  k_noleg + l +
+  plot_layout(design = layout)
+
+if(set == "full"){name = "FigS5_lessLegend.pdf"}else{name = "FigS?_lessLegend.pdf"}
+
 pdf(paste0(save_loc,name), height=20, width=15) 
 pt
 dev.off()
@@ -1765,15 +1840,38 @@ j126 <- map_sign_positive_gfdl_126 + ggtitle("j) Shift to positive change GFDL")
 k126 <- map_sign_negative_ipsl_126 + ggtitle("k) Shift to negative change IPSL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 l126 <- map_sign_negative_gfdl_126 + ggtitle("l) Shift to negative change GFDL") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
 
-pt<-a2126 + b2126 + 
+pt<-a2126 + b2126 +
   c126 + d126 +
   e126 + f126 +
-  g126 + h126 + 
+  g126 + h126 +
   i126 + j126 +
   k126 + l126 +
   plot_layout(design = layout)
 
 if(set == "full"){name = "FigS13.pdf"}else{name = "FigS19.pdf"}
+
+# pdf(paste0(save_loc, name), height=20, width=15) 
+# pt
+# dev.off()
+
+# less legends 
+
+a2126_noleg = a2126 + theme(legend.position = "none")
+c126_noleg = c126 + theme(legend.position = "none")
+e126_noleg = e126 + theme(legend.position = "none")
+g126_noleg = g126 + theme(legend.position = "none")
+i126_noleg = i126 + theme(legend.position = "none")
+k126_noleg = k126 + theme(legend.position = "none")
+
+pt<-a2126_noleg + b2126 + 
+  c126_noleg + d126 +
+  e126_noleg + f126 +
+  g126_noleg + h126 + 
+  i126_noleg + j126 + 
+  k126_noleg + l126 +
+  plot_layout(design = layout)
+
+if(set == "full"){name = "FigS13_lessLegend.pdf"}else{name = "FigS19_lessLegend.pdf"}
 
 pdf(paste0(save_loc, name), height=20, width=15) 
 pt
@@ -1787,38 +1885,81 @@ CD
 EF
 "
 
-c<-map_summaries_CMIP5$sd_CMIP5_all +  ggtitle("c) CMIP5 RCP8.5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-d<-map_summaries_CMIP6$sd_CMIP6_all +  ggtitle("d) CMIP6 SSP5-8.5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-e<-map_summaries_CMIP5$agreement_CMIP5_all + ggtitle("e) CMIP5 RCP8.5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-f<-map_summaries_CMIP6$agreement_CMIP6_all + ggtitle("f) CMIP6 SSP5-8.5") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+tit2 = c("Variability  \n (SD)", "Model \n agreement \n (%)")
 
-pt<-a + b + 
+c<-map_summaries_CMIP5$sd_CMIP5_all +  ggtitle("c) CMIP5 RCP8.5") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit2[1])) + theme_opts_new 
+d<-map_summaries_CMIP6$sd_CMIP6_all +  ggtitle("d) CMIP6 SSP5-8.5") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit2[1])) + theme_opts_new 
+e<-map_summaries_CMIP5$agreement_CMIP5_all + ggtitle("e) CMIP5 RCP8.5") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit2[2])) + theme_opts_new 
+f<-map_summaries_CMIP6$agreement_CMIP6_all + ggtitle("f) CMIP6 SSP5-8.5") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit2[2])) + theme_opts_new 
+
+pt<-a + b + # SAME AS FIG 5 # ### WRONG! this come out as BOATS in a previous run - fixed 
     c + d +  
     e + f +  
     plot_layout(design = layout)
 
 if(set == "full"){name = "FigS6.pdf"}else{name = "FigS10.pdf"}
 
-pdf(paste0(save_loc,name), height=10, width=15) 
+# pdf(paste0(save_loc,name), height=5.5, width=7.086) # width can only be 180 mm if the fig is a 2 column one (7,086 inch)
+# pt
+# dev.off()
+
+# pdf(paste0(save_loc,name), height=10, width=15) 
+# pt
+# dev.off()
+
+# less legend 
+
+a_noleg = a + theme(legend.position = "none")
+c_noleg = c + theme(legend.position = "none")
+e_noleg = e + theme(legend.position = "none")
+
+pt<-a_noleg + b + 
+    c_noleg + d +  
+    e_noleg + f +  
+    plot_layout(design = layout)
+
+if(set == "full"){name = "FigS6_lessLegend.pdf"}else{name = "FigS10_lessLegend.pdf"}
+
+pdf(paste0(save_loc,name), height=5.5, width=7.086) # width can only be 180 mm if the fig is a 2 column one (7,086 inch)
 pt
 dev.off()
 
-
 ### FIG S16 & S20 - 2.6 scenario ####
 
-c126<-map_summaries_CMIP5$sd_CMIP5_all_126 +  ggtitle("c) CMIP5 RCP2.6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-d126<-map_summaries_CMIP6$sd_CMIP6_all_126 +  ggtitle("d) CMIP6 SSP1-2.6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-e126<-map_summaries_CMIP5$agreement_CMIP5_all_126 + ggtitle("e) CMIP5 RCP2.6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
-f126<-map_summaries_CMIP6$agreement_CMIP6_all_126 + ggtitle("f) CMIP6 SSP1-2.6") + theme(plot.title = element_text(size = 16, face = "bold", hjust = 0))
+c126<-map_summaries_CMIP5$sd_CMIP5_all_126 +  ggtitle("c) CMIP5 RCP2.6") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit2[1])) + theme_opts_new
+d126<-map_summaries_CMIP6$sd_CMIP6_all_126 +  ggtitle("d) CMIP6 SSP1-2.6") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit2[1])) + theme_opts_new
+e126<-map_summaries_CMIP5$agreement_CMIP5_all_126 + ggtitle("e) CMIP5 RCP2.6") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit2[2])) + theme_opts_new
+f126<-map_summaries_CMIP6$agreement_CMIP6_all_126 + ggtitle("f) CMIP6 SSP1-2.6") + guides(fill = guide_colourbar(barwidth = 0.5, barheight = 3, title = tit2[2])) + theme_opts_new
 
-pt<-a126 + b126 + 
+pt<-a126 + b126 + # same as Fig S12
     c126 + d126 +  
     e126 + f126 +  
     plot_layout(design = layout)
 
 if(set == "full"){name = "FigS16.pdf"}else{name = "FigS20.pdf"}
 
-pdf(paste0(save_loc,name), height=10, width=15) 
+# pdf(paste0(save_loc,name), height=5.5, width=7.086) # width can only be 180 mm if the fig is a 2 column one (7,086 inch)
+# pt
+# dev.off()
+
+# pdf(paste0(save_loc,name), height=10, width=15) 
+# pt
+# dev.off()
+
+# less legend 
+
+a126_noleg = a126 + theme(legend.position = "none")
+c126_noleg = c126 + theme(legend.position = "none")
+e126_noleg = e126 + theme(legend.position = "none")
+
+pt<-a126_noleg + b126 + 
+    c126_noleg + d126 +  
+    e126_noleg + f126 +  
+    plot_layout(design = layout)
+
+if(set == "full"){name = "FigS16_lessLegend.pdf"}else{name = "FigS20_lessLegend.pdf"}
+
+pdf(paste0(save_loc,name), height=5.5, width=7.086) # width can only be 180 mm if the fig is a 2 column one (7,086 inch)
 pt
 dev.off()
 
@@ -1981,4 +2122,6 @@ pt
 dev.off()
 
 ```
+
+
 
