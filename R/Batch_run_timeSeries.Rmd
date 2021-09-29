@@ -249,15 +249,14 @@ rm(hist, fut126, fut585, all)
 
 ```{r}
 
-# save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5.RData")
+save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5.RData")
 
-save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5_weigthedMean.RData")
+# save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5_weigthedMean_lastCheck.RData")
 
 # # # for IPCC - Laurent Bopp
 # save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP5_IPCC_toCut.RData")
 
 ```
-
 
 ## Load libraries for netcdf and define variables
 
@@ -410,34 +409,13 @@ data_ipsl_CMIP6<-list()
 
 for (i in 1:length(mod_ipsl)){
   
-  # i = 1
-  
-  # filename<-paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
-  
-  # APECOSM: 
-  # delete _tmp, change file name in details above 
-  # BOATS
-  # delete _tmp, change file name in details above, change date reference (HelperScript line ~120)
-  # DBPM 
-  # delete _tmp
-  # MACROECOLOGICAL 
-  # delete _tmp, change file name in details above X 2
-  # FEISTY 
-  # delete _tmp
-  # ZooMSS
-  # delete _tmp
-  
   filename<-paste0(mod_ipsl[i], "/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
   
   hist<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = FALSE, CMIP =  6)
   
-  # filename <- paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
-  
   filename <- paste0(mod_ipsl[i], "/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
   fut126<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE, CMIP = 6)
-  
-  # filename <- paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
   filename <- paste0(mod_ipsl[i], "/ipsl-cm6a-lr/", protocol[3], "/", tolower(mod_ipsl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
 
@@ -656,19 +634,13 @@ yearmonth2_fut<-rep(NA, length(mod_gfdl))
 
 for (i in 1:length(mod_gfdl)){
 
-  # filename<-paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[2],"/", tolower(mod_gfdl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
-  
   filename<-paste0(mod_gfdl[i], "/gfdl-esm4/", protocol[2],"/", tolower(mod_gfdl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
   
   hist<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = FALSE, CMIP =  6)
 
-  # filename <- paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
-  
   filename <- paste0(mod_gfdl[i], "/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp126_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
   fut126<- extractFishCDF(directory, filename , variable_to_extract[1], yearmonth1_fut[i], yearmonth2_fut[i], average_whole_period = FALSE, CMIP = 6)
-  
-  # filename <- paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
   filename <- paste0(mod_gfdl[i], "/gfdl-esm4/", protocol[3], "/", tolower(mod_gfdl[i]), earth[i], "ssp585_nat_default_",variable_to_extract[1],"_global_",output[i], "_",f_years[i],extension[i])
   
@@ -757,9 +729,9 @@ data_gfdl_CMIP6$DBEM<-list(all = all)
 
 ```{r}
 
-# save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6.RData")
+save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6.RData")
 
-save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_weigthedMean.RData")
+# save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_lastCheck.RData")
 
 # # file structure from OutputData folder
 # save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_OutputDataFolder.RData")
@@ -782,11 +754,11 @@ rm(list=ls())
 # load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP5_revision.RData")
 # load("/Users/camillan/fishmip_outputs/CMIP6vsCMIP5_fig_temp/data_trends_CMIP6_revision.RData")
 
-# load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5.RData")
-# load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6.RData")
+load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5.RData")
+load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6.RData")
 
-load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5_weigthedMean.RData")
-load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_weigthedMean.RData")
+# load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP5_weigthedMean_lastCheck.RData")
+# load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_lastCheck.RData")
 
 # load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_OutputDataFolder.RData")
 # load("../CMIP5vsCMIP6_data/temp_data/data_trends_CMIP6_wrong.RData")
@@ -845,13 +817,13 @@ save_loc<-"../CMIP5vsCMIP6_data/figures/"
 
 # if model set == "full", we are considering all models and creating figures for the Main Document, otherwise we are considering the subset of models considered in Lotze et al. 2019 and producing figures for the Supplemntary Information. 
 
-set = "full"
+set = "not_full"
 
-if (set == "full"){
+if (set != "full"){
   # exclude DBPM GFDL CMIP6 anyways as this are not final runs   
-  data_gfdl_CMIP6$DBPM<-NULL 
-  }else {
-    data_gfdl_CMIP6$DBPM<-NULL 
+  # data_gfdl_CMIP6$DBPM<-NULL 
+  # }else {
+    # data_gfdl_CMIP6$DBPM<-NULL 
     data_ipsl_CMIP5$ZooMSS<-NULL
     data_gfdl_CMIP5$ZooMSS<-NULL
     data_ipsl_CMIP6$ZooMSS<-NULL
@@ -861,6 +833,8 @@ if (set == "full"){
     data_ipsl_CMIP6$EcoTroph<-NULL
     data_gfdl_CMIP6$EcoTroph<-NULL
   }
+
+names(data_ipsl_CMIP6)
 
 ```
 
@@ -1004,13 +978,15 @@ layout <- "
 AB
 "
 
+# NOTE: warning messages are OK - it is because cmip6 does not have data between 2006 and 2014 for ssp126 and ssp585 which are part of historical 
+
 a<-a + ggtitle("a) CMIP5") + theme(plot.title = element_text(size = 7, face = "bold", hjust = 0))
 b<-b + ggtitle("b) CMIP6") + theme(plot.title = element_text(size = 7, face = "bold",hjust = 0))
 
 plot<-a + b + 
   plot_layout(design = layout)
 
-if(set == "full"){name = "Fig3_weigthedMean.pdf"}else{name = "FigS7_weigthedMean.pdf"}
+if(set == "full"){name = "Fig3.pdf"}else{name = "FigS7.pdf"}
 
 pdf(paste0(save_loc,name), height=2.8, width=7.086)
 plot
@@ -1025,6 +1001,14 @@ lastDecade<-filter(all, year >= 2090, year <= 2099) %>%
   summarise(mean2 = mean(mean), 
             sd2 = mean(sd))
 
+# full set NEW run with updated DBPM 
+#    cmip protocol  mean2   sd2
+#   <dbl> <chr>     <dbl> <dbl>
+# 1     5 ssp126    -4.41  3.18
+# 2     5 ssp585   -15.5   9.60
+# 3     6 ssp126    -5.90  2.95
+# 4     6 ssp585   -17.2   5.92
+
 # full set
 #    cmip protocol  mean2   sd2
 #   <dbl> <chr>     <dbl> <dbl>
@@ -1032,6 +1016,14 @@ lastDecade<-filter(all, year >= 2090, year <= 2099) %>%
 # 2     5 ssp585   -15.4   9.61
 # 3     6 ssp126    -5.81  2.97
 # 4     6 ssp585   -17.1   5.89
+
+# reduced set NEW run with updated DBPM 
+#    cmip protocol  mean2   sd2
+#   <dbl> <chr>     <dbl> <dbl>
+# 1     5 ssp126    -4.54  3.30
+# 2     5 ssp585   -16.2  10.1 
+# 3     6 ssp126    -6.27  2.93
+# 4     6 ssp585   -17.6   6.88
 
 # reduced set - CMIP5 has not the same values becasue of ZoomSS
 #   cmip protocol  mean2   sd2
@@ -1044,6 +1036,14 @@ lastDecade<-filter(all, year >= 2090, year <= 2099) %>%
 
 lastYear<-filter(all, year == 2099) 
 
+# full set NEW run with updated DBPM 
+#   protocol  year  cmip   mean    sd sd_min sd_max      A
+#   <chr>    <dbl> <dbl>  <dbl> <dbl>  <dbl>  <dbl>  <dbl>
+# 1 ssp126    2099     5  -4.78  2.97  -7.75  -1.81  -4.78
+# 2 ssp126    2099     6  -6.75  2.88  -9.64  -3.87  -4.78
+# 3 ssp585    2099     5 -16.5  10.1  -26.6   -6.48 -16.5 
+# 4 ssp585    2099     6 -19.0   6.57 -25.5  -12.4  -16.5 
+
 # full set
 #   protocol  year  cmip   mean    sd sd_min sd_max      A
 #   <chr>    <dbl> <dbl>  <dbl> <dbl>  <dbl>  <dbl>  <dbl>
@@ -1051,6 +1051,14 @@ lastYear<-filter(all, year == 2099)
 # 2 ssp126    2099     6  -6.66  2.89  -9.55  -3.77  -4.69
 # 3 ssp585    2099     5 -16.5  10.1  -26.5   -6.39 -16.5 
 # 4 ssp585    2099     6 -18.9   6.54 -25.4  -12.4  -16.5
+
+# reduced set NEW run with updated DBPM 
+#   protocol  year  cmip   mean    sd sd_min sd_max      A
+#   <chr>    <dbl> <dbl>  <dbl> <dbl>  <dbl>  <dbl>  <dbl>
+# 1 ssp126    2099     5  -4.90  3.10  -8.00  -1.80  -4.90
+# 2 ssp126    2099     6  -7.28  2.63  -9.91  -4.65  -4.90
+# 3 ssp585    2099     5 -17.3  10.6  -27.9   -6.74 -17.3 
+# 4 ssp585    2099     6 -19.3   7.59 -26.9  -11.7  -17.3 
 
 # reduced set
 #   protocol  year  cmip   mean    sd sd_min sd_max      A
@@ -1084,9 +1092,19 @@ wilcox.test(test5_26$tcbChange, test5_85$tcbChange, alternative = "two.sided")
 length(test5_26$tcbChange) # 120
 length(test5_85$tcbChange) # 120
 
+# full set NEW run with updated DBPM 
+# data:  test5_26$tcbChange and test5_85$tcbChange
+# W = 12824, p-value < 2.2e-16
+# alternative hypothesis: true location shift is not equal to 0
+
 # full set
 # data:  test5_26$tcbChange and test5_85$tcbChange
 # W = 12822, p-value < 2.2e-16
+# alternative hypothesis: true location shift is not equal to 0
+
+# reduced set NEW run with updated DBPM 
+# data:  test5_26$tcbChange and test5_85$tcbChange
+# W = 8963, p-value < 2.2e-16
 # alternative hypothesis: true location shift is not equal to 0
 
 # reduced set 
@@ -1105,9 +1123,19 @@ wilcox.test(test6_26$tcbChange, test6_85$tcbChange, alternative = "two.sided")
 length(test6_26$tcbChange) # 160
 length(test6_85$tcbChange) # 160
 
+# full set NEW run with updated DBPM 
+# data:  test6_26$tcbChange and test6_85$tcbChange
+# W = 25105, p-value < 2.2e-16
+# alternative hypothesis: true location shift is not equal to 0
+
 # full set 
 # data:  test6_26$tcbChange and test6_85$tcbChange
 # W = 25123, p-value < 2.2e-16
+# alternative hypothesis: true location shift is not equal to 0
+
+# reduced set NEW run with updated DBPM 
+# data:  test6_26$tcbChange and test6_85$tcbChange
+# W = 9684, p-value < 2.2e-16
 # alternative hypothesis: true location shift is not equal to 0
 
 # reduced set 
@@ -1123,9 +1151,19 @@ wilcox.test(test5_26$tcbChange, test6_26$tcbChange, alternative = "two.sided")
 length(test5_26$tcbChange) # 120
 length(test6_26$tcbChange) # 160
 
+# full set NEW run with updated DBPM 
+# data:  test5_26$tcbChange and test6_26$tcbChange
+# W = 12290, p-value = 6.045e-05
+# alternative hypothesis: true location shift is not equal to 0
+
 # full set 
 # data:  test5_26$tcbChange and test6_26$tcbChange
 # W = 12291, p-value = 6.007e-05
+# alternative hypothesis: true location shift is not equal to 0
+
+# reduced set NEW run with updated DBPM 
+# data:  test5_26$tcbChange and test6_26$tcbChange
+# W = 6623, p-value = 7.358e-05
 # alternative hypothesis: true location shift is not equal to 0
 
 # reduced set
@@ -1139,9 +1177,19 @@ wilcox.test(test5_85$tcbChange, test6_85$tcbChange, alternative = "two.sided")
 length(test5_85$tcbChange) # 120
 length(test6_85$tcbChange) # 160
 
+# full set NEW run with updated DBPM 
+# data:  test5_85$tcbChange and test6_85$tcbChange
+# W = 11221, p-value = 0.01566
+# alternative hypothesis: true location shift is not equal to 0
+
 # full set 
 # data:  test5_85$tcbChange and test6_85$tcbChange
 # W = 11246, p-value = 0.01413
+# alternative hypothesis: true location shift is not equal to 0
+
+# reduced set NEW run with updated DBPM 
+# data:  test5_85$tcbChange and test6_85$tcbChange
+# W = 5418, p-value = 0.3077
 # alternative hypothesis: true location shift is not equal to 0
 
 # reduced set
@@ -1278,7 +1326,7 @@ b2<-b2 + ggtitle("d) CMIP6 GFDL-ESM4") + theme(plot.title = element_text(size = 
 plot<-a1 + b1 + a2 + b2 + 
   plot_layout(design = layout)
 
-if(set == "full"){name = "Fig4_weigthedMean.pdf"}else{name = "FigS8_weigthedMean.pdf"}
+if(set == "full"){name = "Fig4.pdf"}else{name = "FigS8.pdf"}
 
 # name = "Fig4_OutputDataFolder2.pdf"
 
@@ -1310,7 +1358,7 @@ b2<-b2 + ggtitle("d) CMIP6 GFDL-ESM4") + theme(plot.title = element_text(size = 
 plot<-a1 + b1 + a2 + b2 + 
   plot_layout(design = layout)
 
-if(set == "full"){name = "FigS11_weigthedMean.pdf"}else{name = "FigS17_weigthedMean.pdf"}
+if(set == "full"){name = "FigS11.pdf"}else{name = "FigS17.pdf"}
 
 # name = "FigS11_OutputDataFolder.pdf"
 

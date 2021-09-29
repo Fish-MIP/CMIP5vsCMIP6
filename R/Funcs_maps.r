@@ -14,6 +14,17 @@ plot_FISH_MIP <- function(data_to_plot,
                           num_dp = 0,
                           contour = FALSE){
   
+  # data_to_plot = flip_sign_data$data_negative
+  # data_title = maptitle_sign_negative
+  # plot_limits = c(-50, 0) 
+  # colour_scheme = colour_scheme4
+  # coltitle = "Difference \nin (%) \nchange \n"
+  # latlon_limits = NA 
+  # model_type = NA 
+  # legend_ticks = 3
+  # num_dp = 0
+  # contour = FALSE
+ 
   # Set up the raster
   e <- extent(c(-180, 180, -90, 90))
   if (!is.na(model_type)){ # DBEM is 0.5 degree - here taken into account

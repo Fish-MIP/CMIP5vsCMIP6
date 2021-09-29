@@ -663,7 +663,7 @@ get_timeSeries<-function(hist, fut126, fut585, output = "yearly"){
 
   # ref decade
   refDecade <- hist_2 %>%
-    filter(year >= 1990, year <=2000) %>%
+    filter(year >= 1990, year <2000) %>%
     # filter(year >= 1995, year <= 2014) %>% # prepare data and fig for IPCC report: Laurent Bopp ref year 1995-2014
     dplyr::summarize(value = mean(tcb, na.rm = TRUE))
 
@@ -698,8 +698,8 @@ get_timeSeries<-function(hist, fut126, fut585, output = "yearly"){
       mutate(color = ifelse(year < 2015, "hist", "ssp126"))
   }
 
-  filter(all126, year == 1971)
-  filter(all126, year == 2099)
+  # filter(all126, year == 1971)
+  # filter(all126, year == 2099)
 
   # ssp585
   dimnames(fut585$fishvar)<-list(fut585$lon, fut585$lat, fut585$years)
@@ -868,7 +868,7 @@ get_timeSeries_temperature<-function(hist, fut126, fut585, output = "yearly"){
 
   # ref decade
   refDecade <- hist_2 %>%
-    filter(year >= 1990, year <=2000) %>%
+    filter(year >= 1990, year <2000) %>%
     dplyr::summarize(value = mean(tcb, na.rm = TRUE))
 
   # ssp126
@@ -900,7 +900,7 @@ get_timeSeries_temperature<-function(hist, fut126, fut585, output = "yearly"){
       full_join(fut126_2) %>%
       # mutate(TcbChange = (tcb - refDecade$value)/refDecade$value * 100) %>%
       mutate(TcbChange = tcb - refDecade$value) %>% # celsius change
-      mutate(color = ifelse(year <= 2015, "hist", "ssp126"))
+      mutate(color = ifelse(year < 2015, "hist", "ssp126"))
   }
 
   # ssp585

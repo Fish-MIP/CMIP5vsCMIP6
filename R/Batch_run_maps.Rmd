@@ -362,7 +362,7 @@ for (i in 1:length(data_gfdl_CMIP5)){
 
 # if model set == "full", we are considering all models and creating figures for the Main Document, otherwise we are considering the subset of models considered in Lotze et al. 2019 and producing figures for the Supplemntary Information. 
 
-set = "N_full"
+set = "not_full"
 
 if(set != "full"){
   data_ipsl_CMIP5$ZooMSS<-NULL
@@ -659,10 +659,6 @@ data_ipsl_CMIP6<-list()
 
 for (i in 1:length(mod_ipsl)){
 
-  # i = 5
-  # New folder structure - see batch_run_timeSeriies.Rmd for edits 
-  # filename<-paste0(mod_ipsl[i], "/_tmp/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
-  
   filename<-paste0(mod_ipsl[i], "/ipsl-cm6a-lr/", protocol[2],"/", tolower(mod_ipsl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
   
   hist<- averageFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = TRUE, CMIP =  6)
@@ -972,8 +968,6 @@ data_gfdl_CMIP6<-list()
 
 for (i in 1:length(mod_gfdl)){
 
-  # filename<-paste0(mod_gfdl[i], "/_tmp/gfdl-esm4/", protocol[2],"/", tolower(mod_gfdl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
-  
   filename<-paste0(mod_gfdl[i], "/gfdl-esm4/", protocol[2],"/", tolower(mod_gfdl[i]), earth[i], "historical_nat_default_",variable_to_extract[1],"_global_", output[i], "_", h_years[i], extension[i])
   
   hist<- averageFishCDF(directory, filename , variable_to_extract[1], yearmonth1[i], yearmonth2[i], average_whole_period = TRUE, CMIP =  6)
@@ -1219,10 +1213,25 @@ for (i in 1:length(data_gfdl_CMIP6)){
 }
 
 # CHECK that flip matrix etc worked for each model and given the new data structure 
-# IPSL: macroecological, zoom to change! no need to flip matrix - why!???!?!? maybe fixed by Matthias - but then wht FEISTY IPSL is the only final file that still needs flipping??? 
+# IPSL: macroecological, zoom no need to flip matrix - why? maybe fixed by Matthias - but then why FEISTY IPSL is the only final file that still needs flipping? 
 # GFDL: macroecological, zoom as above 
-map_ipsl585_CMIP6$FEISTY
-map_gfdl585_CMIP6$FEISTY
+# map_ipsl585_CMIP6$APECOSM
+# map_ipsl585_CMIP6$BOATS
+# map_ipsl585_CMIP6$DBPM
+# map_ipsl585_CMIP6$MACROECOLOGICAL
+# map_ipsl585_CMIP6$FEISTY
+# map_ipsl585_CMIP6$ZooMSS
+# map_ipsl585_CMIP6$EcoTroph
+# map_ipsl585_CMIP6$EcoOcean
+# map_ipsl585_CMIP6$DBEM
+# 
+# map_gfdl585_CMIP6$BOATS
+# map_gfdl585_CMIP6$MACROECOLOGICAL
+# map_gfdl585_CMIP6$ZooMSS
+# map_gfdl585_CMIP6$FEISTY
+# map_gfdl585_CMIP6$EcoTroph
+# map_gfdl585_CMIP6$EcoOcean
+# map_gfdl585_CMIP6$DBEM
 
 ## RCP 2.6
 
@@ -1254,6 +1263,24 @@ for (i in 1:length(data_gfdl_CMIP6)){
   
 }
 
+# map_ipsl126_CMIP6$APECOSM
+# map_ipsl126_CMIP6$BOATS
+# map_ipsl126_CMIP6$DBPM
+# map_ipsl126_CMIP6$MACROECOLOGICAL
+# map_ipsl126_CMIP6$FEISTY
+# map_ipsl126_CMIP6$ZooMSS
+# map_ipsl126_CMIP6$EcoTroph
+# map_ipsl126_CMIP6$EcoOcean
+# map_ipsl126_CMIP6$DBEM
+# 
+# map_gfdl126_CMIP6$BOATS
+# map_gfdl126_CMIP6$MACROECOLOGICAL
+# map_gfdl126_CMIP6$ZooMSS
+# map_gfdl126_CMIP6$FEISTY
+# map_gfdl126_CMIP6$EcoTroph
+# map_gfdl126_CMIP6$EcoOcean
+# map_gfdl126_CMIP6$DBEM
+
 ```
 
 ## Deal with model set 
@@ -1264,10 +1291,10 @@ for (i in 1:length(data_gfdl_CMIP6)){
 
 set = "N_full"
 
-if(set == "full"){
-  data_gfdl_CMIP6$DBPM<-NULL # exclude DBPM GFDL CMIP6 anyways as this are not final runs 
-}else{
-  data_gfdl_CMIP6$DBPM<-NULL
+if(set != "full"){
+#   data_gfdl_CMIP6$DBPM<-NULL # exclude DBPM GFDL CMIP6 anyways as this are not final runs 
+# }else{
+  # data_gfdl_CMIP6$DBPM<-NULL
   data_ipsl_CMIP6$ZooMSS<-NULL
   data_gfdl_CMIP6$ZooMSS<-NULL
   data_ipsl_CMIP6$FEISTY<-NULL
@@ -1275,6 +1302,8 @@ if(set == "full"){
   data_ipsl_CMIP6$EcoTroph<-NULL
   data_gfdl_CMIP6$EcoTroph<-NULL
 }
+
+names(data_ipsl_CMIP6)
 
 ```
 
@@ -1397,14 +1426,11 @@ if(set == "full"){
 
 rm(list=ls())
 
-set = "n_full"
+set = "Not_full"
 
 if(set == "full"){
   
-  # NEED TO re-run or MOVE from old to ned folder 
   load("../CMIP5vsCMIP6_data/temp_data/data_CMIP5.RData")
-  # load("../CMIP5vsCMIP6_data/temp_data/data_CMIP6.RData")
-  
   # new data structure 
   load("../CMIP5vsCMIP6_data/temp_data/data_CMIP6.RData")
   
@@ -1591,24 +1617,32 @@ flip_sign<-function(temp, temp1){
 flip_sign_data<-flip_sign(data_summaries_CMIP5$res_all$model_average, data_summaries_CMIP6$res_all$model_average)
 
 # % of cell that changed
-a<-sum(!is.na(data_summaries_CMIP5$res_all$model_average))
-b<-sum(!is.na(flip_sign_data$data_negative))
+a<-sum(!is.na(data_summaries_CMIP6$res_all$model_average*data_summaries_CMIP5$res_all$model_average)) # sum the number of cells that are not NA neither in CMIP5 nor CMIP6
+b<-sum(!is.na(flip_sign_data$data_negative)) # sum the number of cells that are not NA - i.e. the ones with negative changes
 c<-sum(!is.na(flip_sign_data$data_positive))
 d<-sum(!is.na(flip_sign_data$data_neutral))
 (b/a)*100 # turned negative 
 (c/a)*100 # turned positive
 (d/a)*100 # did not change sign  
-
 (b/a)*100 + (c/a)*100 + (d/a)*100 
-# not perfect match to 100%  
 
 # full set
 # > (b/a)*100 # turned negative 
-# [1] 13.54085
+# [1] 13.5
 # > (c/a)*100 # turned positive
-# [1] 14.93126
+# [1] 14.9
 # > (d/a)*100 # did not change sign  
-# [1] 71.09784
+# [1] 71.4
+
+# reduced set
+# > (b/a)*100 # turned negative 
+# [1] 12.47341
+# > (c/a)*100 # turned positive
+# [1] 15.52963
+# > (d/a)*100 # did not change sign  
+# [1] 71.99695
+# > (b/a)*100 + (c/a)*100 + (d/a)*100 
+# [1] 100
 
 # plot
 colour_scheme4 <- c(low = "#fc9617", mid = "#fecf95",  high = "#fef4e7")
@@ -1629,13 +1663,24 @@ map_sign_neutral<-plot_FISH_MIP(flip_sign_data$data_neutral, maptitle_sign_neutr
 flip_sign_data_ipsl<-flip_sign(data_summaries_CMIP5$res_ipsl$model_average, data_summaries_CMIP6$res_ipsl$model_average)
 
 # % of cell that change
-a<-sum(!is.na(data_summaries_CMIP5$res_all$model_average))
+a<-sum(!is.na(data_summaries_CMIP5$res_ipsl$model_average*data_summaries_CMIP6$res_ipsl$model_average))
 b<-sum(!is.na(flip_sign_data_ipsl$data_negative))
 c<-sum(!is.na(flip_sign_data_ipsl$data_positive))
 d<-sum(!is.na(flip_sign_data_ipsl$data_neutral))
 (b/a)*100 # turned negative 
 (c/a)*100 # turned positive
 (d/a)*100 # did not change sign 
+(b/a)*100+(c/a)*100+(d/a)*100
+
+# reduced model set
+# > (b/a)*100 # turned negative 
+# [1] 10.4054
+# > (c/a)*100 # turned positive
+# [1] 18.95766
+# > (d/a)*100 # did not change sign 
+# [1] 70.63693
+# > (b/a)*100+(c/a)*100+(d/a)*100
+# [1] 100
 
 maptitle_sign_negative<-"Delta for cells that changed from an increase in CMIP5 to a decrease in IPSL CMIP6"
 map_sign_negative_ipsl<-plot_FISH_MIP(flip_sign_data_ipsl$data_negative, maptitle_sign_negative, c(-50, 0), colour_scheme = colour_scheme4, coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 3) 
@@ -1650,13 +1695,24 @@ map_sign_neutral_ipsl<-plot_FISH_MIP(flip_sign_data_ipsl$data_neutral, maptitle_
 flip_sign_data_gfdl<-flip_sign(data_summaries_CMIP5$res_gfdl$model_average, data_summaries_CMIP6$res_gfdl$model_average)
 
 # % of cell that change
-a<-sum(!is.na(data_summaries_CMIP5$res_all$model_average))
+a<-sum(!is.na(data_summaries_CMIP5$res_gfdl$model_average*data_summaries_CMIP6$res_gfdl$model_average))
 b<-sum(!is.na(flip_sign_data_gfdl$data_negative))
 c<-sum(!is.na(flip_sign_data_gfdl$data_positive))
 d<-sum(!is.na(flip_sign_data_gfdl$data_neutral))
 (b/a)*100 # turned negative 
 (c/a)*100 # turned positive
 (d/a)*100 # did not change sign 
+(b/a)*100 + (c/a)*100 + (d/a)*100
+
+# reduced model set 
+# > (b/a)*100 # turned negative 
+# [1] 20.63513
+# > (c/a)*100 # turned positive
+# [1] 14.33986
+# > (d/a)*100 # did not change sign 
+# [1] 65.02501
+# > (b/a)*100 + (c/a)*100 + (d/a)*100
+# [1] 100
 
 maptitle_sign_negative<-"Delta for cells that changed from an increase in CMIP5 to a decrease in GFDL CMIP6"
 map_sign_negative_gfdl<-plot_FISH_MIP(flip_sign_data_gfdl$data_negative, maptitle_sign_negative, c(-50, 0), colour_scheme = colour_scheme4, coltitle = "Difference \nin (%) \nchange \n", legend_ticks = 3) 

@@ -248,7 +248,7 @@ for (i in 1:length(variable_to_extract)){
 ```{r}
 
 # save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5.RData")
-save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5_weigthedMean2.RData")
+save(data_ipsl_CMIP5, data_gfdl_CMIP5, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5.RData")
 
 ```
 
@@ -412,7 +412,7 @@ for (i in 1:length(variable_to_extract3)){
 ```{r}
 
 # save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6.RData")
-save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6_weigthedMean2.RData")
+save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6.RData")
 
 ```
 
@@ -424,11 +424,11 @@ save(data_ipsl_CMIP6, data_gfdl_CMIP6, file = "../CMIP5vsCMIP6_data/temp_data/da
 
 rm(list=ls())
 
-# load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5.RData")
-# load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6.RData")
+load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5.RData")
+load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6.RData")
 
-load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5_weigthedMean2.RData")
-load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6_weigthedMean2.RData")
+# load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP5_weigthedMean2.RData")
+# load("../CMIP5vsCMIP6_data/temp_data/data_trends_inputs_CMIP6_weigthedMean2.RData")
 
 ```
 
@@ -593,13 +593,27 @@ data = all_notMean$to %>%
   filter(cmip == 5)
 
 filter(all_notMean$to, year == 2099, cmip == 5, earth == "ipsl", protocol == "ssp585")
+filter(all_notMean$to, year == 2099, cmip == 5, earth == "gfdl", protocol == "ssp585")
+filter(all_notMean$to, year == 2099, cmip == 6, earth == "ipsl", protocol == "ssp585")
+filter(all_notMean$to, year == 2099, cmip == 6, earth == "gfdl", protocol == "ssp585")
+
+#   year      tcb tcbChange protocol cmip earth
+# 1 2099 21.06647  3.774723   ssp585    5  ipsl
+# > filter(all_notMean$to, year == 2099, cmip == 5, earth == "gfdl", protocol == "ssp585")
+#   year      tcb tcbChange protocol cmip earth
+# 1 2099 20.92841  2.183071   ssp585    5  gfdl
+# > filter(all_notMean$to, year == 2099, cmip == 6, earth == "ipsl", protocol == "ssp585")
+#   year      tcb tcbChange protocol cmip earth
+# 1 2099 22.34013  4.310742   ssp585    6  ipsl
+# > filter(all_notMean$to, year == 2099, cmip == 6, earth == "gfdl", protocol == "ssp585")
+#   year     tcb tcbChange protocol cmip earth
+# 1 2099 20.8402  2.769594   ssp585    6  gfdl
+
 filter(all_notMean$pp, year == 2099, cmip == 5, earth == "ipsl", protocol == "ssp585")
 filter(all_notMean$phy, year == 2099, cmip == 5, earth == "ipsl", protocol == "ssp585")
 filter(all_notMean$phy, year == 2099, cmip == 5, earth == "gfdl", protocol == "ssp585")
 filter(all_notMean$zoo, year == 2099, cmip == 5, earth == "ipsl", protocol == "ssp585")
-
 filter(all_notMean$zoo, year == 2099, cmip == 6, earth == "ipsl", protocol == "ssp585")
-
 
 max(data$tcbChange)
 to_cmip5<-general_plot(data)
@@ -706,7 +720,7 @@ plot<-to_cmip5 + to_cmip6 + pp_cmip5 + pp_cmip6 +
 # plot 
 # dev.off()
 
-pdf(paste0(save_loc,"Fig1_weigthedMean3.pdf"), height=8.858, width=7.086) # width can only be 180 mm if the fig spans 2 columns (7,086 inch)
+pdf(paste0(save_loc,"Fig1.pdf"), height=8.858, width=7.086) # width can only be 180 mm if the fig spans 2 columns (7,086 inch)
 plot
 dev.off()
 
